@@ -1,9 +1,9 @@
 import express from "express";
 import process from "node:process";
-import citizenRoutes from "./routes/citizens.js";
-import complaintsRoutes from "./routes/complaints.js";
-import emergenciesRoutes from "./routes/emergencies.js";
-import notificationRoutes from "./routes/notifications.js";
+import citizenRoutes from "./backend/routes/citizens.js";
+import complaintsRoutes from "./backend/routes/complaints.js";
+import emergenciesRoutes from "./backend/routes/emergencies.js";
+import notificationRoutes from "./backend/routes/notifications.js";
 
 const app = express();
 const port = Number(process.env.PORT) || 5000;

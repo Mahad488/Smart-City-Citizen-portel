@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { API_BASE_URL } from "../api";
 import ConfirmModal from "../components/ConfirmModal";
 import "./Citizenportal.css";
 
@@ -125,12 +126,12 @@ function CitizenPortal() {
 
       const [complaintsResponse, emergenciesResponse] = await Promise.all([
         fetch(
-          `https://smart-city-production-c48b.up.railway.app/api/complaints/citizen/${encodeURIComponent(
+          `${API_BASE_URL}/api/complaints/citizen/${encodeURIComponent(
             citizenId
           )}`
         ),
         fetch(
-          `https://smart-city-production-c48b.up.railway.app/api/emergency/citizen/${encodeURIComponent(
+          `${API_BASE_URL}/api/emergency/citizen/${encodeURIComponent(
             citizenId
           )}`
         ),
@@ -171,10 +172,10 @@ function CitizenPortal() {
 
       const baseUrl =
         deleteTarget.type === "complaint"
-          ? "https://smart-city-production-c48b.up.railway.app/api/complaints"
-          : "https://smart-city-production-c48b.up.railway.app/api/emergency";
+            ? `${API_BASE_URL}/api/complaints`
+            : `${API_BASE_URL}/api/emergency`;
 
-      const response = await fetch(`${baseUrl}/${deleteTarget.id}`, {
+          const response = await fetch(`${baseUrl}/citizen/${deleteTarget.id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -209,7 +210,7 @@ function CitizenPortal() {
       setActionLoading(true);
 
       const response = await fetch(
-        `https://smart-city-production-c48b.up.railway.app/api/complaints/${editingComplaint.id}`,
+        `${API_BASE_URL}/api/complaints/citizen/${editingComplaint.id}`,
         {
           method: "PUT",
           headers: {
@@ -220,7 +221,7 @@ function CitizenPortal() {
             title: editingComplaint.title?.trim() || "Untitled complaint",
             description: editingComplaint.description.trim(),
             category: editingComplaint.category || "Other",
-            location: editingComplaint.location || citizen.area || "Not provided",
+            area: editingComplaint.location || citizen.area || "Not provided",
             priority: editingComplaint.priority || "Medium",
             status: editingComplaint.status || "Pending",
             latitude: editingComplaint.latitude ?? null,
@@ -255,7 +256,7 @@ function CitizenPortal() {
       setActionLoading(true);
 
       const response = await fetch(
-        `https://smart-city-production-c48b.up.railway.app/api/emergency/${editingEmergency.id}`,
+        `${API_BASE_URL}/api/emergency/citizen/${editingEmergency.id}`,
         {
           method: "PUT",
           headers: {
@@ -298,7 +299,7 @@ function CitizenPortal() {
       setNotificationLoading(true);
 
       const response = await fetch(
-        "https://smart-city-production-c48b.up.railway.app/api/notifications"
+        `${API_BASE_URL}/api/notifications`
       );
 
       if (!response.ok) {
@@ -373,7 +374,7 @@ function CitizenPortal() {
       setComplaintMessage("");
 
       const response = await fetch(
-        "https://smart-city-production-c48b.up.railway.app/api/complaints/citizen",
+        `${API_BASE_URL}/api/complaints/citizen`,
         {
           method: "POST",
           headers: {
@@ -455,7 +456,7 @@ function CitizenPortal() {
       setEmergencyMessage("");
 
       const response = await fetch(
-        "https://smart-city-production-c48b.up.railway.app/api/emergency",
+        `${API_BASE_URL}/api/emergency`,
         {
           method: "POST",
           headers: {

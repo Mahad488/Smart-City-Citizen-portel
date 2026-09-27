@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from "../api";
 import "./CitizenAuth.css";
 
 type Mode = "login" | "register";
@@ -38,7 +39,7 @@ function CitizenAuth() {
 
     try {
       const response = await fetch(
-        "https://smart-city-production-c48b.up.railway.app/api/citizens/login",
+        `${API_BASE_URL}/api/citizens/login`,
         {
           method: "POST",
           headers: {
@@ -99,7 +100,7 @@ function CitizenAuth() {
 
     try {
       const response = await fetch(
-        "https://smart-city-production-c48b.up.railway.app/api/citizens/register",
+        `${API_BASE_URL}/api/citizens/register`,
         {
           method: "POST",
           headers: {
