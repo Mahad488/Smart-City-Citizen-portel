@@ -1,1304 +1,640 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { API_BASE_URL } from "../api";
-import ConfirmModal from "../components/ConfirmModal";
-import "./Citizenportal.css";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
+import { useNavigate } from 'react-router-dom'
+import { formatComplaintId, getCitizenComplaints } from '../api'
+import { CitizenNavbar, CitizenSidebar } from './CitizenNavigation'
+import './Citizenportal.css'
 
-interface Citizen {
-  id?: number;
-  citizen_id?: string;
-  name: string;
-  email: string;
-  phone?: string;
-  area?: string;
-  status?: string;
+type ComplaintStatus = 'Pending' | 'In Progress' | 'Resolved' | string
+
+type Complaint = {
+  id: number | string
+  title: string
+  category: string
+  status: ComplaintStatus
+  date: string
+  location: string
+  priority: string
+  description: string
 }
 
-interface CitizenNotification {
-  id: number;
-  title: string;
-  message: string;
-  type?: string;
-  is_read?: boolean | number;
-  created_at: string;
+function extractComplaintTitle(description = '') {
+  const match = description.match(/^Title:\s*(.+?)(?:\n|$)/i)
+
+  if (match?.[1]) {
+    return match[1].trim()
+  }
+
+  return 'Citizen Complaint'
 }
 
-interface Complaint {
-  id: number;
-  title?: string;
-  category?: string;
-  description: string;
-  location?: string;
-  priority?: string;
-  status?: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  created_at?: string;
-}
-
-const formatComplaintDetails = (complaint: Complaint) => {
-  const rawDescription = complaint.description ?? "";
-  const legacyTitleMatch = rawDescription.match(
-    /^Title:\s*([\s\S]*?)(?:\r?\n\r?\n|\n\n)/
-  );
-
-  const title =
-    complaint.title?.trim() ||
-    legacyTitleMatch?.[1]?.trim() ||
-    "Untitled complaint";
-
-  const description = complaint.title
-    ? rawDescription.trim()
-    : legacyTitleMatch
-      ? rawDescription.replace(legacyTitleMatch[0], "").trim()
-      : rawDescription.trim();
-
-  return {
-    title,
-    description: description || "No description provided.",
-  };
-};
-
-interface Emergency {
-  id: number;
-  type: string;
-  location: string;
-  team?: string;
-  priority?: string;
-  status?: string;
-  latitude?: number | null;
-  longitude?: number | null;
-}
-
-function CitizenPortal() {
-  const [citizen] = useState<Citizen | null>(() => {
-    try {
-      const savedCitizen = localStorage.getItem("citizen");
-      return savedCitizen ? JSON.parse(savedCitizen) : null;
-    } catch {
-      console.error("Invalid citizen data");
-      return null;
-    }
-  });
-  const citizenId = citizen?.citizen_id;
-
-  const [showComplaintForm, setShowComplaintForm] = useState(false);
-  const [complaintForm, setComplaintForm] = useState({
-    title: "",
-    description: "",
-    category: "",
-    area: "",
-  });
-  const [complaintMessage, setComplaintMessage] = useState("");
-  const [complaintLoading, setComplaintLoading] = useState(false);
-  const [showEmergencyForm, setShowEmergencyForm] = useState(false);
-  const [emergencyForm, setEmergencyForm] = useState({
-    type: "",
-    location: "",
-  });
-  const [emergencyLoading, setEmergencyLoading] = useState(false);
-  const [emergencyMessage, setEmergencyMessage] = useState("");
-  const [notifications, setNotifications] = useState<CitizenNotification[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationLoading, setNotificationLoading] = useState(false);
-
-  const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [emergencies, setEmergencies] = useState<Emergency[]>([]);
-  const [recordsLoading, setRecordsLoading] = useState(false);
-  const [recordsMessage, setRecordsMessage] = useState("");
-
-  const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(null);
-  const [editingEmergency, setEditingEmergency] = useState<Emergency | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<
-    { type: "complaint" | "emergency"; id: number } | null
-  >(null);
-  const [pendingUpdate, setPendingUpdate] = useState<{
-    type: "complaint" | "emergency";
-    action: () => void;
-  } | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
-
-  const fetchMyRecords = useCallback(async () => {
-    if (!citizenId) return;
-
-    try {
-      setRecordsLoading(true);
-      setRecordsMessage("");
-
-      const [complaintsResponse, emergenciesResponse] = await Promise.all([
-        fetch(
-          `${API_BASE_URL}/api/complaints/citizen/${encodeURIComponent(
-            citizenId
-          )}`
-        ),
-        fetch(
-          `${API_BASE_URL}/api/emergency/citizen/${encodeURIComponent(
-            citizenId
-          )}`
-        ),
-      ]);
-
-      const complaintsData = await complaintsResponse.json();
-      const emergenciesData = await emergenciesResponse.json();
-
-      if (!complaintsResponse.ok) {
-        throw new Error(
-          complaintsData.message || "Failed to load complaints."
-        );
-      }
-
-      if (!emergenciesResponse.ok) {
-        throw new Error(
-          emergenciesData.message || "Failed to load emergencies."
-        );
-      }
-
-      setComplaints(Array.isArray(complaintsData) ? complaintsData : []);
-      setEmergencies(Array.isArray(emergenciesData) ? emergenciesData : []);
-    } catch (error) {
-      console.error("My records error:", error);
-      setRecordsMessage(
-        error instanceof Error ? error.message : "Unable to load your records."
-      );
-    } finally {
-      setRecordsLoading(false);
-    }
-  }, [citizenId]);
-
-  const deleteRecord = async () => {
-    if (!deleteTarget || !citizen?.citizen_id) return;
-
-    try {
-      setActionLoading(true);
-
-      const baseUrl =
-        deleteTarget.type === "complaint"
-            ? `${API_BASE_URL}/api/complaints`
-            : `${API_BASE_URL}/api/emergency`;
-
-          const response = await fetch(`${baseUrl}/citizen/${deleteTarget.id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          citizen_id: citizen.citizen_id,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Delete failed.");
-      }
-
-      setDeleteTarget(null);
-      await fetchMyRecords();
-    } catch (error) {
-      console.error("Delete record error:", error);
-      setRecordsMessage(
-        error instanceof Error ? error.message : "Unable to delete record."
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const saveComplaint = async () => {
-    if (!editingComplaint || !citizen?.citizen_id) return;
-
-    try {
-      setActionLoading(true);
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/complaints/citizen/${editingComplaint.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            citizen_id: citizen.citizen_id,
-            title: editingComplaint.title?.trim() || "Untitled complaint",
-            description: editingComplaint.description.trim(),
-            category: editingComplaint.category || "Other",
-            area: editingComplaint.location || citizen.area || "Not provided",
-            priority: editingComplaint.priority || "Medium",
-            status: editingComplaint.status || "Pending",
-            latitude: editingComplaint.latitude ?? null,
-            longitude: editingComplaint.longitude ?? null,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Unable to update complaint.");
-      }
-
-      setEditingComplaint(null);
-      setPendingUpdate(null);
-      await fetchMyRecords();
-    } catch (error) {
-      console.error("Update complaint error:", error);
-      setRecordsMessage(
-        error instanceof Error ? error.message : "Unable to update complaint."
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const saveEmergency = async () => {
-    if (!editingEmergency || !citizen?.citizen_id) return;
-
-    try {
-      setActionLoading(true);
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/emergency/citizen/${editingEmergency.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            citizen_id: citizen.citizen_id,
-            type: editingEmergency.type,
-            location: editingEmergency.location,
-            team: editingEmergency.team || "Emergency Response Team",
-            priority: editingEmergency.priority || "High",
-            status: editingEmergency.status || "Active",
-            latitude: editingEmergency.latitude ?? null,
-            longitude: editingEmergency.longitude ?? null,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Unable to update emergency.");
-      }
-
-      setEditingEmergency(null);
-      setPendingUpdate(null);
-      await fetchMyRecords();
-    } catch (error) {
-      console.error("Update emergency error:", error);
-      setRecordsMessage(
-        error instanceof Error ? error.message : "Unable to update emergency."
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      setNotificationLoading(true);
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/notifications`
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch notifications");
-      }
-
-      const data = await response.json();
-      setNotifications(data);
-    } catch (error) {
-      console.error("Notification error:", error);
-    } finally {
-      setNotificationLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const fetchTimer = window.setTimeout(() => {
-      void fetchNotifications();
-    }, 0);
-
-    return () => window.clearTimeout(fetchTimer);
-  }, []);
-
-  useEffect(() => {
-    const fetchTimer = window.setTimeout(() => {
-      void fetchMyRecords();
-    }, 0);
-
-    const refreshTimer = window.setInterval(() => {
-      void fetchMyRecords();
-    }, 10000);
-
-    return () => {
-      window.clearTimeout(fetchTimer);
-      window.clearInterval(refreshTimer);
-    };
-  }, [citizenId, fetchMyRecords]);
-
-  useEffect(() => {
-    if (!showComplaintForm && !showEmergencyForm && !showNotifications) {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [showComplaintForm, showEmergencyForm, showNotifications]);
-
-  const logout = () => {
-    localStorage.removeItem("citizen");
-    window.location.href = "/citizen-login";
-  };
-
-  const submitComplaint = async (event: FormEvent) => {
-    event.preventDefault();
-
-    if (!citizen?.citizen_id) {
-      setComplaintMessage("Citizen information not found.");
-      return;
-    }
-
-    if (!complaintForm.title.trim() || !complaintForm.description.trim()) {
-      setComplaintMessage("Title and description are required.");
-      return;
-    }
-
-    try {
-      setComplaintLoading(true);
-      setComplaintMessage("");
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/complaints/citizen`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            citizen_id: citizen.citizen_id,
-            title: complaintForm.title.trim(),
-            description: complaintForm.description.trim(),
-            category: complaintForm.category || "Other",
-            area: complaintForm.area.trim() || citizen.area || "Not provided",
-            latitude: null,
-            longitude: null,
-          }),
-        }
-      );
-
-      const responseText = await response.text();
-      let data: { message?: string; complaintId?: number } = {};
-
-      try {
-        data = JSON.parse(responseText) as {
-          message?: string;
-          complaintId?: number;
-        };
-      } catch {
-        setComplaintMessage(
-          response.ok
-            ? "Unexpected response from server."
-            : `Server error (${response.status}). Please try again.`
-        );
-        return;
-      }
-
-      if (!response.ok) {
-        setComplaintMessage(data.message || "Failed to submit complaint.");
-        return;
-      }
-
-      setComplaintMessage(
-        `Complaint submitted successfully. ID: ${data.complaintId ?? "N/A"}`
-      );
-      setComplaintForm({
-        title: "",
-        description: "",
-        category: "",
-        area: "",
-      });
-
-      void fetchMyRecords();
-
-      window.setTimeout(() => {
-        setShowComplaintForm(false);
-        setComplaintMessage("");
-      }, 1800);
-    } catch (error) {
-      console.error("Submit complaint error:", error);
-      setComplaintMessage("Unable to connect to server.");
-    } finally {
-      setComplaintLoading(false);
-    }
-  };
-
-  const submitEmergency = async (event: FormEvent) => {
-    event.preventDefault();
-
-    if (!citizen?.citizen_id) {
-      setEmergencyMessage("Citizen information not found.");
-      return;
-    }
-
-    if (!emergencyForm.type.trim() || !emergencyForm.location.trim()) {
-      setEmergencyMessage("Emergency type and location are required.");
-      return;
-    }
-
-    try {
-      setEmergencyLoading(true);
-      setEmergencyMessage("");
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/emergency`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            citizen_id: citizen.citizen_id,
-            type: emergencyForm.type,
-            location: emergencyForm.location.trim(),
-            team: "Emergency Response Team",
-            priority: "High",
-            status: "Active",
-            latitude: null,
-            longitude: null,
-          }),
-        }
-      );
-
-      const responseText = await response.text();
-      let data: { message?: string; id?: number } = {};
-
-      try {
-        data = JSON.parse(responseText) as {
-          message?: string;
-          id?: number;
-        };
-      } catch {
-        setEmergencyMessage(
-          response.ok
-            ? "Unexpected response from server."
-            : `Server error (${response.status}). Please try again.`
-        );
-        return;
-      }
-
-      if (!response.ok) {
-        setEmergencyMessage(data.message || "Failed to report emergency.");
-        return;
-      }
-
-      setEmergencyMessage(
-        `Emergency reported successfully. ID: ${data.id ?? "N/A"}`
-      );
-      setEmergencyForm({
-        type: "",
-        location: "",
-      });
-
-      void fetchMyRecords();
-
-      window.setTimeout(() => {
-        setShowEmergencyForm(false);
-        setEmergencyMessage("");
-      }, 1800);
-    } catch (error) {
-      console.error("Emergency submission error:", error);
-      setEmergencyMessage("Unable to connect to server.");
-    } finally {
-      setEmergencyLoading(false);
-    }
-  };
-
-  if (!citizen) {
-    return (
-      <div className="citizen-loading">
-        <h2>Citizen Portal</h2>
-        <p>Please login to continue.</p>
-
-        <button onClick={() => (window.location.href = "/citizen-login")}>
-          Go to Login
-        </button>
-      </div>
-    );
+const updates = [
+  {
+    icon: '♻',
+    title: 'New waste collection schedule for all zones',
+    date: '28 Sep 2026',
+    type: 'green',
+  },
+  {
+    icon: '🔧',
+    title: 'Road maintenance updates',
+    date: '26 Sep 2026',
+    type: 'purple',
+  },
+  {
+    icon: '💧',
+    title: 'Water supply notification',
+    date: '25 Sep 2026',
+    type: 'blue',
+  },
+  {
+    icon: '📢',
+    title: 'Public holiday announcement',
+    date: '20 Sep 2026',
+    type: 'orange',
+  },
+]
+
+function Icon({
+  name,
+  size = 18,
+}: {
+  name: string
+  size?: number
+}) {
+  const svgProps = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: '1.8',
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    'aria-hidden': true,
+  }
+
+  const icons: Record<string, ReactNode> = {
+    dashboard: (
+      <svg {...svgProps}>
+        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+        <rect x="14" y="3" width="7" height="4" rx="1.5" />
+        <rect x="14" y="11" width="7" height="10" rx="1.5" />
+        <rect x="3" y="12" width="7" height="9" rx="1.5" />
+      </svg>
+    ),
+    complaint: (
+      <svg {...svgProps}>
+        <path d="M7 17.5V7.5A2.5 2.5 0 0 1 9.5 5h5A2.5 2.5 0 0 1 17 7.5v7.5l-3 3-3-3H9.5A2.5 2.5 0 0 1 7 17.5Z" />
+        <path d="M12 9v4" />
+        <path d="M12 16h.01" />
+      </svg>
+    ),
+    complaints: (
+      <svg {...svgProps}>
+        <path d="M8 4h9a2 2 0 0 1 2 2v11l-4-3H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
+        <path d="M9.5 9h5" />
+        <path d="M9.5 12h5" />
+      </svg>
+    ),
+    track: (
+      <svg {...svgProps}>
+        <circle cx="11" cy="11" r="5.5" />
+        <path d="M16 16l4 4" />
+      </svg>
+    ),
+    emergency: (
+      <svg {...svgProps}>
+        <path d="M12 3.5 18 11v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8l6-7.5Z" />
+        <path d="M12 8v5" />
+        <path d="M12 16h.01" />
+      </svg>
+    ),
+    notifications: (
+      <svg {...svgProps}>
+        <path d="M7 16h10l-1.2-1.5V10a3.8 3.8 0 1 0-7.6 0v4.5L7 16Z" />
+        <path d="M10 18a2 2 0 0 0 4 0" />
+      </svg>
+    ),
+    profile: (
+      <svg {...svgProps}>
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 19c1.4-2.6 4-4 7-4s5.6 1.4 7 4" />
+      </svg>
+    ),
+    logout: (
+      <svg {...svgProps}>
+        <path d="M9 7V5.8A1.8 1.8 0 0 1 10.8 4h6.4A1.8 1.8 0 0 1 19 5.8v12.4A1.8 1.8 0 0 1 17.2 20h-6.4A1.8 1.8 0 0 1 9 18.2V17" />
+        <path d="M14 12H4" />
+        <path d="m7 8 4 4-4 4" />
+      </svg>
+    ),
+    search: (
+      <svg {...svgProps}>
+        <circle cx="11" cy="11" r="5.5" />
+        <path d="m16 16 4 4" />
+      </svg>
+    ),
+    bell: (
+      <svg {...svgProps}>
+        <path d="M7 16h10l-1.2-1.5V10a3.8 3.8 0 1 0-7.6 0v4.5L7 16Z" />
+        <path d="M10 18a2 2 0 0 0 4 0" />
+      </svg>
+    ),
+    arrow: (
+      <svg {...svgProps}>
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+    ),
+    plus: (
+      <svg {...svgProps}>
+        <path d="M12 5v14" />
+        <path d="M5 12h14" />
+      </svg>
+    ),
+    document: (
+      <svg {...svgProps}>
+        <path d="M7 4.5h7l4 4V18a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2Z" />
+        <path d="M14 4.5V9h4" />
+        <path d="M8.5 13h7" />
+        <path d="M8.5 16h7" />
+      </svg>
+    ),
+    phone: (
+      <svg {...svgProps}>
+        <path d="M6.5 4.5h3l1.2 3.5-1.8 1.7a12.8 12.8 0 0 0 7.1 7.1l1.7-1.8 3.5 1.2v3A1.9 1.9 0 0 1 18.5 20A15.5 15.5 0 0 1 4 5.5a1.9 1.9 0 0 1 2.5-1Z" />
+      </svg>
+    ),
+    mail: (
+      <svg {...svgProps}>
+        <rect x="3" y="6" width="18" height="12" rx="2" />
+        <path d="m4 7 8 6 8-6" />
+      </svg>
+    ),
+    help: (
+      <svg {...svgProps}>
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M9.8 9.5A2.6 2.6 0 0 1 12 8a2.6 2.6 0 0 1 2.2 4.1c-.8.9-1.5 1.4-1.9 2.1-.2.4-.3.7-.3 1.3" />
+        <path d="M12 17h.01" />
+      </svg>
+    ),
   }
 
   return (
-    <div className="citizen-portal">
-
-      {/* Header */}
-      <header className="citizen-header">
-        <div>
-          <h1>Smart City</h1>
-          <p>Citizen Portal</p>
-        </div>
-
-        <button className="logout-btn" onClick={logout}>
-          Logout
-        </button>
-      </header>
-
-      {/* Welcome */}
-      <section className="welcome-card">
-        <div>
-          <h2>Welcome, {citizen.name} 👋</h2>
-          <p>
-            Welcome to your Smart City citizen portal.
-          </p>
-        </div>
-
-        <div className="citizen-status">
-          <span>Status</span>
-          <strong>{citizen.status || "Active"}</strong>
-        </div>
-      </section>
-
-      {/* Stats / Quick Cards */}
-      <section className="citizen-cards">
-
-        <div className="citizen-card">
-          <div className="card-icon">👤</div>
-          <div>
-            <span>Citizen ID</span>
-            <strong>{citizen.citizen_id || "N/A"}</strong>
-          </div>
-        </div>
-
-        <div className="citizen-card">
-          <div className="card-icon">📧</div>
-          <div>
-            <span>Email</span>
-            <strong>{citizen.email}</strong>
-          </div>
-        </div>
-
-        <div className="citizen-card">
-          <div className="card-icon">📞</div>
-          <div>
-            <span>Phone</span>
-            <strong>{citizen.phone || "Not provided"}</strong>
-          </div>
-        </div>
-
-        <div className="citizen-card">
-          <div className="card-icon">📍</div>
-          <div>
-            <span>Area</span>
-            <strong>{citizen.area || "Not provided"}</strong>
-          </div>
-        </div>
-
-      </section>
-
-      {/* Main Sections */}
-      <section className="portal-sections">
-
-        <div className="portal-box">
-          <h3>📢 Report a Complaint</h3>
-          <p>
-            Report an issue or problem in your area to the Smart City
-            administration.
-          </p>
-
-          <button onClick={() => setShowComplaintForm(true)}>
-            Submit Complaint
-          </button>
-        </div>
-
-        <div className="portal-box">
-          <h3>🚨 Emergency</h3>
-          <p>
-            Access emergency information and important city alerts.
-          </p>
-
-          <button onClick={() => setShowEmergencyForm(true)}>
-            Report Emergency
-          </button>
-        </div>
-
-        <div className="portal-box">
-          <h3>🔔 Notifications</h3>
-          <p>
-            View important announcements and updates from Smart City.
-          </p>
-
-          <button onClick={() => setShowNotifications(true)}>
-            View Notifications
-          </button>
-        </div>
-
-      </section>
-
-      {/* My Complaints & Emergencies */}
-      <section className="profile-section records-section">
-        <div className="profile-header">
-          <div>
-            <h2>My Complaints & Emergencies</h2>
-            <p>Track your submitted reports and their latest status.</p>
-          </div>
-          <button
-            type="button"
-            className="cancel-btn"
-            onClick={() => void fetchMyRecords()}
-            disabled={recordsLoading}
-          >
-            {recordsLoading ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
-
-        {recordsMessage && (
-          <p className="complaint-message">{recordsMessage}</p>
-        )}
-
-        <div className="my-records-grid">
-          <div className="my-records-column">
-            <h3>📢 My Complaints</h3>
-
-            {complaints.length === 0 ? (
-              <div className="notification-empty">
-                No complaints submitted yet.
-              </div>
-            ) : (
-              complaints.map((complaint) => {
-                const complaintDetails = formatComplaintDetails(complaint);
-
-                return (
-                  <div className="record-card" key={complaint.id}>
-                    <div className="record-card-header">
-                      <strong>Complaint #{complaint.id}</strong>
-                      <span className={`status-badge status-${(complaint.status || "Pending").toLowerCase().replace(/\s+/g, "-")}`}>
-                        {complaint.status || "Pending"}
-                      </span>
-                    </div>
-
-                    <p><b>Title:</b> {complaintDetails.title}</p>
-                    <p><b>Category:</b> {complaint.category || "Other"}</p>
-                    <p><b>Location:</b> {complaint.location || "Not provided"}</p>
-                    <p><b>Description:</b> {complaintDetails.description}</p>
-                    <small>
-                      {complaint.created_at
-                        ? new Date(complaint.created_at).toLocaleString()
-                        : ""}
-                    </small>
-
-                    <div className="record-actions">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setEditingComplaint({
-                            ...complaint,
-                            title: complaintDetails.title,
-                            description: complaintDetails.description,
-                          })
-                        }
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="delete-record-btn"
-                        onClick={() =>
-                          setDeleteTarget({
-                            type: "complaint",
-                            id: complaint.id,
-                          })
-                        }
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          <div className="my-records-column">
-            <h3>🚨 My Emergencies</h3>
-
-            {emergencies.length === 0 ? (
-              <div className="notification-empty">
-                No emergencies reported yet.
-              </div>
-            ) : (
-              emergencies.map((emergency) => (
-                <div className="record-card" key={emergency.id}>
-                  <div className="record-card-header">
-                    <strong>Emergency #{emergency.id}</strong>
-                    <span className={`status-badge status-${(emergency.status || "Pending").toLowerCase().replace(/\s+/g, "-")}`}>
-                      {emergency.status || "Pending"}
-                    </span>
-                  </div>
-
-                  <p><b>Type:</b> {emergency.type}</p>
-                  <p><b>Location:</b> {emergency.location}</p>
-                  <p><b>Priority:</b> {emergency.priority || "High"}</p>
-                  <p><b>Team:</b> {emergency.team || "Emergency Response Team"}</p>
-
-                  <div className="record-actions">
-                    <button
-                      type="button"
-                      onClick={() => setEditingEmergency({ ...emergency })}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="delete-record-btn"
-                      onClick={() =>
-                        setDeleteTarget({
-                          type: "emergency",
-                          id: emergency.id,
-                        })
-                      }
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Profile */}
-      <section className="profile-section">
-
-        <div className="profile-header">
-          <h2>My Profile</h2>
-        </div>
-
-        <div className="profile-grid">
-
-          <div>
-            <label>Full Name</label>
-            <p>{citizen.name}</p>
-          </div>
-
-          <div>
-            <label>Citizen ID</label>
-            <p>{citizen.citizen_id || "N/A"}</p>
-          </div>
-
-          <div>
-            <label>Email</label>
-            <p>{citizen.email}</p>
-          </div>
-
-          <div>
-            <label>Phone</label>
-            <p>{citizen.phone || "Not provided"}</p>
-          </div>
-
-          <div>
-            <label>Area</label>
-            <p>{citizen.area || "Not provided"}</p>
-          </div>
-
-          <div>
-            <label>Account Status</label>
-            <p>{citizen.status || "Active"}</p>
-          </div>
-
-        </div>
-
-      </section>
-
-      {showComplaintForm && (
-        <div className="complaint-modal-overlay">
-          <div className="complaint-modal">
-            <div className="complaint-modal-header">
-              <h2>Submit Complaint</h2>
-
-              <button
-                type="button"
-                className="close-complaint-btn"
-                onClick={() => setShowComplaintForm(false)}
-                aria-label="Close complaint form"
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={submitComplaint}>
-              <div className="complaint-form-group">
-                <label htmlFor="complaint-title">Title</label>
-                <input
-                  id="complaint-title"
-                  type="text"
-                  value={complaintForm.title}
-                  onChange={(event) =>
-                    setComplaintForm({
-                      ...complaintForm,
-                      title: event.target.value,
-                    })
-                  }
-                  placeholder="e.g. Broken street light"
-                />
-              </div>
-
-              <div className="complaint-form-group">
-                <label htmlFor="complaint-category">Category</label>
-                <select
-                  id="complaint-category"
-                  value={complaintForm.category}
-                  onChange={(event) =>
-                    setComplaintForm({
-                      ...complaintForm,
-                      category: event.target.value,
-                    })
-                  }
-                >
-                  <option value="">Select category</option>
-                  <option value="Road">Road</option>
-                  <option value="Water">Water</option>
-                  <option value="Electricity">Electricity</option>
-                  <option value="Waste">Waste</option>
-                  <option value="Street Light">Street Light</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="complaint-form-group">
-                <label htmlFor="complaint-area">Area</label>
-                <input
-                  id="complaint-area"
-                  type="text"
-                  value={complaintForm.area}
-                  onChange={(event) =>
-                    setComplaintForm({
-                      ...complaintForm,
-                      area: event.target.value,
-                    })
-                  }
-                  placeholder={citizen.area || "Enter area"}
-                />
-              </div>
-
-              <div className="complaint-form-group">
-                <label htmlFor="complaint-description">Description</label>
-                <textarea
-                  id="complaint-description"
-                  rows={5}
-                  value={complaintForm.description}
-                  onChange={(event) =>
-                    setComplaintForm({
-                      ...complaintForm,
-                      description: event.target.value,
-                    })
-                  }
-                  placeholder="Describe the problem..."
-                />
-              </div>
-
-              {complaintMessage && (
-                <p
-                  className={`complaint-message ${
-                    complaintMessage.includes("successfully") ? "success" : ""
-                  }`}
-                  role="status"
-                >
-                  {complaintMessage}
-                </p>
-              )}
-
-              <div className="complaint-modal-actions">
-                <button
-                  type="button"
-                  className="cancel-complaint-btn"
-                  onClick={() => setShowComplaintForm(false)}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="submit-complaint-btn"
-                  disabled={complaintLoading}
-                >
-                  {complaintLoading ? "Submitting..." : "Submit Complaint"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showEmergencyForm && (
-        <div className="complaint-modal-overlay">
-          <div className="complaint-modal">
-            <div className="complaint-modal-header">
-              <h2>🚨 Report Emergency</h2>
-
-              <button
-                type="button"
-                className="close-complaint-btn"
-                onClick={() => setShowEmergencyForm(false)}
-                aria-label="Close emergency form"
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={submitEmergency}>
-              <div className="complaint-form-group">
-                <label htmlFor="emergency-type">Emergency Type</label>
-                <select
-                  id="emergency-type"
-                  value={emergencyForm.type}
-                  onChange={(event) =>
-                    setEmergencyForm({
-                      ...emergencyForm,
-                      type: event.target.value,
-                    })
-                  }
-                >
-                  <option value="">Select emergency</option>
-                  <option value="Fire">🔥 Fire</option>
-                  <option value="Accident">🚗 Accident</option>
-                  <option value="Medical">🚑 Medical</option>
-                  <option value="Crime">🚨 Crime</option>
-                  <option value="Flood">🌊 Flood</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="complaint-form-group">
-                <label htmlFor="emergency-location">Location</label>
-                <input
-                  id="emergency-location"
-                  type="text"
-                  value={emergencyForm.location}
-                  onChange={(event) =>
-                    setEmergencyForm({
-                      ...emergencyForm,
-                      location: event.target.value,
-                    })
-                  }
-                  placeholder="Enter emergency location"
-                />
-              </div>
-
-              {emergencyMessage && (
-                <p
-                  className={`complaint-message ${
-                    emergencyMessage.includes("successfully") ? "success" : ""
-                  }`}
-                  role="status"
-                >
-                  {emergencyMessage}
-                </p>
-              )}
-
-              <div className="complaint-modal-actions">
-                <button
-                  type="button"
-                  className="cancel-complaint-btn"
-                  onClick={() => setShowEmergencyForm(false)}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="submit-complaint-btn"
-                  disabled={emergencyLoading}
-                >
-                  {emergencyLoading ? "Reporting..." : "Report Emergency"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {editingComplaint && (
-        <div className="complaint-modal-overlay">
-          <div className="complaint-modal">
-            <div className="complaint-modal-header">
-              <h2>Update Complaint #{editingComplaint.id}</h2>
-              <button
-                type="button"
-                className="close-complaint-btn"
-                onClick={() => setEditingComplaint(null)}
-              >
-                ×
-              </button>
-            </div>
-
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                setPendingUpdate({
-                  type: "complaint",
-                  action: () => {
-                    setPendingUpdate(null);
-                    void saveComplaint();
-                  },
-                });
-              }}
-            >
-              <div className="complaint-form-group">
-                <label>Title</label>
-                <input
-                  value={editingComplaint.title || ""}
-                  onChange={(event) =>
-                    setEditingComplaint({
-                      ...editingComplaint,
-                      title: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="complaint-form-group">
-                <label>Category</label>
-                <select
-                  value={editingComplaint.category || "Other"}
-                  onChange={(event) =>
-                    setEditingComplaint({
-                      ...editingComplaint,
-                      category: event.target.value,
-                    })
-                  }
-                >
-                  <option value="Road">Road</option>
-                  <option value="Water">Water</option>
-                  <option value="Electricity">Electricity</option>
-                  <option value="Waste">Waste</option>
-                  <option value="Street Light">Street Light</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="complaint-form-group">
-                <label>Location</label>
-                <input
-                  value={editingComplaint.location || ""}
-                  onChange={(event) =>
-                    setEditingComplaint({
-                      ...editingComplaint,
-                      location: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="complaint-form-group">
-                <label>Description</label>
-                <textarea
-                  rows={5}
-                  value={editingComplaint.description}
-                  onChange={(event) =>
-                    setEditingComplaint({
-                      ...editingComplaint,
-                      description: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="complaint-modal-actions">
-                <button
-                  type="button"
-                  className="cancel-complaint-btn"
-                  onClick={() => setEditingComplaint(null)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="submit-complaint-btn"
-                  disabled={actionLoading}
-                >
-                  {actionLoading ? "Updating..." : "Update Complaint"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {editingEmergency && (
-        <div className="complaint-modal-overlay">
-          <div className="complaint-modal">
-            <div className="complaint-modal-header">
-              <h2>Update Emergency #{editingEmergency.id}</h2>
-              <button
-                type="button"
-                className="close-complaint-btn"
-                onClick={() => setEditingEmergency(null)}
-              >
-                ×
-              </button>
-            </div>
-
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                setPendingUpdate({
-                  type: "emergency",
-                  action: () => {
-                    setPendingUpdate(null);
-                    void saveEmergency();
-                  },
-                });
-              }}
-            >
-              <div className="complaint-form-group">
-                <label>Emergency Type</label>
-                <select
-                  value={editingEmergency.type}
-                  onChange={(event) =>
-                    setEditingEmergency({
-                      ...editingEmergency,
-                      type: event.target.value,
-                    })
-                  }
-                >
-                  <option value="Fire">🔥 Fire</option>
-                  <option value="Accident">🚗 Accident</option>
-                  <option value="Medical">🚑 Medical</option>
-                  <option value="Crime">🚨 Crime</option>
-                  <option value="Flood">🌊 Flood</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="complaint-form-group">
-                <label>Location</label>
-                <input
-                  value={editingEmergency.location}
-                  onChange={(event) =>
-                    setEditingEmergency({
-                      ...editingEmergency,
-                      location: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="complaint-modal-actions">
-                <button
-                  type="button"
-                  className="cancel-complaint-btn"
-                  onClick={() => setEditingEmergency(null)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="submit-complaint-btn"
-                  disabled={actionLoading}
-                >
-                  {actionLoading ? "Updating..." : "Update Emergency"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {deleteTarget && (
-        <ConfirmModal
-          title={`Delete ${deleteTarget.type === "complaint" ? "Complaint" : "Emergency"}?`}
-          message={`Are you sure you want to permanently delete this ${deleteTarget.type}?`}
-          warning="This action cannot be undone."
-          confirmLabel="Delete"
-          tone="danger"
-          loading={actionLoading}
-          onCancel={() => setDeleteTarget(null)}
-          onConfirm={() => void deleteRecord()}
+    <span className="portal-icon" aria-hidden="true">
+      {icons[name] || <svg {...svgProps}><circle cx="12" cy="12" r="8" /></svg>}
+    </span>
+  )
+}
+
+function StatusBadge({ status }: { status: ComplaintStatus }) {
+  return (
+    <span className={`status-badge ${status.toLowerCase().replace(' ', '-')}`}>
+      {status}
+    </span>
+  )
+}
+
+function CitizenPortal() {
+  const navigate = useNavigate()
+  const [citizen, setCitizen] = useState<any>(null)
+  const [complaints, setComplaints] = useState<Complaint[]>([])
+  const [complaintsLoading, setComplaintsLoading] = useState(true)
+  const [complaintsError, setComplaintsError] = useState('')
+  const [activeMenu, setActiveMenu] = useState('Dashboard')
+  const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    const savedCitizen = localStorage.getItem('citizen')
+
+    if (!savedCitizen) {
+      window.location.href = '/citizen-login'
+      return
+    }
+
+    try {
+      const citizenData = JSON.parse(savedCitizen)
+
+      setCitizen(citizenData)
+
+      const citizenId =
+        citizenData.citizen_id ??
+        citizenData.citizenId ??
+        citizenData.id
+
+      if (!citizenId) {
+        setComplaintsError('Citizen ID not found. Please login again.')
+        setComplaintsLoading(false)
+        return
+      }
+
+      loadComplaints(String(citizenId))
+    } catch (error) {
+      console.error('CITIZEN DATA ERROR:', error)
+
+      setComplaintsError('Invalid citizen session. Please login again.')
+      setComplaintsLoading(false)
+    }
+  }, [])
+
+  const loadComplaints = async (citizenId: string) => {
+    try {
+      setComplaintsLoading(true)
+      setComplaintsError('')
+
+      const data = await getCitizenComplaints(citizenId)
+
+      const formattedComplaints: Complaint[] = data.map((item: any) => ({
+        id: item.id,
+        title: extractComplaintTitle(item.description),
+        category: item.category || 'Other',
+        status: item.status || 'Pending',
+        date: item.created_at
+          ? new Date(item.created_at).toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            })
+          : '-',
+        location: item.location || 'Not provided',
+        priority: item.priority || 'Medium',
+        description: item.description || '',
+      }))
+
+      setComplaints(formattedComplaints)
+    } catch (error) {
+      console.error('LOAD COMPLAINTS ERROR:', error)
+
+      setComplaintsError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to load complaints',
+      )
+    } finally {
+      setComplaintsLoading(false)
+    }
+  }
+
+  const filteredComplaints = useMemo(() => {
+    return complaints.filter((complaint) =>
+      `${complaint.id} ${complaint.title} ${complaint.category} ${complaint.status} ${complaint.location}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+    )
+  }, [complaints, search])
+
+  const totalComplaints = complaints.length
+
+  const pendingComplaints = complaints.filter(
+    (complaint) => complaint.status.toLowerCase() === 'pending',
+  ).length
+
+  const inProgressComplaints = complaints.filter(
+    (complaint) => complaint.status.toLowerCase() === 'in progress',
+  ).length
+
+  const resolvedComplaints = complaints.filter(
+    (complaint) => complaint.status.toLowerCase() === 'resolved',
+  ).length
+
+  const handleMenu = (menu: string) => {
+    setActiveMenu(menu)
+
+    if (menu === 'My Complaints') {
+      navigate('/citizen-my-complaints')
+      return
+    }
+
+    if (menu === 'Track Complaint') {
+      document.getElementById('my-complaints')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+      return
+    }
+
+    if (menu === 'Dashboard') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    if (menu === 'New Complaint') {
+      navigate('/citizen-new-complaint')
+      return
+    }
+
+    if (menu === 'Emergency') {
+      navigate('/citizen-emergency')
+      return
+    }
+
+    if (menu === 'Notifications') {
+      navigate('/citizen-notifications')
+      return
+    }
+
+    if (menu === 'Logout') {
+      window.location.href = '/citizen-login'
+    }
+  }
+
+  return (
+    <div className="citizen-dashboard">
+      <CitizenSidebar activeItem={activeMenu} onNavigate={handleMenu} />
+
+      {/* MAIN CONTENT */}
+      <main className="dashboard-main">
+        <CitizenNavbar
+          citizenName={citizen?.name || 'Citizen'}
+          searchValue={search}
+          onSearchChange={setSearch}
         />
-      )}
 
-      {pendingUpdate && (
-        <ConfirmModal
-          title={`Update ${pendingUpdate.type === "complaint" ? "Complaint" : "Emergency"}?`}
-          message={`Are you sure you want to update this ${pendingUpdate.type}?`}
-          warning="This will save your changes."
-          confirmLabel="Update"
-          tone="primary"
-          loading={actionLoading}
-          onCancel={() => setPendingUpdate(null)}
-          onConfirm={pendingUpdate.action}
-        />
-      )}
+        <div className="dashboard-content">
+          {/* WELCOME */}
+          <section className="welcome-banner">
+            <div>
+              <h1>
+                Welcome, {citizen?.name || 'Citizen'} <span>👋</span>
+              </h1>
+              <p>
+                Here's what's happening with your complaints and services.
+              </p>
+            </div>
 
-      {showNotifications && (
-        <div className="citizen-modal-overlay">
-          <div className="citizen-modal notification-modal">
-            <div className="modal-header">
+            <div className="account-status">
+              <span>STATUS</span>
+              <strong>Active</strong>
+            </div>
+          </section>
+
+          {/* STAT CARDS */}
+          <section className="stats-grid">
+            <div className="stat-card blue">
+              <div className="stat-icon">
+                <Icon name="complaints" size={21} />
+              </div>
+
               <div>
-                <h2>Notifications</h2>
-                <p>Latest updates from Smart City</p>
+                <span>Total Complaints</span>
+                <strong>{totalComplaints}</strong>
               </div>
-
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setShowNotifications(false)}
-                aria-label="Close notifications"
-              >
-                ×
-              </button>
             </div>
 
-            {notificationLoading ? (
-              <div className="notification-empty">
-                Loading notifications...
+            <div className="stat-card orange">
+              <div className="stat-icon">
+                <Icon name="complaint" size={22} />
               </div>
-            ) : notifications.length === 0 ? (
-              <div className="notification-empty">
-                No notifications available.
+
+              <div>
+                <span>Pending</span>
+                <strong>{pendingComplaints}</strong>
               </div>
-            ) : (
-              <div className="citizen-notification-list">
-                {notifications.map((notification) => (
-                  <div
-                    className={`citizen-notification ${
-                      notification.is_read ? "read" : "unread"
-                    }`}
-                    key={notification.id}
+            </div>
+
+            <div className="stat-card green">
+              <div className="stat-icon">
+                <span>↻</span>
+              </div>
+
+              <div>
+                <span>In Progress</span>
+                <strong>{inProgressComplaints}</strong>
+              </div>
+            </div>
+
+            <div className="stat-card purple">
+              <div className="stat-icon">
+                <span>▥</span>
+              </div>
+
+              <div>
+                <span>Resolved</span>
+                <strong>{resolvedComplaints}</strong>
+              </div>
+            </div>
+          </section>
+
+          {/* MAIN GRID */}
+          <div className="dashboard-grid">
+            {/* LEFT */}
+            <div className="dashboard-left">
+              {/* COMPLAINTS */}
+              <section
+                className="dashboard-card complaints-card"
+                id="my-complaints"
+              >
+                <div className="card-header">
+                  <div>
+                    <h2>My Complaints</h2>
+                    <p>Track and manage your submitted complaints</p>
+                  </div>
+
+                  <button
+                    className="view-all"
+                    onClick={() => handleMenu('My Complaints')}
                   >
-                    <div className="notification-content">
-                      <h3>{notification.title}</h3>
-                      <p>{notification.message}</p>
-                      <span>
-                        {notification.type} •{" "}
-                        {new Date(notification.created_at).toLocaleString()}
+                    View All <Icon name="arrow" size={15} />
+                  </button>
+                </div>
+
+                <div className="complaints-table-wrapper">
+                  <table className="complaints-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {complaintsLoading ? (
+                        <tr>
+                          <td colSpan={6} className="empty-table">
+                            Loading your complaints...
+                          </td>
+                        </tr>
+                      ) : complaintsError ? (
+                        <tr>
+                          <td colSpan={6} className="empty-table">
+                            {complaintsError}
+                          </td>
+                        </tr>
+                      ) : filteredComplaints.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="empty-table">
+                            No complaints found.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredComplaints.map((complaint) => (
+                          <tr
+                            key={complaint.id}
+                            className="complaint-row"
+                            onClick={() =>
+                              navigate(`/citizen-portal/complaint/${complaint.id}`)
+                            }
+                          >
+                            <td>
+                              <strong>{formatComplaintId(complaint.id)}</strong>
+                            </td>
+
+                            <td>{complaint.title}</td>
+
+                            <td>{complaint.category}</td>
+
+                            <td>
+                              <StatusBadge
+                                status={complaint.status as ComplaintStatus}
+                              />
+                            </td>
+
+                            <td>{complaint.date}</td>
+
+                            <td>
+                              <button
+                                type="button"
+                                className="track-record-btn"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  navigate(`/citizen-portal/complaint/${complaint.id}`)
+                                }}
+                              >
+                                Track
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              {/* BOTTOM CARDS */}
+              <div className="bottom-grid">
+                {/* QUICK ACTIONS */}
+                <section className="dashboard-card quick-card">
+                  <div className="card-header">
+                    <div>
+                      <h2>Quick Actions</h2>
+                    </div>
+                  </div>
+
+                  <div className="quick-actions">
+                    <button
+                      onClick={() => handleMenu('New Complaint')}
+                    >
+                      <span className="quick-icon blue-icon">
+                        <Icon name="complaint" />
                       </span>
+                      <span>Submit<br />Complaint</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleMenu('Track Complaint')}
+                    >
+                      <span className="quick-icon purple-icon">
+                        <Icon name="track" />
+                      </span>
+                      <span>Track<br />Complaint</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleMenu('Emergency')}
+                    >
+                      <span className="quick-icon red-icon">
+                        !
+                      </span>
+                      <span>Emergency</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleMenu('Notifications')}
+                    >
+                      <span className="quick-icon green-icon">
+                        <Icon name="document" />
+                      </span>
+                      <span>View<br />Notices</span>
+                    </button>
+                  </div>
+                </section>
+
+                {/* HELP */}
+                <section className="dashboard-card help-card">
+                  <div className="card-header">
+                    <div>
+                      <h2>Need Help?</h2>
+                      <p>Our support team is here for you.</p>
+                    </div>
+                  </div>
+
+                  <div className="help-details">
+                    <p>
+                      <Icon name="phone" size={15} />
+                      +92 42 111 345 678
+                    </p>
+
+                    <p>
+                      <Icon name="mail" size={15} />
+                      support@smartcity.gov
+                    </p>
+                  </div>
+
+                  <div className="help-buttons">
+                    <button className="contact-button">
+                      Contact Us
+                    </button>
+
+                    <button className="faq-button">
+                      FAQs
+                    </button>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            {/* RIGHT */}
+            <aside className="recent-updates dashboard-card">
+              <div className="card-header">
+                <div>
+                  <h2>Recent Updates</h2>
+                  <p>Latest city announcements</p>
+                </div>
+
+                <button className="view-all">
+                  View All <Icon name="arrow" size={15} />
+                </button>
+              </div>
+
+              <div className="updates-list">
+                {updates.map((update, index) => (
+                  <div className="update-item" key={index}>
+                    <div className={`update-icon ${update.type}`}>
+                      {update.icon}
+                    </div>
+
+                    <div className="update-content">
+                      <h3>{update.title}</h3>
+                      <span>{update.date}</span>
                     </div>
                   </div>
                 ))}
               </div>
-            )}
-
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="cancel-btn"
-                onClick={() => setShowNotifications(false)}
-              >
-                Close
-              </button>
-            </div>
+            </aside>
           </div>
         </div>
-      )}
-
+      </main>
     </div>
-  );
+  )
 }
 
-export default CitizenPortal;
+export default CitizenPortal

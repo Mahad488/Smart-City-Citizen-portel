@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { API_BASE_URL } from "../api";
+import smartCityMark from "../assets/smart-city-mark.svg";
 import "./CitizenAuth.css";
 
 type Mode = "login" | "register";
@@ -25,7 +26,7 @@ function CitizenAuth() {
   });
 
   // =========================
-  // CITIZEN LOGIN
+  // LOGIN
   // =========================
 
   const handleLogin = async (
@@ -52,12 +53,9 @@ function CitizenAuth() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Login failed"
-        );
+        throw new Error(data.message || "Login failed");
       }
 
-      // Save citizen session
       localStorage.setItem(
         "citizen",
         JSON.stringify(data.citizen || data)
@@ -65,7 +63,6 @@ function CitizenAuth() {
 
       setMessage("Login successful!");
 
-      // Open citizen portal
       window.location.href = "/citizen-portal";
 
     } catch (err) {
@@ -80,7 +77,7 @@ function CitizenAuth() {
   };
 
   // =========================
-  // CITIZEN REGISTER
+  // REGISTER
   // =========================
 
   const handleRegister = async (
@@ -91,7 +88,11 @@ function CitizenAuth() {
     setError("");
     setMessage("");
 
-    if (!registerForm.name || !registerForm.email || !registerForm.password) {
+    if (
+      !registerForm.name ||
+      !registerForm.email ||
+      !registerForm.password
+    ) {
       setError("Name, email and password are required");
       return;
     }
@@ -122,7 +123,6 @@ function CitizenAuth() {
         "Registration submitted successfully. Please wait for admin approval."
       );
 
-      // Clear form
       setRegisterForm({
         name: "",
         email: "",
@@ -131,7 +131,6 @@ function CitizenAuth() {
         area: "Central City",
       });
 
-      // Switch to login
       setTimeout(() => {
         setMode("login");
         setMessage(
@@ -150,293 +149,457 @@ function CitizenAuth() {
     }
   };
 
+  const switchMode = (newMode: Mode) => {
+    setMode(newMode);
+    setError("");
+    setMessage("");
+  };
+
   return (
     <div className="citizen-auth-page">
 
-      <div className="citizen-auth-card">
+      {/* BACK TO HOME */}
+      <div className="citizen-auth-layout">
 
-        {/* HEADER */}
+        {/* =========================
+            LEFT BRAND PANEL
+        ========================== */}
 
-        <div className="citizen-auth-header">
+        <div className="auth-brand-panel">
 
-          <div className="citizen-auth-logo">
-            SC
+          <div className="auth-brand-content">
+
+            <img className="auth-logo-large" src={smartCityMark} alt="Smart City logo" />
+
+            <div className="auth-brand-title">
+              <span>SMART CITY</span>
+              <small>Citizen Portal</small>
+            </div>
+
+            <div className="auth-brand-line" />
+
+            <h2>
+              Your city.
+              <br />
+              Your voice.
+              <br />
+              <span>Your impact.</span>
+            </h2>
+
+            <p>
+              Connect with your city, report civic issues,
+              track complaints and stay informed about
+              important city services.
+            </p>
+
+            <div className="auth-features">
+
+              <div className="auth-feature">
+                <div>✓</div>
+                <span>Report civic issues easily</span>
+              </div>
+
+              <div className="auth-feature">
+                <div>✓</div>
+                <span>Track complaint progress</span>
+              </div>
+
+              <div className="auth-feature">
+                <div>✓</div>
+                <span>Receive city notifications</span>
+              </div>
+
+            </div>
+
           </div>
 
-          <h1>Smart City</h1>
-
-          <p>
-            Citizen Portal
-          </p>
+          <div className="auth-city-decoration">
+            <div className="city-building building-one" />
+            <div className="city-building building-two" />
+            <div className="city-building building-three" />
+            <div className="city-building building-four" />
+            <div className="city-building building-five" />
+          </div>
 
         </div>
 
-        {/* TABS */}
-
-        <div className="citizen-auth-tabs">
-
-          <button
-            className={
-              mode === "login"
-                ? "active"
-                : ""
-            }
-            onClick={() => {
-              setMode("login");
-              setError("");
-              setMessage("");
-            }}
-          >
-            Login
-          </button>
-
-          <button
-            className={
-              mode === "register"
-                ? "active"
-                : ""
-            }
-            onClick={() => {
-              setMode("register");
-              setError("");
-              setMessage("");
-            }}
-          >
-            Register
-          </button>
-
-        </div>
-
-        {/* MESSAGE */}
-
-        {message && (
-          <div className="citizen-auth-success">
-            {message}
-          </div>
-        )}
-
-        {error && (
-          <div className="citizen-auth-error">
-            {error}
-          </div>
-        )}
 
         {/* =========================
-            LOGIN
+            RIGHT AUTH PANEL
         ========================== */}
 
-        {mode === "login" && (
+        <div className="auth-form-panel">
 
-          <form
-            onSubmit={handleLogin}
-            className="citizen-auth-form"
-          >
+          <div className="citizen-auth-card">
 
-            <div className="auth-form-group">
+            {/* HEADER */}
 
-              <label>Email</label>
+            <div className="citizen-auth-header">
 
-              <input
-                type="email"
-                placeholder="citizen@email.com"
-                value={loginForm.email}
-                required
-                onChange={(e) =>
-                  setLoginForm({
-                    ...loginForm,
-                    email: e.target.value,
-                  })
-                }
-              />
+              <img className="citizen-auth-logo" src={smartCityMark} alt="Smart City logo" />
+
+              <h1>
+                {mode === "login"
+                  ? "Welcome Back"
+                  : "Create Account"}
+              </h1>
+
+              <p>
+                {mode === "login"
+                  ? "Sign in to your Citizen Portal"
+                  : "Join your Smart City community"}
+              </p>
 
             </div>
 
-            <div className="auth-form-group">
 
-              <label>Password</label>
+            {/* TABS */}
 
-              <input
-                type="password"
-                placeholder="Enter your password"
-                value={loginForm.password}
-                required
-                onChange={(e) =>
-                  setLoginForm({
-                    ...loginForm,
-                    password: e.target.value,
-                  })
-                }
-              />
+            <div className="citizen-auth-tabs">
 
-            </div>
-
-            <button
-              type="submit"
-              className="citizen-auth-submit"
-              disabled={loading}
-            >
-              {loading
-                ? "Signing in..."
-                : "Login"}
-            </button>
-
-            <p className="auth-switch-text">
-              Don't have an account?{" "}
               <button
                 type="button"
-                onClick={() => {
-                  setMode("register");
-                  setError("");
-                  setMessage("");
-                }}
-              >
-                Register here
-              </button>
-            </p>
-
-          </form>
-        )}
-
-        {/* =========================
-            REGISTER
-        ========================== */}
-
-        {mode === "register" && (
-
-          <form
-            onSubmit={handleRegister}
-            className="citizen-auth-form"
-          >
-
-            <div className="auth-form-group">
-
-              <label>Full Name</label>
-
-              <input
-                type="text"
-                placeholder="Enter your full name"
-                value={registerForm.name}
-                required
-                onChange={(e) =>
-                  setRegisterForm({
-                    ...registerForm,
-                    name: e.target.value,
-                  })
-                }
-              />
-
-            </div>
-
-            <div className="auth-form-group">
-
-              <label>Email</label>
-
-              <input
-                type="email"
-                placeholder="citizen@email.com"
-                value={registerForm.email}
-                required
-                onChange={(e) =>
-                  setRegisterForm({
-                    ...registerForm,
-                    email: e.target.value,
-                  })
-                }
-              />
-
-            </div>
-
-            <div className="auth-form-group">
-
-              <label>Password</label>
-
-              <input
-                type="password"
-                placeholder="Create a password"
-                value={registerForm.password}
-                required
-                minLength={6}
-                onChange={(e) =>
-                  setRegisterForm({
-                    ...registerForm,
-                    password: e.target.value,
-                  })
-                }
-              />
-
-            </div>
-
-            <div className="auth-form-group">
-
-              <label>Phone</label>
-
-              <input
-                type="text"
-                placeholder="+92 300 1234567"
-                value={registerForm.phone}
-                onChange={(e) =>
-                  setRegisterForm({
-                    ...registerForm,
-                    phone: e.target.value,
-                  })
-                }
-              />
-
-            </div>
-
-            <div className="auth-form-group">
-
-              <label>Area</label>
-
-              <select
-                value={registerForm.area}
-                onChange={(e) =>
-                  setRegisterForm({
-                    ...registerForm,
-                    area: e.target.value,
-                  })
-                }
-              >
-                <option>Central City</option>
-                <option>North District</option>
-                <option>South District</option>
-                <option>East Zone</option>
-                <option>West Zone</option>
-              </select>
-
-            </div>
-
-            <button
-              type="submit"
-              className="citizen-auth-submit"
-              disabled={loading}
-            >
-              {loading
-                ? "Creating account..."
-                : "Create Citizen Account"}
-            </button>
-
-            <p className="auth-note">
-              Your account will remain pending until an
-              administrator approves it.
-            </p>
-
-            <p className="auth-switch-text">
-              Already registered?{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("login");
-                  setError("");
-                  setMessage("");
-                }}
+                className={mode === "login" ? "active" : ""}
+                onClick={() => switchMode("login")}
               >
                 Login
               </button>
-            </p>
 
-          </form>
-        )}
+              <button
+                type="button"
+                className={
+                  mode === "register" ? "active" : ""
+                }
+                onClick={() => switchMode("register")}
+              >
+                Register
+              </button>
+
+            </div>
+
+
+            {/* MESSAGE */}
+
+            {message && (
+              <div className="citizen-auth-success">
+                <span>✓</span>
+                {message}
+              </div>
+            )}
+
+            {error && (
+              <div className="citizen-auth-error">
+                <span>!</span>
+                {error}
+              </div>
+            )}
+
+
+            {/* =========================
+                LOGIN
+            ========================== */}
+
+            {mode === "login" && (
+
+              <form
+                onSubmit={handleLogin}
+                className="citizen-auth-form"
+              >
+
+                <div className="auth-form-group">
+
+                  <label>Email Address</label>
+
+                  <div className="auth-input-wrapper">
+                    <span className="input-icon">
+                      ✉
+                    </span>
+
+                    <input
+                      type="email"
+                      placeholder="citizen@email.com"
+                      value={loginForm.email}
+                      required
+                      onChange={(e) =>
+                        setLoginForm({
+                          ...loginForm,
+                          email: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                </div>
+
+
+                <div className="auth-form-group">
+
+                  <label>Password</label>
+
+                  <div className="auth-input-wrapper">
+                    <span className="input-icon">
+                      🔒
+                    </span>
+
+                    <input
+                      type="password"
+                      placeholder="Enter your password"
+                      value={loginForm.password}
+                      required
+                      onChange={(e) =>
+                        setLoginForm({
+                          ...loginForm,
+                          password: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                </div>
+
+
+                <div className="auth-extra-row">
+
+                  <label className="remember-me">
+                    <input type="checkbox" />
+                    <span>Remember me</span>
+                  </label>
+
+                  <button
+                    type="button"
+                    className="forgot-password"
+                  >
+                    Forgot password?
+                  </button>
+
+                </div>
+
+
+                <button
+                  type="submit"
+                  className="citizen-auth-submit"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="button-loader" />
+                      Signing in...
+                    </>
+                  ) : (
+                    <>
+                      Login to Citizen Portal
+                      <span>→</span>
+                    </>
+                  )}
+                </button>
+
+
+                <div className="auth-divider">
+                  <span>OR</span>
+                </div>
+
+
+                <p className="auth-switch-text">
+                  Don't have an account?{" "}
+
+                  <button
+                    type="button"
+                    onClick={() => switchMode("register")}
+                  >
+                    Register here
+                  </button>
+                </p>
+
+              </form>
+            )}
+
+
+            {/* =========================
+                REGISTER
+            ========================== */}
+
+            {mode === "register" && (
+
+              <form
+                onSubmit={handleRegister}
+                className="citizen-auth-form"
+              >
+
+                <div className="register-grid">
+
+                  <div className="auth-form-group full">
+
+                    <label>Full Name</label>
+
+                    <div className="auth-input-wrapper">
+                      <span className="input-icon">
+                        👤
+                      </span>
+
+                      <input
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={registerForm.name}
+                        required
+                        onChange={(e) =>
+                          setRegisterForm({
+                            ...registerForm,
+                            name: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                  </div>
+
+
+                  <div className="auth-form-group">
+
+                    <label>Email Address</label>
+
+                    <div className="auth-input-wrapper">
+                      <span className="input-icon">
+                        ✉
+                      </span>
+
+                      <input
+                        type="email"
+                        placeholder="citizen@email.com"
+                        value={registerForm.email}
+                        required
+                        onChange={(e) =>
+                          setRegisterForm({
+                            ...registerForm,
+                            email: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                  </div>
+
+
+                  <div className="auth-form-group">
+
+                    <label>Phone</label>
+
+                    <div className="auth-input-wrapper">
+                      <span className="input-icon">
+                        ☎
+                      </span>
+
+                      <input
+                        type="text"
+                        placeholder="+92 300 1234567"
+                        value={registerForm.phone}
+                        onChange={(e) =>
+                          setRegisterForm({
+                            ...registerForm,
+                            phone: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                  </div>
+
+
+                  <div className="auth-form-group">
+
+                    <label>Password</label>
+
+                    <div className="auth-input-wrapper">
+                      <span className="input-icon">
+                        🔒
+                      </span>
+
+                      <input
+                        type="password"
+                        placeholder="Create a password"
+                        value={registerForm.password}
+                        required
+                        minLength={6}
+                        onChange={(e) =>
+                          setRegisterForm({
+                            ...registerForm,
+                            password: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                  </div>
+
+
+                  <div className="auth-form-group">
+
+                    <label>Area</label>
+
+                    <div className="auth-input-wrapper select-wrapper">
+                      <span className="input-icon">
+                        📍
+                      </span>
+
+                      <select
+                        value={registerForm.area}
+                        onChange={(e) =>
+                          setRegisterForm({
+                            ...registerForm,
+                            area: e.target.value,
+                          })
+                        }
+                      >
+                        <option>Central City</option>
+                        <option>North District</option>
+                        <option>South District</option>
+                        <option>East Zone</option>
+                        <option>West Zone</option>
+                      </select>
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                <button
+                  type="submit"
+                  className="citizen-auth-submit"
+                  disabled={loading}
+                >
+                  {loading
+                    ? "Creating account..."
+                    : "Create Citizen Account"}
+                </button>
+
+
+                <div className="auth-note">
+                  <span>ℹ</span>
+
+                  <p>
+                    Your account will remain pending until
+                    an administrator approves it.
+                  </p>
+                </div>
+
+
+                <p className="auth-switch-text">
+                  Already registered?{" "}
+
+                  <button
+                    type="button"
+                    onClick={() => switchMode("login")}
+                  >
+                    Login
+                  </button>
+                </p>
+
+              </form>
+            )}
+
+          </div>
+
+        </div>
 
       </div>
 

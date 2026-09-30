@@ -222,7 +222,15 @@ router.get("/:id", (req, res) => {
   const { id } = req.params;
 
   const sql = `
-    SELECT *
+    SELECT
+      id,
+      citizen_id,
+      name,
+      email,
+      phone,
+      area,
+      registered_at,
+      status
     FROM citizens
     WHERE id = ?
   `;

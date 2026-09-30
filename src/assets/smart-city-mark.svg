@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <defs>
+    <linearGradient id="blue" x1="54" y1="302" x2="339" y2="63" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0646B8"/>
+      <stop offset="1" stop-color="#08B8F4"/>
+    </linearGradient>
+    <linearGradient id="green" x1="267" y1="315" x2="344" y2="203" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#168F31"/>
+      <stop offset="1" stop-color="#72C923"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="96" y1="346" x2="305" y2="333" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#073FAD"/>
+      <stop offset="1" stop-color="#08B8F4"/>
+    </linearGradient>
+  </defs>
+  <path d="M73 303a151 151 0 1 1 260-3" stroke="url(#blue)" stroke-width="17" stroke-linecap="round"/>
+  <g stroke="#078BF0" stroke-linecap="round" stroke-width="13">
+    <path d="M145 106a79 79 0 0 1 110 0"/>
+    <path d="M163 128a52 52 0 0 1 74 0"/>
+    <path d="M181 150a26 26 0 0 1 38 0"/>
+  </g>
+  <circle cx="200" cy="167" r="9" fill="#0874E5"/>
+  <path d="M83 252 126 233v67l-43 11v-59Z" fill="#0754C6"/>
+  <path d="M126 214 175 187v112l-49 9V214Z" fill="#0863D5"/>
+  <path d="m175 187 28 19v92l-28 1V187Z" fill="#0795E9"/>
+  <path d="m207 233 46-21v94l-46-7v-66Z" fill="#075BC8"/>
+  <path d="m253 212 31 15v83l-31-4v-94Z" fill="#087EE0"/>
+  <path d="M91 269v23m14-29v24m14-30v27M139 229v68m17-77v74m-1-86v-17m64 64v9m0 13v9m0 13v8m18-62v9m0 14v9m0 13v8" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+  <path d="M311 204c-19 23-35 41-35 62a42 42 0 0 0 84 0c0-21-18-43-49-78Z" fill="url(#green)"/>
+  <path d="M318 250v67m0-37-17-17m17 5 16-17" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M50 310c39 15 76-2 116-16 48-17 95-14 144 5 23 9 45 17 66 17-30 18-69 18-115 4-50-15-85-14-126 0-37 13-69 11-85-10Z" fill="url(#green)"/>
+  <path d="M47 310c37 20 70 14 108 0 41-15 84-19 127-7 22 6 48 18 75 24-43 8-74 0-109-8-41-10-72-8-112 3-40 12-70 7-89-12Z" fill="url(#wave)"/>
+</svg>
