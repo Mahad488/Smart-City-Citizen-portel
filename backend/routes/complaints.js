@@ -1,7 +1,18 @@
 import express from "express";
+import { Buffer } from "node:buffer";
 import db from "../config/db.js";
 
 const router = express.Router();
+
+const ensureComplaintAttachmentsTable = () =>
+  db.query(
+    `CREATE TABLE IF NOT EXISTS complaint_attachments (
+       complaint_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+       mime_type VARCHAR(32) NOT NULL,
+       photo_data MEDIUMBLOB NOT NULL,
+       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+     ) ENGINE=InnoDB`
+  );
 
 
 // =====================================================
@@ -65,12 +76,54 @@ router.post("/citizen", async (req, res) => {
       area,
       latitude,
       longitude,
+      photo,
     } = req.body;
 
     if (!citizen_id || !title || !description) {
       return res.status(400).json({
         message: "Citizen, title and description are required",
       });
+    }
+
+    let photoBuffer = null;
+    let photoMimeType = null;
+
+    if (photo != null) {
+      const photoMatch =
+        typeof photo === "string" &&
+        /^data:(image\/(?:jpeg|png));base64,([A-Za-z0-9+/]+={0,2})$/.exec(photo);
+
+      if (!photoMatch) {
+        return res.status(400).json({
+          message: "Photo must be a valid JPG or PNG image.",
+        });
+      }
+
+      photoMimeType = photoMatch[1];
+      photoBuffer = Buffer.from(photoMatch[2], "base64");
+
+      const isPng =
+        photoMimeType === "image/png" &&
+        photoBuffer.subarray(0, 8).equals(
+          Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+        );
+      const isJpeg =
+        photoMimeType === "image/jpeg" &&
+        photoBuffer[0] === 0xff &&
+        photoBuffer[1] === 0xd8 &&
+        photoBuffer[2] === 0xff;
+
+      if (!isPng && !isJpeg) {
+        return res.status(400).json({
+          message: "Photo content is not a valid JPG or PNG image.",
+        });
+      }
+
+      if (photoBuffer.length > 5 * 1024 * 1024) {
+        return res.status(413).json({
+          message: "Photo must be 5 MB or smaller.",
+        });
+      }
     }
 
     // Check citizen
@@ -95,6 +148,10 @@ router.post("/citizen", async (req, res) => {
       });
     }
 
+    if (photoBuffer) {
+      await ensureComplaintAttachmentsTable();
+    }
+
     const [result] = await db.query(
       `INSERT INTO complaints
        (
@@ -117,6 +174,19 @@ router.post("/citizen", async (req, res) => {
         longitude ?? null,
       ]
     );
+
+    if (photoBuffer && photoMimeType) {
+      try {
+        await db.query(
+          `INSERT INTO complaint_attachments (complaint_id, mime_type, photo_data)
+           VALUES (?, ?, ?)` ,
+          [result.insertId, photoMimeType, photoBuffer]
+        );
+      } catch (error) {
+        await db.query("DELETE FROM complaints WHERE id = ?", [result.insertId]);
+        throw error;
+      }
+    }
 
     res.status(201).json({
       message: "Complaint submitted successfully",
@@ -211,6 +281,7 @@ router.delete("/citizen/:id", async (req, res) => {
       });
     }
 
+    await ensureComplaintAttachmentsTable();
     const [result] = await db.query(
       `DELETE FROM complaints
        WHERE id = ? AND citizen_id = ?`,
@@ -222,6 +293,11 @@ router.delete("/citizen/:id", async (req, res) => {
         message: "Complaint not found or access denied",
       });
     }
+
+    await db.query(
+      `DELETE FROM complaint_attachments WHERE complaint_id = ?`,
+      [id]
+    );
 
     res.json({
       message: "Complaint deleted successfully",
@@ -240,6 +316,33 @@ router.delete("/citizen/:id", async (req, res) => {
 // =====================================================
 // GET SINGLE COMPLAINT
 // =====================================================
+router.get("/:id/attachment", async (req, res) => {
+  try {
+    await ensureComplaintAttachmentsTable();
+    const [rows] = await db.query(
+      `SELECT mime_type, photo_data
+       FROM complaint_attachments
+       WHERE complaint_id = ?`,
+      [req.params.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Complaint photo not found" });
+    }
+
+    res.set("Content-Type", rows[0].mime_type);
+    res.set("Cache-Control", "private, no-store");
+    res.set("X-Content-Type-Options", "nosniff");
+    res.send(rows[0].photo_data);
+  } catch (error) {
+    console.error("GET COMPLAINT PHOTO ERROR:", error);
+
+    res.status(500).json({
+      message: "Error fetching complaint photo",
+    });
+  }
+});
+
 router.get("/:id", async (req, res) => {
   try {
     const [rows] = await db.query(

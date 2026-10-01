@@ -12,6 +12,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import smartCityMark from '../assets/smart-city-mark.svg'
+import { useUnreadNotificationCount } from './notificationStore'
 
 const navigationItems = [
   { label: 'Dashboard', Icon: LayoutDashboard },
@@ -31,9 +32,11 @@ type CitizenSidebarProps = {
 export function CitizenSidebar({
   activeItem,
   onNavigate,
-  notificationCount = 3,
+  notificationCount,
 }: CitizenSidebarProps) {
   const navigate = useNavigate()
+  const storedUnreadCount = useUnreadNotificationCount()
+  const visibleNotificationCount = notificationCount ?? storedUnreadCount
 
   return (
     <aside className="dashboard-sidebar">
@@ -68,8 +71,8 @@ export function CitizenSidebar({
             </span>
             <span>{label}</span>
 
-            {label === 'Notifications' && notificationCount > 0 && (
-              <span className="notification-count">{notificationCount}</span>
+            {label === 'Notifications' && visibleNotificationCount > 0 && (
+              <span className="notification-count">{visibleNotificationCount}</span>
             )}
           </button>
         ))}
@@ -123,6 +126,7 @@ export function CitizenNavbar({
   onSearchChange,
 }: CitizenNavbarProps) {
   const navigate = useNavigate()
+  const unreadNotificationCount = useUnreadNotificationCount()
   const userMenuRef = useRef<HTMLDivElement>(null)
   const [localSearch, setLocalSearch] = useState('')
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -194,7 +198,9 @@ export function CitizenNavbar({
           onClick={() => navigate('/citizen-notifications')}
         >
           <Bell size={18} />
-          <span></span>
+          {unreadNotificationCount > 0 && (
+            <span aria-label={`${unreadNotificationCount} unread notifications`} />
+          )}
         </button>
 
         <div className="user-menu" ref={userMenuRef}>

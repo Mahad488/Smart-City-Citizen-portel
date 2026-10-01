@@ -26,6 +26,8 @@ const Emergency: React.FC = () => {
 
   const [emergencyType, setEmergencyType] = useState("");
   const [location, setLocation] = useState("");
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
   const [description, setDescription] = useState("");
   const [phone, setPhone] = useState("");
   const [trackingEmergency, setTrackingEmergency] =
@@ -41,6 +43,41 @@ const Emergency: React.FC = () => {
       date: "29 Sep 2026",
     },
   ]);
+
+  const useMyLocation = () => {
+    setLocationError("");
+
+    if (!window.isSecureContext) {
+      setLocationError("Location access requires HTTPS or localhost.");
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setLocationError("Location is not supported by this browser.");
+      return;
+    }
+
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setLocation(
+          `Lat ${coords.latitude.toFixed(6)}, Lng ${coords.longitude.toFixed(6)}`,
+        );
+        setLocating(false);
+      },
+      (error) => {
+        setLocationError(
+          error.code === error.PERMISSION_DENIED
+            ? "Allow location access in your browser to use your current location."
+            : error.code === error.POSITION_UNAVAILABLE
+              ? "Your device could not determine a location. Turn on Location Services and try again."
+              : "Location request timed out. Check Location Services and try again.",
+        );
+        setLocating(false);
+      },
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 },
+    );
+  };
 
   const handleNavigation = (label: string) => {
     if (label === "Emergency") return;
@@ -213,19 +250,27 @@ const Emergency: React.FC = () => {
                     type="text"
                     placeholder="Enter emergency location"
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    onChange={(e) => {
+                      setLocation(e.target.value);
+                      setLocationError("");
+                    }}
                   />
 
                   <button
                     type="button"
                     className="location-button"
-                    onClick={() => {
-                      alert("Location detection can be connected here.");
-                    }}
+                    onClick={useMyLocation}
+                    disabled={locating}
                   >
-                    Use My Location
+                    {locating ? "Finding location..." : "Use My Location"}
                   </button>
                 </div>
+
+                {locationError && (
+                  <small className="location-error" role="alert">
+                    {locationError}
+                  </small>
+                )}
               </div>
 
               {/* Description */}

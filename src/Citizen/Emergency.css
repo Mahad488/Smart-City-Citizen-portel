@@ -275,6 +275,18 @@
   background: #edf5ff;
 }
 
+.location-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.location-error {
+  display: block;
+  margin-top: 7px;
+  color: #bd3845;
+  font-size: 11px;
+}
+
 /* =========================================
    FORM FOOTER
 ========================================= */

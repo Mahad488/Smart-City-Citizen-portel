@@ -24,7 +24,10 @@ DB_PASSWORD=your-password
 DB_NAME=citizen_portal
 DB_PORT=3306
 PORT=5000
+VITE_GOOGLE_MAPS_API_KEY=your-google-maps-api-key
 ```
+
+For the complaint location map, enable the Google Maps Embed API in Google Cloud and create a browser API key restricted to your site's referrers. Set it as `VITE_GOOGLE_MAPS_API_KEY` locally and in your deployment environment (for example, Vercel), then restart or rebuild the frontend.
 
 Start the API and frontend in separate terminals:
 
@@ -37,6 +40,8 @@ npm run dev
 ```
 
 The API listens on port 5000 by default. Vite proxies `/api` requests to it during development. To use a separately hosted API, set `VITE_API_URL` to its origin when building the frontend, for example `https://api.example.com`.
+
+Complaint photos are stored in the MySQL `complaint_attachments` table, which the API creates automatically when needed. The configured database user must have permission to create tables. JPG and PNG uploads are limited to 5 MB.
 
 ## Checks
 

@@ -13,7 +13,7 @@ const port = Number(process.env.PORT) || 5000;
 
 // Middleware
 app.use(cors()); // Cross-Origin Request allow karne ke liye
-app.use(express.json());
+app.use(express.json({ limit: "8mb" }));
 
 // Health check route (Railway testing ke liye)
 app.get("/", (req, res) => {

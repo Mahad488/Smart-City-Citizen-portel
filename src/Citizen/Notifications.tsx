@@ -1,24 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
+import {
+  loadNotifications,
+  saveNotifications,
+  type Notification,
+  type NotificationType,
+} from "./notificationStore";
 import "./Citizenportal.css";
 import "./Notifications.css";
-
-type NotificationType =
-  | "complaint"
-  | "emergency"
-  | "service"
-  | "announcement";
-
-type Notification = {
-  id: number;
-  type: NotificationType;
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-  reference?: string;
-};
 
 const Notifications: React.FC = () => {
   const navigate = useNavigate();
@@ -33,56 +23,9 @@ const Notifications: React.FC = () => {
 
   const [activeFilter, setActiveFilter] = useState("All");
 
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      type: "complaint",
-      title: "Complaint Status Updated",
-      message:
-        "Your complaint SC-00011 has been received and is currently pending review.",
-      time: "10 minutes ago",
-      read: false,
-      reference: "SC-00011",
-    },
-    {
-      id: 2,
-      type: "complaint",
-      title: "Complaint Submitted Successfully",
-      message:
-        "Your street light complaint has been successfully submitted to Smart City.",
-      time: "2 hours ago",
-      read: false,
-      reference: "SC-00011",
-    },
-    {
-      id: 3,
-      type: "emergency",
-      title: "Emergency Response Team Assigned",
-      message:
-        "A response team has been assigned to your emergency request.",
-      time: "Yesterday",
-      read: false,
-      reference: "EM-0007",
-    },
-    {
-      id: 4,
-      type: "service",
-      title: "Water Supply Update",
-      message:
-        "Water supply maintenance is scheduled in your area tomorrow.",
-      time: "2 days ago",
-      read: true,
-    },
-    {
-      id: 5,
-      type: "announcement",
-      title: "Smart City Announcement",
-      message:
-        "New citizen services are now available through the Smart City portal.",
-      time: "3 days ago",
-      read: true,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>(
+    loadNotifications,
+  );
 
   const filters = [
     "All",
@@ -122,22 +65,22 @@ const Notifications: React.FC = () => {
   ).length;
 
   const markAsRead = (id: number) => {
-    setNotifications((current) =>
-      current.map((notification) =>
-        notification.id === id
-          ? { ...notification, read: true }
-          : notification
-      )
+    const updated = notifications.map((notification) =>
+      notification.id === id
+        ? { ...notification, read: true }
+        : notification,
     );
+    setNotifications(updated);
+    saveNotifications(updated);
   };
 
   const markAllAsRead = () => {
-    setNotifications((current) =>
-      current.map((notification) => ({
-        ...notification,
-        read: true,
-      }))
-    );
+    const updated = notifications.map((notification) => ({
+      ...notification,
+      read: true,
+    }));
+    setNotifications(updated);
+    saveNotifications(updated);
   };
 
   const getIcon = (type: NotificationType) => {

@@ -1,4 +1,9 @@
-import { useState, type FormEvent } from "react";
+import {
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type FormEvent,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL, formatComplaintId } from "../api";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
@@ -12,8 +17,14 @@ interface Citizen {
   area?: string;
 }
 
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
 function NewComplaint() {
   const navigate = useNavigate();
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   const [citizen] = useState<Citizen | null>(() => {
     try {
@@ -33,6 +44,23 @@ function NewComplaint() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [photoDataUrl, setPhotoDataUrl] = useState("");
+  const [photoName, setPhotoName] = useState("");
+  const [photoError, setPhotoError] = useState("");
+  const [photoProcessing, setPhotoProcessing] = useState(false);
+
+  const mapCenter = coordinates ?? {
+    latitude: 31.5204,
+    longitude: 74.358,
+  };
+  const mapUrl = googleMapsApiKey
+    ? `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(
+        googleMapsApiKey
+      )}&q=${mapCenter.latitude},${mapCenter.longitude}&zoom=15&maptype=roadmap`
+    : `https://maps.google.com/maps?q=${mapCenter.latitude},${mapCenter.longitude}&z=15&output=embed`;
 
   const updateField = (
     field: keyof typeof form,
@@ -42,6 +70,50 @@ function NewComplaint() {
       ...previous,
       [field]: value,
     }));
+  };
+
+  const selectPhoto = (file?: File) => {
+    if (!file) {
+      return;
+    }
+
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      setPhotoError("Choose a JPG or PNG image.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("The photo must be 5 MB or smaller.");
+      return;
+    }
+
+    setPhotoProcessing(true);
+    setPhotoError("");
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setPhotoDataUrl(reader.result);
+        setPhotoName(file.name);
+      } else {
+        setPhotoError("Unable to read this photo. Please try another file.");
+      }
+      setPhotoProcessing(false);
+    };
+    reader.onerror = () => {
+      setPhotoError("Unable to read this photo. Please try another file.");
+      setPhotoProcessing(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    selectPhoto(event.target.files?.[0]);
+    event.target.value = "";
+  };
+
+  const handlePhotoDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    selectPhoto(event.dataTransfer.files[0]);
   };
 
   const submitComplaint = async (event: FormEvent) => {
@@ -79,8 +151,9 @@ function NewComplaint() {
             description: form.description.trim(),
             category: form.category,
             area: form.area.trim(),
-            latitude: null,
-            longitude: null,
+            latitude: coordinates?.latitude ?? null,
+            longitude: coordinates?.longitude ?? null,
+            photo: photoDataUrl || null,
           }),
         }
       );
@@ -120,6 +193,9 @@ function NewComplaint() {
         area: citizen.area || "",
         description: "",
       });
+      setCoordinates(null);
+      setPhotoDataUrl("");
+      setPhotoName("");
 
       setTimeout(() => {
         navigate("/citizen-portal");
@@ -135,6 +211,41 @@ function NewComplaint() {
     }
   };
 
+  const useCurrentLocation = () => {
+    if (!window.isSecureContext) {
+      setLocationError("Location access requires HTTPS or localhost.");
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setLocationError("Location is not supported by this browser.");
+      return;
+    }
+
+    setLocating(true);
+    setLocationError("");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords: currentCoords }) => {
+        setCoordinates({
+          latitude: currentCoords.latitude,
+          longitude: currentCoords.longitude,
+        });
+        setLocating(false);
+      },
+      (error) => {
+        setLocationError(
+          error.code === error.PERMISSION_DENIED
+            ? "Allow location access in your browser to show your position."
+            : error.code === error.POSITION_UNAVAILABLE
+              ? "Your device could not determine a location. Turn on Location Services and try again."
+              : "Location request timed out. Check Location Services and try again."
+        );
+        setLocating(false);
+      },
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
+    );
+  };
+
   const handleNavigation = (label: string) => {
     if (label === "New Complaint") {
       return;
@@ -148,6 +259,11 @@ function NewComplaint() {
 
     if (label === "My Complaints") {
       navigate("/citizen-my-complaints");
+      return;
+    }
+
+    if (label === "Notifications") {
+      navigate("/citizen-notifications");
       return;
     }
 
@@ -375,7 +491,17 @@ function NewComplaint() {
                     <em>(Optional)</em>
                   </label>
 
-                  <div className="upload-box">
+                  <div
+                    className="upload-box"
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={handlePhotoDrop}
+                  >
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      aria-label="Attach a JPG or PNG photo"
+                      onChange={handlePhotoChange}
+                    />
 
                     <div className="upload-icon">
                       ↑
@@ -393,6 +519,30 @@ function NewComplaint() {
 
                   </div>
 
+                  {photoDataUrl && (
+                    <div className="photo-preview">
+                      <img src={photoDataUrl} alt="Complaint attachment preview" />
+                      <div className="photo-preview-details">
+                        <strong>{photoName}</strong>
+                        <button
+                          type="button"
+                          className="remove-photo-button"
+                          onClick={() => {
+                            setPhotoDataUrl("");
+                            setPhotoName("");
+                          }}
+                        >
+                          Remove photo
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {photoProcessing && <small>Preparing photo...</small>}
+                  {photoError && (
+                    <p className="photo-error" role="alert">{photoError}</p>
+                  )}
+
                 </div>
 
                 {/* LOCATION */}
@@ -403,30 +553,43 @@ function NewComplaint() {
                     <em>(Optional)</em>
                   </label>
 
-                  <div className="location-box">
+                  <div className="location-picker">
+                    <div className="location-box">
+                      <div className="location-text">
+                        <strong>
+                          {coordinates ? "Current location selected" : "Choose your complaint location"}
+                        </strong>
+                        <span>
+                          {coordinates
+                            ? `${coordinates.latitude.toFixed(6)}, ${coordinates.longitude.toFixed(6)}`
+                            : "Use your device location to center the map."}
+                        </span>
+                      </div>
 
-                    <div className="fake-map">
-                      <span>⌖</span>
+                      <button
+                        type="button"
+                        className="location-button"
+                        onClick={useCurrentLocation}
+                        disabled={locating}
+                      >
+                        {locating ? "Finding location..." : "⌖ Use Current Location"}
+                      </button>
                     </div>
 
-                    <div className="location-text">
-                      <strong>
-                        Your current location
-                      </strong>
+                    <iframe
+                      className="complaint-map"
+                      title="Complaint location map"
+                      src={mapUrl}
+                      loading="lazy"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                    />
 
-                      <span>
-                        Your area will be attached
-                        to this complaint.
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="location-button"
-                    >
-                      ⌖ Use Current Location
-                    </button>
-
+                    {locationError && (
+                      <p className="location-error" role="alert">
+                        {locationError}
+                      </p>
+                    )}
                   </div>
 
                 </div>
@@ -469,7 +632,7 @@ function NewComplaint() {
                   <button
                     type="submit"
                     className="submit-button"
-                    disabled={loading}
+                    disabled={loading || photoProcessing}
                   >
                     {loading
                       ? "Submitting..."

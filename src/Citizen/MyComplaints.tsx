@@ -215,6 +215,11 @@ function MyComplaints() {
       return;
     }
 
+    if (label === "Notifications") {
+      navigate("/citizen-notifications");
+      return;
+    }
+
     navigate("/citizen-portal");
   };
 
