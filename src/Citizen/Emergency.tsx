@@ -1,5 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  AlertTriangle,
+  Check,
+  Clock3,
+  MapPin,
+  Siren,
+  X,
+} from "lucide-react";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
 import "./Citizenportal.css";
 import "./Emergency.css";
@@ -171,7 +179,7 @@ const Emergency: React.FC = () => {
 
         {/* Warning Banner */}
         <div className="emergency-warning">
-          <div className="warning-icon">!</div>
+          <div className="warning-icon"><AlertTriangle size={22} aria-hidden="true" /></div>
 
           <div>
             <h3>For life-threatening emergencies</h3>
@@ -188,7 +196,7 @@ const Emergency: React.FC = () => {
         <section className="emergency-card">
 
           <div className="card-heading">
-            <div className="heading-icon">🚨</div>
+            <div className="heading-icon"><Siren size={24} aria-hidden="true" /></div>
 
             <div>
               <h2>Report an Emergency</h2>
@@ -213,12 +221,12 @@ const Emergency: React.FC = () => {
                   onChange={(e) => setEmergencyType(e.target.value)}
                 >
                   <option value="">Select emergency type</option>
-                  <option value="Accident">🚗 Accident</option>
-                  <option value="Fire">🔥 Fire</option>
-                  <option value="Medical">🏥 Medical Emergency</option>
-                  <option value="Crime">🚔 Crime / Security</option>
-                  <option value="Flood">🌊 Flood</option>
-                  <option value="Gas Leak">⚠️ Gas Leak</option>
+                  <option value="Accident">Accident</option>
+                  <option value="Fire">Fire</option>
+                  <option value="Medical">Medical Emergency</option>
+                  <option value="Crime">Crime / Security</option>
+                  <option value="Flood">Flood</option>
+                  <option value="Gas Leak">Gas Leak</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
@@ -244,7 +252,7 @@ const Emergency: React.FC = () => {
                 </label>
 
                 <div className="location-input">
-                  <span>📍</span>
+                  <MapPin size={17} aria-hidden="true" />
 
                   <input
                     type="text"
@@ -293,7 +301,7 @@ const Emergency: React.FC = () => {
             <div className="form-footer">
 
               <div className="response-info">
-                <span>⏱</span>
+                <Clock3 size={18} aria-hidden="true" />
                 <div>
                   <strong>Quick Response</strong>
                   <p>
@@ -304,7 +312,7 @@ const Emergency: React.FC = () => {
               </div>
 
               <button type="submit" className="submit-emergency">
-                🚨 Submit Emergency
+                <Siren size={17} aria-hidden="true" /> Submit Emergency
               </button>
 
             </div>
@@ -331,7 +339,7 @@ const Emergency: React.FC = () => {
 
             {emergencies.length === 0 ? (
               <div className="empty-emergency">
-                <div>🚨</div>
+                <div><Siren size={24} aria-hidden="true" /></div>
                 <h3>No Emergency Requests</h3>
                 <p>You have not reported any emergencies yet.</p>
               </div>
@@ -350,7 +358,7 @@ const Emergency: React.FC = () => {
                   </div>
 
                   <div className="emergency-location">
-                    <span>📍</span>
+                    <MapPin size={15} aria-hidden="true" />
                     {emergency.location}
                   </div>
 
@@ -402,7 +410,7 @@ const Emergency: React.FC = () => {
                 aria-label="Close emergency tracking"
                 onClick={() => setTrackingEmergency(null)}
               >
-                ×
+                <X size={18} aria-hidden="true" />
               </button>
 
               <div className="emergency-track-heading">
@@ -455,7 +463,7 @@ const Emergency: React.FC = () => {
                         className={`emergency-track-step ${isComplete ? "complete" : ""}`}
                         key={status}
                       >
-                        <span>{isComplete ? "✓" : index + 1}</span>
+                        <span>{isComplete ? <Check size={14} aria-hidden="true" /> : index + 1}</span>
                         <strong>{status}</strong>
                       </div>
                     );

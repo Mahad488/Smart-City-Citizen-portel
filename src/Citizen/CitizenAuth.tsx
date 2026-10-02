@@ -1,5 +1,16 @@
 import React, { useState } from "react";
 import { API_BASE_URL } from "../api";
+import {
+  ArrowRight,
+  Check,
+  CircleAlert,
+  Info,
+  LockKeyhole,
+  Mail,
+  MapPin,
+  Phone,
+  UserRound,
+} from "lucide-react";
 import smartCityMark from "../assets/smart-city-mark.svg";
 import "./CitizenAuth.css";
 
@@ -195,17 +206,17 @@ function CitizenAuth() {
             <div className="auth-features">
 
               <div className="auth-feature">
-                <div>✓</div>
+                <div><Check size={16} aria-hidden="true" /></div>
                 <span>Report civic issues easily</span>
               </div>
 
               <div className="auth-feature">
-                <div>✓</div>
+                <div><Check size={16} aria-hidden="true" /></div>
                 <span>Track complaint progress</span>
               </div>
 
               <div className="auth-feature">
-                <div>✓</div>
+                <div><Check size={16} aria-hidden="true" /></div>
                 <span>Receive city notifications</span>
               </div>
 
@@ -282,14 +293,14 @@ function CitizenAuth() {
 
             {message && (
               <div className="citizen-auth-success">
-                <span>✓</span>
+                <Check size={16} aria-hidden="true" />
                 {message}
               </div>
             )}
 
             {error && (
               <div className="citizen-auth-error">
-                <span>!</span>
+                <CircleAlert size={16} aria-hidden="true" />
                 {error}
               </div>
             )}
@@ -312,7 +323,7 @@ function CitizenAuth() {
 
                   <div className="auth-input-wrapper">
                     <span className="input-icon">
-                      ✉
+                      <Mail size={16} aria-hidden="true" />
                     </span>
 
                     <input
@@ -338,7 +349,7 @@ function CitizenAuth() {
 
                   <div className="auth-input-wrapper">
                     <span className="input-icon">
-                      🔒
+                      <LockKeyhole size={16} aria-hidden="true" />
                     </span>
 
                     <input
@@ -388,7 +399,7 @@ function CitizenAuth() {
                   ) : (
                     <>
                       Login to Citizen Portal
-                      <span>→</span>
+                      <ArrowRight size={16} aria-hidden="true" />
                     </>
                   )}
                 </button>
@@ -433,7 +444,7 @@ function CitizenAuth() {
 
                     <div className="auth-input-wrapper">
                       <span className="input-icon">
-                        👤
+                        <UserRound size={16} aria-hidden="true" />
                       </span>
 
                       <input
@@ -459,7 +470,7 @@ function CitizenAuth() {
 
                     <div className="auth-input-wrapper">
                       <span className="input-icon">
-                        ✉
+                        <Mail size={16} aria-hidden="true" />
                       </span>
 
                       <input
@@ -485,7 +496,7 @@ function CitizenAuth() {
 
                     <div className="auth-input-wrapper">
                       <span className="input-icon">
-                        ☎
+                        <Phone size={16} aria-hidden="true" />
                       </span>
 
                       <input
@@ -510,7 +521,7 @@ function CitizenAuth() {
 
                     <div className="auth-input-wrapper">
                       <span className="input-icon">
-                        🔒
+                        <LockKeyhole size={16} aria-hidden="true" />
                       </span>
 
                       <input
@@ -537,7 +548,7 @@ function CitizenAuth() {
 
                     <div className="auth-input-wrapper select-wrapper">
                       <span className="input-icon">
-                        📍
+                        <MapPin size={16} aria-hidden="true" />
                       </span>
 
                       <select
@@ -574,7 +585,7 @@ function CitizenAuth() {
 
 
                 <div className="auth-note">
-                  <span>ℹ</span>
+                  <Info size={16} aria-hidden="true" />
 
                   <p>
                     Your account will remain pending until

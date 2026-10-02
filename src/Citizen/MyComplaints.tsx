@@ -1,6 +1,17 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Pencil, Search, Trash2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  Clock3,
+  MapPin,
+  MessageSquare,
+  Pencil,
+  RefreshCw,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { API_BASE_URL, formatComplaintId } from "../api";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
 import ConfirmModal from "../components/ConfirmModal";
@@ -343,7 +354,7 @@ function MyComplaints() {
                 className="refresh-button"
                 onClick={loadComplaints}
               >
-                ↻ Refresh
+                <RefreshCw size={15} aria-hidden="true" /> Refresh
               </button>
 
             </div>
@@ -356,7 +367,7 @@ function MyComplaints() {
 
             <div className="stat-card total">
               <div className="stat-icon">
-                ▣
+                <MessageSquare size={22} aria-hidden="true" />
               </div>
 
               <div>
@@ -367,7 +378,7 @@ function MyComplaints() {
 
             <div className="stat-card pending">
               <div className="stat-icon">
-                ◷
+                <Clock3 size={22} aria-hidden="true" />
               </div>
 
               <div>
@@ -378,7 +389,7 @@ function MyComplaints() {
 
             <div className="stat-card progress">
               <div className="stat-icon">
-                ↻
+                <Clock3 size={22} aria-hidden="true" />
               </div>
 
               <div>
@@ -389,7 +400,7 @@ function MyComplaints() {
 
             <div className="stat-card resolved">
               <div className="stat-icon">
-                ✓
+                <Check size={22} aria-hidden="true" />
               </div>
 
               <div>
@@ -442,7 +453,7 @@ function MyComplaints() {
               <div className="complaints-error">
 
                 <div>
-                  ⚠
+                  <AlertTriangle size={20} aria-hidden="true" />
                 </div>
 
                 <h3>
@@ -468,7 +479,7 @@ function MyComplaints() {
                 <div className="empty-complaints">
 
                   <div className="empty-icon">
-                    ▣
+                    <MessageSquare size={28} aria-hidden="true" />
                   </div>
 
                   <h3>
@@ -592,7 +603,7 @@ function MyComplaints() {
                               <div className="location-cell">
 
                                 <span>
-                                  ⌖
+                                  <MapPin size={14} aria-hidden="true" />
                                 </span>
 
                                 {complaint.location ||

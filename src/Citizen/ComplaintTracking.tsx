@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import {
+  ArrowLeft,
+  Check,
+  Clock3,
+  LoaderCircle,
+} from 'lucide-react'
 import smartCityMark from '../assets/smart-city-mark.svg'
 import { API_BASE_URL, formatComplaintId } from '../api'
 import './ComplaintTracking.css'
@@ -96,14 +102,14 @@ function ComplaintTracking() {
     return (
       <div className="tracking-page">
         <div className="tracking-error">
-          <div className="error-icon">!</div>
+          <div className="error-icon"><Clock3 size={24} aria-hidden="true" /></div>
 
           <h2>Complaint Not Found</h2>
 
           <p>{error || 'This complaint could not be found.'}</p>
 
           <button onClick={() => navigate('/citizen-portal')}>
-            Back to Dashboard
+            <ArrowLeft size={16} aria-hidden="true" /> Back to Dashboard
           </button>
         </div>
       </div>
@@ -136,7 +142,7 @@ function ComplaintTracking() {
           className="back-dashboard"
           onClick={() => navigate('/citizen-portal')}
         >
-          ← Back to Dashboard
+          <ArrowLeft size={16} aria-hidden="true" /> Back to Dashboard
         </button>
       </header>
 
@@ -183,7 +189,11 @@ function ComplaintTracking() {
                   : 'pending'
             }`}
           >
-            {isResolved ? '✓' : isInProgress ? '↻' : '…'}
+            {isResolved
+              ? <Check size={25} aria-hidden="true" />
+              : isInProgress
+                ? <LoaderCircle size={25} aria-hidden="true" />
+                : <Clock3 size={25} aria-hidden="true" />}
           </div>
         </section>
 
@@ -199,7 +209,7 @@ function ComplaintTracking() {
           <div className="tracking-timeline">
             {/* SUBMITTED */}
             <div className="timeline-item completed">
-              <div className="timeline-marker">✓</div>
+              <div className="timeline-marker"><Check size={15} aria-hidden="true" /></div>
 
               <div className="timeline-content">
                 <h3>Complaint Submitted</h3>
@@ -228,7 +238,7 @@ function ComplaintTracking() {
             >
               <div className="timeline-marker">
                 {isPending || isInProgress || isResolved
-                  ? '✓'
+                  ? <Check size={15} aria-hidden="true" />
                   : '2'}
               </div>
 
@@ -249,7 +259,7 @@ function ComplaintTracking() {
               }`}
             >
               <div className="timeline-marker">
-                {isInProgress || isResolved ? '✓' : '3'}
+                {isInProgress || isResolved ? <Check size={15} aria-hidden="true" /> : '3'}
               </div>
 
               <div className="timeline-content">
@@ -268,7 +278,7 @@ function ComplaintTracking() {
               }`}
             >
               <div className="timeline-marker">
-                {isResolved ? '✓' : '4'}
+                {isResolved ? <Check size={15} aria-hidden="true" /> : '4'}
               </div>
 
               <div className="timeline-content">

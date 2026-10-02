@@ -1,5 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Bell,
+  Check,
+  ClipboardList,
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+  MapPin,
+  MessageSquareWarning,
+  RefreshCw,
+  Search,
+  Siren,
+  UserRound,
+} from "lucide-react";
 import { API_BASE_URL } from "../api";
 import "./TrackComplaint.css";
 
@@ -241,7 +257,7 @@ function TrackComplaint() {
               navigate("/citizen-portal")
             }
           >
-            <span>▦</span>
+            <LayoutDashboard size={17} aria-hidden="true" />
             Dashboard
           </button>
 
@@ -251,7 +267,7 @@ function TrackComplaint() {
               navigate("/citizen-new-complaint")
             }
           >
-            <span>▣</span>
+            <MessageSquareWarning size={17} aria-hidden="true" />
             New Complaint
           </button>
 
@@ -261,17 +277,17 @@ function TrackComplaint() {
               navigate("/citizen-my-complaints")
             }
           >
-            <span>▤</span>
+            <ClipboardList size={17} aria-hidden="true" />
             My Complaints
           </button>
 
           <button type="button">
-            <span>♧</span>
+            <Siren size={17} aria-hidden="true" />
             Emergency
           </button>
 
           <button type="button">
-            <span>♧</span>
+            <Bell size={17} aria-hidden="true" />
             Notifications
 
             <b className="track-notification">
@@ -283,7 +299,7 @@ function TrackComplaint() {
             type="button"
             onClick={() => navigate("/citizen-profile")}
           >
-            <span>♙</span>
+            <UserRound size={17} aria-hidden="true" />
             My Profile
           </button>
 
@@ -297,7 +313,7 @@ function TrackComplaint() {
               navigate("/citizen-login");
             }}
           >
-            <span>↪</span>
+            <LogOut size={17} aria-hidden="true" />
             Logout
           </button>
 
@@ -326,7 +342,7 @@ function TrackComplaint() {
 
           <div className="track-search">
 
-            <span>⌕</span>
+            <Search size={17} aria-hidden="true" />
 
             <input
               placeholder="Search here..."
@@ -337,7 +353,7 @@ function TrackComplaint() {
           <div className="track-user">
 
             <div className="navbar-bell">
-              ♧
+              <Bell size={18} aria-hidden="true" />
               <b></b>
             </div>
 
@@ -361,7 +377,7 @@ function TrackComplaint() {
             </div>
 
             <span className="user-arrow">
-             ⌄
+             <ChevronDown size={15} aria-hidden="true" />
             </span>
 
           </div>
@@ -397,7 +413,7 @@ function TrackComplaint() {
                 )
               }
             >
-              ↻ Refresh
+              <RefreshCw size={15} aria-hidden="true" /> Refresh
             </button>
 
           </div>
@@ -409,7 +425,7 @@ function TrackComplaint() {
             <div className="track-search-title">
 
               <div className="search-icon-box">
-                ⌕
+                <Search size={19} aria-hidden="true" />
               </div>
 
               <div>
@@ -482,7 +498,7 @@ function TrackComplaint() {
           {error && (
             <div className="track-error">
 
-              <span>!</span>
+              <AlertTriangle size={17} aria-hidden="true" />
 
               <div>
                 <strong>
@@ -583,7 +599,7 @@ function TrackComplaint() {
                     <div className="timeline-line"></div>
 
                     <div className="timeline-icon">
-                      ✓
+                      <Check size={15} aria-hidden="true" />
                     </div>
 
                     <div className="timeline-content">
@@ -626,7 +642,7 @@ function TrackComplaint() {
 
                     <div className="timeline-icon">
                       {currentStep >= 2
-                        ? "✓"
+                        ? <Check size={15} aria-hidden="true" />
                         : "2"}
                     </div>
 
@@ -670,7 +686,7 @@ function TrackComplaint() {
 
                     <div className="timeline-icon">
                       {currentStep >= 3
-                        ? "✓"
+                        ? <Check size={15} aria-hidden="true" />
                         : "3"}
                     </div>
 
@@ -711,7 +727,7 @@ function TrackComplaint() {
 
                     <div className="timeline-icon">
                       {currentStep >= 4
-                        ? "✓"
+                        ? <Check size={15} aria-hidden="true" />
                         : "4"}
                     </div>
 
@@ -800,7 +816,7 @@ function TrackComplaint() {
                       </span>
 
                       <strong>
-                        ⌖{" "}
+                        <MapPin size={14} aria-hidden="true" />{" "}
                         {complaint.location ||
                           "Not provided"}
                       </strong>
@@ -900,7 +916,7 @@ function TrackComplaint() {
               <div className="track-empty">
 
                 <div className="empty-track-icon">
-                  ⌕
+                  <Search size={16} aria-hidden="true" />
                 </div>
 
                 <h2>

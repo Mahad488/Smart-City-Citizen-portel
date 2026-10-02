@@ -1,5 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Bell,
+  Check,
+  Megaphone,
+  MessageSquare,
+  Wrench,
+} from "lucide-react";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
 import {
   loadNotifications,
@@ -86,15 +95,15 @@ const Notifications: React.FC = () => {
   const getIcon = (type: NotificationType) => {
     switch (type) {
       case "complaint":
-        return "▣";
+        return <MessageSquare aria-hidden="true" />;
       case "emergency":
-        return "!";
+        return <AlertTriangle aria-hidden="true" />;
       case "service":
-        return "◉";
+        return <Wrench aria-hidden="true" />;
       case "announcement":
-        return "▤";
+        return <Megaphone aria-hidden="true" />;
       default:
-        return "•";
+        return <Bell aria-hidden="true" />;
     }
   };
 
@@ -154,7 +163,7 @@ const Notifications: React.FC = () => {
           className="mark-all-button"
           onClick={markAllAsRead}
         >
-          ✓ Mark all as read
+          <Check size={16} aria-hidden="true" /> Mark all as read
         </button>
 
       </div>
@@ -164,7 +173,7 @@ const Notifications: React.FC = () => {
       <div className="notification-summary">
 
         <div className="summary-icon">
-          🔔
+          <Bell size={22} aria-hidden="true" />
         </div>
 
         <div>
@@ -234,7 +243,7 @@ const Notifications: React.FC = () => {
             <div className="empty-notifications">
 
               <div className="empty-icon">
-                🔔
+                <Bell size={24} aria-hidden="true" />
               </div>
 
               <h3>
@@ -314,7 +323,7 @@ const Notifications: React.FC = () => {
                 {/* Arrow */}
 
                 <div className="notification-arrow">
-                  →
+                  <ArrowRight size={16} aria-hidden="true" />
                 </div>
 
               </div>

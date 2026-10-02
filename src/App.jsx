@@ -9,6 +9,13 @@ import NewComplaint from './Citizen/NewComplaint'
 import Notifications from './Citizen/Notifications.tsx'
 import TrackComplaint from './Citizen/TrackComplaint'
 import Home from './Home/Home.tsx'
+import {
+  AboutPage,
+  ContactPage,
+  ServicesPage,
+  TrackComplaintPage,
+  UpdatesPage,
+} from './Home/InfoPages.tsx'
 
 function App() {
   return (
@@ -17,6 +24,11 @@ function App() {
 
         {/* Public Smart City Homepage */}
         <Route path="/" element={<Home />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/services" element={<ServicesPage />} />
+        <Route path="/updates" element={<UpdatesPage />} />
+        <Route path="/track-complaint" element={<TrackComplaintPage />} />
+        <Route path="/contact" element={<ContactPage />} />
 
         {/* Existing Citizen Login */}
         <Route path="/citizen-login" element={<CitizenAuth />} />

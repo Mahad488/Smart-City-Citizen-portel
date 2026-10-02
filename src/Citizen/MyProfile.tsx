@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { BadgeCheck, Camera, Check, LockKeyhole } from "lucide-react";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
 import "./Citizenportal.css";
 import "./MyProfile.css";
@@ -238,7 +239,7 @@ const MyProfile: React.FC = () => {
 
       {message && (
         <div className="profile-message">
-          <span>✓</span>
+          <Check size={16} aria-hidden="true" />
           {message}
         </div>
       )}
@@ -285,7 +286,7 @@ const MyProfile: React.FC = () => {
                   fileInputRef.current?.click()
                 }
               >
-                ✎
+                <Camera size={16} aria-hidden="true" />
               </button>
 
             </div>
@@ -475,7 +476,7 @@ const MyProfile: React.FC = () => {
           </div>
 
           <div className="security-icon">
-            🔐
+            <LockKeyhole size={22} aria-hidden="true" />
           </div>
 
         </div>
@@ -539,11 +540,11 @@ const MyProfile: React.FC = () => {
             <strong>Password requirements</strong>
 
             <div>
-              ✓ At least 6 characters
+              <Check size={14} aria-hidden="true" /> At least 6 characters
             </div>
 
             <div>
-              ✓ Use a combination of letters and numbers
+              <Check size={14} aria-hidden="true" /> Use a combination of letters and numbers
             </div>
 
           </div>
@@ -573,7 +574,7 @@ const MyProfile: React.FC = () => {
         <div>
           <strong>Account Status</strong>
           <span className="active-text">
-            ● Active
+            <BadgeCheck size={15} aria-hidden="true" /> Active
           </span>
         </div>
 

@@ -2,9 +2,27 @@ import {
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  ArrowRight,
+  CheckCircle2,
+  ClipboardList,
+  FileText,
+  Hand,
+  Mail,
+  MapPin,
+  Megaphone,
+  MessageSquareWarning,
+  Phone,
+  Recycle,
+  Search,
+  Siren,
+  Timer,
+  UserRound,
+  Wrench,
+  Droplets,
+} from 'lucide-react'
 import { formatComplaintId, getCitizenComplaints } from '../api'
 import { CitizenNavbar, CitizenSidebar } from './CitizenNavigation'
 import './Citizenportal.css'
@@ -34,162 +52,30 @@ function extractComplaintTitle(description = '') {
 
 const updates = [
   {
-    icon: '♻',
+    Icon: Recycle,
     title: 'New waste collection schedule for all zones',
     date: '28 Sep 2026',
     type: 'green',
   },
   {
-    icon: '🔧',
+    Icon: Wrench,
     title: 'Road maintenance updates',
     date: '26 Sep 2026',
     type: 'purple',
   },
   {
-    icon: '💧',
+    Icon: Droplets,
     title: 'Water supply notification',
     date: '25 Sep 2026',
     type: 'blue',
   },
   {
-    icon: '📢',
+    Icon: Megaphone,
     title: 'Public holiday announcement',
     date: '20 Sep 2026',
     type: 'orange',
   },
 ]
-
-function Icon({
-  name,
-  size = 18,
-}: {
-  name: string
-  size?: number
-}) {
-  const svgProps = {
-    width: size,
-    height: size,
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: '1.8',
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    'aria-hidden': true,
-  }
-
-  const icons: Record<string, ReactNode> = {
-    dashboard: (
-      <svg {...svgProps}>
-        <rect x="3" y="3" width="7" height="7" rx="1.5" />
-        <rect x="14" y="3" width="7" height="4" rx="1.5" />
-        <rect x="14" y="11" width="7" height="10" rx="1.5" />
-        <rect x="3" y="12" width="7" height="9" rx="1.5" />
-      </svg>
-    ),
-    complaint: (
-      <svg {...svgProps}>
-        <path d="M7 17.5V7.5A2.5 2.5 0 0 1 9.5 5h5A2.5 2.5 0 0 1 17 7.5v7.5l-3 3-3-3H9.5A2.5 2.5 0 0 1 7 17.5Z" />
-        <path d="M12 9v4" />
-        <path d="M12 16h.01" />
-      </svg>
-    ),
-    complaints: (
-      <svg {...svgProps}>
-        <path d="M8 4h9a2 2 0 0 1 2 2v11l-4-3H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
-        <path d="M9.5 9h5" />
-        <path d="M9.5 12h5" />
-      </svg>
-    ),
-    track: (
-      <svg {...svgProps}>
-        <circle cx="11" cy="11" r="5.5" />
-        <path d="M16 16l4 4" />
-      </svg>
-    ),
-    emergency: (
-      <svg {...svgProps}>
-        <path d="M12 3.5 18 11v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8l6-7.5Z" />
-        <path d="M12 8v5" />
-        <path d="M12 16h.01" />
-      </svg>
-    ),
-    notifications: (
-      <svg {...svgProps}>
-        <path d="M7 16h10l-1.2-1.5V10a3.8 3.8 0 1 0-7.6 0v4.5L7 16Z" />
-        <path d="M10 18a2 2 0 0 0 4 0" />
-      </svg>
-    ),
-    profile: (
-      <svg {...svgProps}>
-        <circle cx="12" cy="8" r="3.5" />
-        <path d="M5 19c1.4-2.6 4-4 7-4s5.6 1.4 7 4" />
-      </svg>
-    ),
-    logout: (
-      <svg {...svgProps}>
-        <path d="M9 7V5.8A1.8 1.8 0 0 1 10.8 4h6.4A1.8 1.8 0 0 1 19 5.8v12.4A1.8 1.8 0 0 1 17.2 20h-6.4A1.8 1.8 0 0 1 9 18.2V17" />
-        <path d="M14 12H4" />
-        <path d="m7 8 4 4-4 4" />
-      </svg>
-    ),
-    search: (
-      <svg {...svgProps}>
-        <circle cx="11" cy="11" r="5.5" />
-        <path d="m16 16 4 4" />
-      </svg>
-    ),
-    bell: (
-      <svg {...svgProps}>
-        <path d="M7 16h10l-1.2-1.5V10a3.8 3.8 0 1 0-7.6 0v4.5L7 16Z" />
-        <path d="M10 18a2 2 0 0 0 4 0" />
-      </svg>
-    ),
-    arrow: (
-      <svg {...svgProps}>
-        <path d="M9 6l6 6-6 6" />
-      </svg>
-    ),
-    plus: (
-      <svg {...svgProps}>
-        <path d="M12 5v14" />
-        <path d="M5 12h14" />
-      </svg>
-    ),
-    document: (
-      <svg {...svgProps}>
-        <path d="M7 4.5h7l4 4V18a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2Z" />
-        <path d="M14 4.5V9h4" />
-        <path d="M8.5 13h7" />
-        <path d="M8.5 16h7" />
-      </svg>
-    ),
-    phone: (
-      <svg {...svgProps}>
-        <path d="M6.5 4.5h3l1.2 3.5-1.8 1.7a12.8 12.8 0 0 0 7.1 7.1l1.7-1.8 3.5 1.2v3A1.9 1.9 0 0 1 18.5 20A15.5 15.5 0 0 1 4 5.5a1.9 1.9 0 0 1 2.5-1Z" />
-      </svg>
-    ),
-    mail: (
-      <svg {...svgProps}>
-        <rect x="3" y="6" width="18" height="12" rx="2" />
-        <path d="m4 7 8 6 8-6" />
-      </svg>
-    ),
-    help: (
-      <svg {...svgProps}>
-        <circle cx="12" cy="12" r="8.5" />
-        <path d="M9.8 9.5A2.6 2.6 0 0 1 12 8a2.6 2.6 0 0 1 2.2 4.1c-.8.9-1.5 1.4-1.9 2.1-.2.4-.3.7-.3 1.3" />
-        <path d="M12 17h.01" />
-      </svg>
-    ),
-  }
-
-  return (
-    <span className="portal-icon" aria-hidden="true">
-      {icons[name] || <svg {...svgProps}><circle cx="12" cy="12" r="8" /></svg>}
-    </span>
-  )
-}
 
 function StatusBadge({ status }: { status: ComplaintStatus }) {
   return (
@@ -359,7 +245,7 @@ function CitizenPortal() {
           <section className="welcome-banner">
             <div>
               <h1>
-                Welcome, {citizen?.name || 'Citizen'} <span>👋</span>
+                Welcome, {citizen?.name || 'Citizen'} <Hand size={18} aria-hidden="true" />
               </h1>
               <p>
                 Here's what's happening with your complaints and services.
@@ -376,7 +262,7 @@ function CitizenPortal() {
           <section className="stats-grid">
             <div className="stat-card blue">
               <div className="stat-icon">
-                <Icon name="complaints" size={21} />
+                <MessageSquareWarning size={21} aria-hidden="true" />
               </div>
 
               <div>
@@ -387,7 +273,7 @@ function CitizenPortal() {
 
             <div className="stat-card orange">
               <div className="stat-icon">
-                <Icon name="complaint" size={22} />
+                <ClipboardList size={22} aria-hidden="true" />
               </div>
 
               <div>
@@ -398,7 +284,7 @@ function CitizenPortal() {
 
             <div className="stat-card green">
               <div className="stat-icon">
-                <span>↻</span>
+                <Timer size={22} aria-hidden="true" />
               </div>
 
               <div>
@@ -409,7 +295,7 @@ function CitizenPortal() {
 
             <div className="stat-card purple">
               <div className="stat-icon">
-                <span>▥</span>
+                <CheckCircle2 size={22} aria-hidden="true" />
               </div>
 
               <div>
@@ -438,7 +324,7 @@ function CitizenPortal() {
                     className="view-all"
                     onClick={() => handleMenu('My Complaints')}
                   >
-                    View All <Icon name="arrow" size={15} />
+                    View All <ArrowRight size={15} aria-hidden="true" />
                   </button>
                 </div>
 
@@ -534,7 +420,7 @@ function CitizenPortal() {
                       onClick={() => handleMenu('New Complaint')}
                     >
                       <span className="quick-icon blue-icon">
-                        <Icon name="complaint" />
+                        <MessageSquareWarning aria-hidden="true" />
                       </span>
                       <span>Submit<br />Complaint</span>
                     </button>
@@ -543,7 +429,7 @@ function CitizenPortal() {
                       onClick={() => handleMenu('Track Complaint')}
                     >
                       <span className="quick-icon purple-icon">
-                        <Icon name="track" />
+                        <Search aria-hidden="true" />
                       </span>
                       <span>Track<br />Complaint</span>
                     </button>
@@ -552,7 +438,7 @@ function CitizenPortal() {
                       onClick={() => handleMenu('Emergency')}
                     >
                       <span className="quick-icon red-icon">
-                        !
+                        <Siren aria-hidden="true" />
                       </span>
                       <span>Emergency</span>
                     </button>
@@ -561,7 +447,7 @@ function CitizenPortal() {
                       onClick={() => handleMenu('Notifications')}
                     >
                       <span className="quick-icon green-icon">
-                        <Icon name="document" />
+                        <FileText aria-hidden="true" />
                       </span>
                       <span>View<br />Notices</span>
                     </button>
@@ -579,12 +465,12 @@ function CitizenPortal() {
 
                   <div className="help-details">
                     <p>
-                      <Icon name="phone" size={15} />
+                      <Phone size={15} aria-hidden="true" />
                       +92 42 111 345 678
                     </p>
 
                     <p>
-                      <Icon name="mail" size={15} />
+                      <Mail size={15} aria-hidden="true" />
                       support@smartcity.gov
                     </p>
                   </div>
@@ -611,7 +497,7 @@ function CitizenPortal() {
                 </div>
 
                 <button className="view-all">
-                  View All <Icon name="arrow" size={15} />
+                  View All <ArrowRight size={15} aria-hidden="true" />
                 </button>
               </div>
 
@@ -619,7 +505,7 @@ function CitizenPortal() {
                 {updates.map((update, index) => (
                   <div className="update-item" key={index}>
                     <div className={`update-icon ${update.type}`}>
-                      {update.icon}
+                      <update.Icon size={20} aria-hidden="true" />
                     </div>
 
                     <div className="update-content">

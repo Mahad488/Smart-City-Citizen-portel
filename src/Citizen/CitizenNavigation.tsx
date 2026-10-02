@@ -4,9 +4,9 @@ import {
   Bell,
   ChevronDown,
   FileWarning,
-  LayoutDashboard,
+  LayoutGrid,
   LogOut,
-  MessageSquareText,
+  MessageSquareWarning,
   Search,
   Siren,
   UserRound,
@@ -15,9 +15,9 @@ import smartCityMark from '../assets/smart-city-mark.svg'
 import { useUnreadNotificationCount } from './notificationStore'
 
 const navigationItems = [
-  { label: 'Dashboard', Icon: LayoutDashboard },
+  { label: 'Dashboard', Icon: LayoutGrid },
   { label: 'New Complaint', Icon: FileWarning },
-  { label: 'My Complaints', Icon: MessageSquareText },
+  { label: 'My Complaints', Icon: MessageSquareWarning },
   { label: 'Emergency', Icon: Siren },
   { label: 'Notifications', Icon: Bell },
   { label: 'My Profile', Icon: UserRound },
@@ -67,7 +67,7 @@ export function CitizenSidebar({
             }}
           >
             <span className="portal-icon">
-              <Icon size={17} />
+              <Icon size={22} strokeWidth={2} />
             </span>
             <span>{label}</span>
 
@@ -83,7 +83,7 @@ export function CitizenSidebar({
           onClick={() => onNavigate('Logout')}
         >
           <span className="portal-icon">
-            <LogOut size={17} />
+            <LogOut size={22} strokeWidth={2} />
           </span>
           <span>Logout</span>
         </button>

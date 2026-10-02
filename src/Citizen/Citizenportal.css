@@ -3,7 +3,7 @@
 }
 
 .citizen-dashboard {
-  min-height: 100vh;
+  min-height: auto;
   display: flex;
   background: #f5f8fc;
   color: #172b4d;
@@ -96,8 +96,8 @@
 }
 
 .portal-icon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -164,7 +164,7 @@
 .dashboard-main {
   width: calc(100% - 235px);
   margin-left: 235px;
-  min-height: 100vh;
+  min-height: auto;
   position: relative;
 }
 

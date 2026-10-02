@@ -5,6 +5,24 @@ import {
   type FormEvent,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Building2,
+  CarFront,
+  Check,
+  Droplets,
+  FileText,
+  Layers,
+  MapPin,
+  Megaphone,
+  Pencil,
+  Plus,
+  Send,
+  Sparkles,
+  Trash2,
+  Upload,
+  Zap,
+} from "lucide-react";
 import { API_BASE_URL, formatComplaintId } from "../api";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
 import "./NewComplaint.css";
@@ -291,13 +309,13 @@ function NewComplaint() {
               navigate("/citizen-portal")
             }
           >
-            ← Back to Dashboard
+            <ArrowLeft size={16} aria-hidden="true" /> Back to Dashboard
           </button>
 
           <div className="page-heading">
 
             <div className="heading-icon">
-              +
+              <Plus size={22} aria-hidden="true" />
             </div>
 
             <div>
@@ -332,7 +350,7 @@ function NewComplaint() {
                   </label>
 
                   <div className="input-with-icon">
-                    <span>✎</span>
+                    <span><Pencil size={16} aria-hidden="true" /></span>
 
                     <input
                       type="text"
@@ -365,7 +383,7 @@ function NewComplaint() {
                     </label>
 
                     <div className="input-with-icon select-box">
-                      <span>▦</span>
+                      <span><Layers size={16} aria-hidden="true" /></span>
 
                       <select
                         value={form.category}
@@ -422,7 +440,7 @@ function NewComplaint() {
 
                     <div className="input-with-icon">
 
-                      <span>⌖</span>
+                      <span><MapPin size={16} aria-hidden="true" /></span>
 
                       <input
                         type="text"
@@ -460,7 +478,7 @@ function NewComplaint() {
 
                   <div className="textarea-wrapper">
 
-                    <span>▤</span>
+                    <span><FileText size={16} aria-hidden="true" /></span>
 
                     <textarea
                       value={form.description}
@@ -504,7 +522,7 @@ function NewComplaint() {
                     />
 
                     <div className="upload-icon">
-                      ↑
+                      <Upload size={22} aria-hidden="true" />
                     </div>
 
                     <div>
@@ -572,7 +590,7 @@ function NewComplaint() {
                         onClick={useCurrentLocation}
                         disabled={locating}
                       >
-                        {locating ? "Finding location..." : "⌖ Use Current Location"}
+                        {locating ? "Finding location..." : <><MapPin size={15} aria-hidden="true" /> Use Current Location</>}
                       </button>
                     </div>
 
@@ -611,7 +629,7 @@ function NewComplaint() {
 
                 {/* SECURITY */}
                 <div className="security-note">
-                  <span>✓</span>
+                  <span><Check size={16} aria-hidden="true" /></span>
                   Your information is safe and secure.
                   We only use it to process your complaint.
                 </div>
@@ -638,7 +656,7 @@ function NewComplaint() {
                       ? "Submitting..."
                       : "Submit Complaint"}
 
-                    {!loading && <span>➤</span>}
+                    {!loading && <Send size={16} aria-hidden="true" />}
                   </button>
 
                 </div>
@@ -653,13 +671,13 @@ function NewComplaint() {
               <div className="help-card">
 
                 <div className="help-heading">
-                  <div>📢</div>
+                  <div><Megaphone size={20} aria-hidden="true" /></div>
                   <h2>What can you report?</h2>
                 </div>
 
                 <div className="report-item">
                   <div className="report-icon blue">
-                    🚗
+                    <CarFront size={20} aria-hidden="true" />
                   </div>
 
                   <div>
@@ -673,7 +691,7 @@ function NewComplaint() {
 
                 <div className="report-item">
                   <div className="report-icon green">
-                    💧
+                    <Droplets size={20} aria-hidden="true" />
                   </div>
 
                   <div>
@@ -689,7 +707,7 @@ function NewComplaint() {
 
                 <div className="report-item">
                   <div className="report-icon yellow">
-                    ⚡
+                    <Zap size={20} aria-hidden="true" />
                   </div>
 
                   <div>
@@ -702,7 +720,7 @@ function NewComplaint() {
 
                 <div className="report-item">
                   <div className="report-icon red">
-                    🗑
+                    <Trash2 size={16} aria-hidden="true" />
                   </div>
 
                   <div>
@@ -717,7 +735,7 @@ function NewComplaint() {
 
                 <div className="report-item">
                   <div className="report-icon purple">
-                    ✦
+                    <Sparkles size={20} aria-hidden="true" />
                   </div>
 
                   <div>
@@ -734,7 +752,7 @@ function NewComplaint() {
               <div className="city-message">
 
                 <div className="city-illustration">
-                  🏙️
+                  <Building2 size={48} aria-hidden="true" />
                 </div>
 
                 <h2>

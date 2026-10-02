@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import smartCityMark from '../assets/smart-city-mark.svg'
 import './Home.css'
 
@@ -28,8 +28,12 @@ function Home() {
       <header className="home-navbar">
         <div className="home-container nav-inner">
 
-          <a href="/" className="home-brand">
-            <img className="brand-icon" src={smartCityMark} alt="Smart City logo" />
+          <a href="#home" className="home-brand">
+            <img
+              src={smartCityMark}
+              className="brand-icon"
+              alt="Smart City"
+            />
 
             <div>
               <strong>Smart City</strong>
@@ -38,21 +42,17 @@ function Home() {
           </a>
 
           <nav className="home-nav">
-            <a href="#home">Home</a>
-            <a href="#about">About</a>
-            <a href="#services">Services</a>
-            <a href="#complaints">Complaints</a>
-            <a href="#track">Track Complaint</a>
-            <a href="#updates">Updates</a>
-            <a href="#contact">Contact</a>
+            <Link to="/">Home</Link>
+            <Link to="/about">About</Link>
+            <Link to="/services">Services</Link>
+            <Link to="/updates">Updates</Link>
+            <Link to="/track-complaint">Track Complaint</Link>
+            <Link to="/contact">Contact</Link>
           </nav>
 
-          <a
-            href="/citizen-login"
-            className="home-login-btn"
-          >
+          <Link to="/citizen-login" className="home-login-btn">
             Login
-          </a>
+          </Link>
 
         </div>
       </header>
@@ -61,67 +61,74 @@ function Home() {
       {/* HERO */}
       <section className="home-hero" id="home">
 
+        <div className="hero-overlay" />
+
         <div className="home-container hero-inner">
 
           <div className="hero-content">
 
             <div className="hero-small-title">
-              WELCOME TO SMART CITY CITIZEN PORTAL
+              ● SMART CITY CITIZEN PORTAL
             </div>
 
             <h1>
-              Your City,
-              <span>Your Voice</span>
+              A smarter city starts
+              <span>with citizen action</span>
             </h1>
 
             <p>
-              Report civic issues, track complaints, and stay connected
-              with your Smart City. Together we build a cleaner, safer
-              and better tomorrow.
+              This platform brings together complaint reporting,
+              service discovery, public updates and real-time
+              transparency so residents can connect directly with
+              the city and help improve everyday life.
             </p>
 
-            <div className="hero-buttons">
+            <div className="hero-badges" aria-label="Smart city benefits">
+              <span>Public Services</span>
+              <span>Live Updates</span>
+              <span>Transparent Tracking</span>
+            </div>
 
+            <div className="hero-buttons">
               <a
                 href="/citizen-login"
                 className="primary-button"
               >
-                Submit a Complaint
+                Report an Issue →
               </a>
 
-              <a
-                href="#track"
+              <Link
+                to="/track-complaint"
                 className="secondary-button"
               >
                 Track Complaint
-              </a>
-
+              </Link>
             </div>
 
           </div>
 
 
-          {/* HERO FLOATING CARDS */}
-          <div className="hero-cards">
+          {/* FLOATING CARDS */}
+          <div className="hero-floating-cards">
 
-            <div className="hero-floating-card card-one">
-              <span>🌿</span>
+            <div className="floating-card">
+              <span className="green-icon">🌿</span>
               <div>
                 <strong>Clean City</strong>
                 <small>Better Environment</small>
               </div>
             </div>
 
-            <div className="hero-floating-card card-two">
-              <span>🛡️</span>
+            <div className="floating-card">
+              <span className="blue-icon">🛡️</span>
               <div>
                 <strong>Safe Community</strong>
                 <small>Connected Citizens</small>
               </div>
             </div>
 
-            <div className="hero-floating-card card-three">
-              <span>🏙️</span>
+            <div className="floating-card">
+              <span className="purple-icon">🏙️</span>
               <div>
                 <strong>Smart Infrastructure</strong>
                 <small>Modern City Services</small>
@@ -131,16 +138,202 @@ function Home() {
           </div>
 
         </div>
+      </section>
 
+
+      {/* PROJECT OVERVIEW */}
+      <section className="project-overview" id="about">
+        <div className="home-container overview-grid">
+          <div className="overview-copy">
+            <span className="section-label">WHY THIS PLATFORM MATTERS</span>
+            <h2>Built to make city services clearer, faster and more responsive.</h2>
+            <p>
+              The Smart City Citizen Portal is designed to help residents
+              report problems, understand city operations and stay updated on
+              services that affect daily life. It creates a direct, digital link
+              between the community and public departments.
+            </p>
+
+            <div className="overview-points">
+              <OverviewPoint
+                icon="📍"
+                title="Issue Reporting"
+                text="Citizens can raise complaints related to roads, sanitation, safety and public services in a simple, guided flow."
+              />
+              <OverviewPoint
+                icon="📊"
+                title="Progress Visibility"
+                text="Each complaint can be tracked through different stages, helping users stay informed about action and resolution."
+              />
+              <OverviewPoint
+                icon="🏙️"
+                title="Smart City Access"
+                text="Residents get quick access to city alerts, public notices and essential services through one clean portal."
+              />
+            </div>
+          </div>
+
+          <div className="overview-visual">
+            <div className="visual-card main-visual">
+              <img
+                src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=85"
+                alt="Smart city skyline"
+              />
+            </div>
+            <div className="visual-card stat-visual">
+              <span className="mini-label">City Performance</span>
+              <strong>96%</strong>
+              <small>Citizen service satisfaction</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* SERVICES */}
+      <section className="services-section" id="services">
+
+        <div className="home-container">
+
+          <div className="section-heading">
+            <span>OUR SERVICES</span>
+            <h2>City Services at Your Fingertips</h2>
+            <p>
+              Access important city services and stay informed
+              about what's happening around you.
+            </p>
+          </div>
+
+
+          <div className="service-grid">
+
+            <ServiceCard
+              icon="🚨"
+              title="Report an Issue"
+              text="Report civic problems in your area."
+              color="red"
+            />
+
+            <ServiceCard
+              icon="🅿️"
+              title="Smart Parking"
+              text="Find available parking spaces."
+              color="blue"
+            />
+
+            <ServiceCard
+              icon="🗑️"
+              title="Waste Collection"
+              text="Track waste collection services."
+              color="green"
+            />
+
+            <ServiceCard
+              icon="🛡️"
+              title="Public Safety"
+              text="Get emergency information."
+              color="purple"
+            />
+
+            <ServiceCard
+              icon="🚌"
+              title="Public Transport"
+              text="Check routes and transport updates."
+              color="orange"
+            />
+
+            <ServiceCard
+              icon="🌱"
+              title="Environment"
+              text="Monitor air quality and green areas."
+              color="teal"
+            />
+
+          </div>
+
+        </div>
+      </section>
+
+
+      {/* HOW IT WORKS */}
+      <section className="process-section">
+        <div className="home-container">
+          <div className="section-heading centered-heading">
+            <span>HOW IT WORKS</span>
+            <h2>From report to resolution in three simple steps</h2>
+          </div>
+
+          <div className="process-grid">
+            <ProcessStep
+              number="01"
+              title="Submit Request"
+              text="A resident logs in and submits a complaint with category, location and description."
+            />
+            <ProcessStep
+              number="02"
+              title="Review & Assign"
+              text="The city team receives the request and routes it to the right department for action."
+            />
+            <ProcessStep
+              number="03"
+              title="Track & Resolve"
+              text="Citizens follow updates in real time until the issue is solved and closed."
+            />
+          </div>
+        </div>
+      </section>
+
+
+      {/* CITY STATUS */}
+      <section className="status-section">
+
+        <div className="home-container status-grid">
+
+          <div>
+            <strong>12,450+</strong>
+            <span>Complaints Resolved</span>
+          </div>
+
+          <div>
+            <strong>8,230+</strong>
+            <span>Active Services</span>
+          </div>
+
+          <div>
+            <strong>32+</strong>
+            <span>City Departments</span>
+          </div>
+
+          <div>
+            <strong>98%</strong>
+            <span>Citizen Satisfaction</span>
+          </div>
+
+        </div>
       </section>
 
 
       {/* ABOUT */}
-      <section className="home-section" id="about">
+      <section className="about-section" id="about-brief">
 
         <div className="home-container about-layout">
 
-          <div className="about-text">
+          <div className="about-image">
+
+            <img
+              src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1000&q=85"
+              alt="Modern smart city"
+            />
+
+            <div className="image-caption">
+              <strong>Building a Smarter Tomorrow</strong>
+              <span>Connected • Green • Safe</span>
+            </div>
+
+          </div>
+
+
+          <div className="about-content">
 
             <span className="section-label">
               ABOUT OUR SMART CITY
@@ -151,232 +344,113 @@ function Home() {
             </h2>
 
             <p>
-              The Smart City Citizen Portal connects citizens with
-              city departments to report issues, track complaints
-              and access essential services through one simple platform.
+              The Smart City Citizen Portal connects citizens
+              with city departments to report issues, track
+              complaints and access essential services through
+              one simple platform.
             </p>
 
-            <p>
-              Citizens can submit complaints, follow their progress,
-              receive notifications and stay informed about important
-              city updates.
-            </p>
+            <ul>
+              <li>✓ Submit complaints and follow their progress</li>
+              <li>✓ Receive important city updates</li>
+              <li>✓ Access essential city services</li>
+              <li>✓ Stay connected with your community</li>
+            </ul>
 
-            <a href="#services" className="outline-button">
-              Learn More →
-            </a>
-
-          </div>
-
-
-          <div className="feature-grid">
-
-            <div className="feature-card">
-              <div className="feature-icon blue">🏢</div>
-              <h3>Smart Infrastructure</h3>
-              <p>
-                Better roads, modern transport and smart facilities
-                for a connected city.
-              </p>
-            </div>
-
-            <div className="feature-card">
-              <div className="feature-icon green">🌱</div>
-              <h3>Public Services</h3>
-              <p>
-                Clean water, waste management, parks and other
-                essential city services.
-              </p>
-            </div>
-
-            <div className="feature-card">
-              <div className="feature-icon orange">💬</div>
-              <h3>Citizen Complaints</h3>
-              <p>
-                Report issues and track their resolution through
-                your citizen account.
-              </p>
-            </div>
-
-            <div className="feature-card">
-              <div className="feature-icon purple">📊</div>
-              <h3>Transparent Monitoring</h3>
-              <p>
-                Track progress, receive updates and improve
-                accountability.
-              </p>
-            </div>
+            <Link to="/services" className="outline-button">
+              Explore Services →
+            </Link>
 
           </div>
 
         </div>
-
       </section>
 
 
-      {/* HOW IT WORKS */}
-      <section className="home-section light-section">
+      {/* LIVE UPDATES */}
+      <section className="updates-section" id="updates">
 
-        <div className="home-container">
+        <div className="home-container updates-layout">
 
-          <div className="center-heading">
-            <span className="section-label">
-              HOW IT WORKS
-            </span>
-
-            <h2>
-              From report to resolution.
-            </h2>
-
+          <div className="section-heading">
+            <span>REAL-TIME INFORMATION</span>
+            <h2>Live City Updates</h2>
             <p>
-              Reporting a civic issue is simple. Follow the progress
-              from submission to resolution.
+              Stay informed about what's happening in your city.
             </p>
           </div>
 
 
-          <div className="process-grid">
+          <div className="updates-card">
 
-            <div className="process-card">
-              <div className="process-number">1</div>
-              <h3>Report Issue</h3>
-              <p>
-                Submit your complaint with details, location
-                and a photo if available.
-              </p>
-            </div>
+            <Update
+              icon="🚛"
+              title="Waste collection truck is now in Sector 7"
+              time="10:12 AM"
+              type="green"
+            />
 
-            <div className="process-card">
-              <div className="process-number">2</div>
-              <h3>Complaint Verified</h3>
-              <p>
-                The city team reviews and verifies the submitted issue.
-              </p>
-            </div>
+            <Update
+              icon="🚦"
+              title="Traffic congestion detected at Main Chowk"
+              time="09:45 AM"
+              type="red"
+            />
 
-            <div className="process-card">
-              <div className="process-number">3</div>
-              <h3>Department Assigned</h3>
-              <p>
-                Your complaint is assigned to the relevant department.
-              </p>
-            </div>
+            <Update
+              icon="🅿️"
+              title="Parking slot available at City Mall"
+              time="09:32 AM"
+              type="blue"
+            />
 
-            <div className="process-card">
-              <div className="process-number">4</div>
-              <h3>Issue Resolved</h3>
-              <p>
-                You receive an update when the issue has been resolved.
-              </p>
-            </div>
+            <Update
+              icon="🌿"
+              title="Air quality is good in all zones"
+              time="08:21 AM"
+              type="green"
+            />
 
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* COMPLAINT CATEGORIES */}
-      <section className="home-section" id="services">
-
-        <div className="home-container" id="complaints">
-
-          <div className="center-heading">
-            <span className="section-label">
-              CITIZEN SERVICES
-            </span>
-
-            <h2>
-              Report the issues that matter.
-            </h2>
-
-            <p>
-              Choose the category that best matches your civic issue.
-            </p>
-          </div>
-
-
-          <div className="category-grid">
-
-            <div className="category-card">
-              <span>🚦</span>
-              <strong>Traffic & Signals</strong>
-            </div>
-
-            <div className="category-card">
-              <span>💡</span>
-              <strong>Street Lights</strong>
-            </div>
-
-            <div className="category-card">
-              <span>🗑️</span>
-              <strong>Waste Management</strong>
-            </div>
-
-            <div className="category-card">
-              <span>💧</span>
-              <strong>Water & Drainage</strong>
-            </div>
-
-            <div className="category-card">
-              <span>🛣️</span>
-              <strong>Roads & Infrastructure</strong>
-            </div>
-
-            <div className="category-card">
-              <span>🌳</span>
-              <strong>Parks & Environment</strong>
-            </div>
-
-            <div className="category-card">
-              <span>🎓</span>
-              <strong>Education Facilities</strong>
-            </div>
-
-            <div className="category-card">
-              <span>🏥</span>
-              <strong>Public Health</strong>
-            </div>
+            <Update
+              icon="🚨"
+              title="Public safety: No active alerts"
+              time="08:00 AM"
+              type="purple"
+            />
 
           </div>
 
         </div>
-
       </section>
 
 
       {/* TRACK COMPLAINT */}
-      <section
-        className="home-section light-section"
-        id="track"
-      >
+      <section className="track-section" id="track">
 
         <div className="home-container">
 
           <div className="tracking-box">
 
-            <div className="tracking-header">
-
+            <div>
               <span className="section-label">
                 COMPLAINT TRACKING
               </span>
 
-              <h2>
-                Track Your Complaint
-              </h2>
+              <h2>Track Your Complaint</h2>
 
               <p>
                 Enter your complaint ID to check its current status.
               </p>
-
             </div>
 
 
-            <form className="tracking-form" onSubmit={handleTrackComplaint}>
+            <form
+              className="tracking-form"
+              onSubmit={handleTrackComplaint}
+            >
+
               <input
                 type="text"
-                aria-label="Complaint ID"
                 placeholder="e.g. SC-00123"
                 value={complaintId}
                 onChange={(event) => {
@@ -387,88 +461,34 @@ function Home() {
               />
 
               <button type="submit">
-                Track
+                Track Complaint
               </button>
+
             </form>
 
-            {trackingError ? (
-              <p className="tracking-error-message" role="alert">
+            {trackingError && (
+              <p className="tracking-error">
                 {trackingError}
-              </p>
-            ) : (
-              <p className="tracking-hint">
-                Find your complaint ID in the My Complaints section of your dashboard.
               </p>
             )}
 
           </div>
 
         </div>
-
-      </section>
-
-
-      {/* STATS */}
-      <section className="home-section">
-
-        <div className="home-container">
-
-          <div className="center-heading">
-            <span className="section-label">
-              CITY IMPACT
-            </span>
-
-            <h2>
-              Connected services, measurable progress.
-            </h2>
-          </div>
-
-
-          <div className="stats-grid">
-
-            <div className="stat-card">
-              <strong>24,850+</strong>
-              <span>Complaints Received</span>
-            </div>
-
-            <div className="stat-card">
-              <strong>19,420+</strong>
-              <span>Issues Resolved</span>
-            </div>
-
-            <div className="stat-card">
-              <strong>87%</strong>
-              <span>Resolution Rate</span>
-            </div>
-
-            <div className="stat-card">
-              <strong>32</strong>
-              <span>Connected Departments</span>
-            </div>
-
-          </div>
-
-        </div>
-
       </section>
 
 
       {/* CONTACT */}
-      <section
-        className="contact-section"
-        id="contact"
-      >
+      <section className="contact-section" id="contact">
 
-        <div className="home-container contact-inner">
+        <div className="home-container contact-layout">
 
           <div>
             <span className="section-label">
               NEED HELP?
             </span>
 
-            <h2>
-              We're here to help.
-            </h2>
+            <h2>We're here to help.</h2>
 
             <p>
               Need assistance with a complaint or citizen service?
@@ -476,38 +496,38 @@ function Home() {
             </p>
           </div>
 
-          <div className="contact-details">
-            <div>
-              <strong>Citizen Helpline</strong>
-              <span>+92 42 111 123 456</span>
-            </div>
+          <div className="contact-info">
+            <strong>Citizen Helpline</strong>
+            <span>+92 42 111 123 456</span>
 
-            <div>
-              <strong>Email</strong>
-              <span>support@smartcity.gov</span>
-            </div>
+            <strong>Email</strong>
+            <span>support@smartcity.gov</span>
 
-            <a
-              href="/citizen-login"
+            <Link
+              to="/citizen-login"
               className="primary-button"
             >
               Go to Citizen Portal
-            </a>
+            </Link>
           </div>
 
         </div>
-
       </section>
 
 
       {/* FOOTER */}
       <footer className="home-footer">
 
-        <div className="home-container footer-grid">
+        <div className="home-container footer-content">
 
           <div>
             <div className="footer-brand">
-              <img className="brand-icon" src={smartCityMark} alt="Smart City logo" />
+              <img
+                src={smartCityMark}
+                className="brand-icon"
+                alt="Smart City"
+              />
+
               <div>
                 <strong>Smart City</strong>
                 <span>Citizen Portal</span>
@@ -519,29 +539,32 @@ function Home() {
             </p>
           </div>
 
+
           <div>
             <h4>Quick Links</h4>
-            <a href="#home">Home</a>
-            <a href="#about">About</a>
-            <a href="#services">Services</a>
-            <a href="#complaints">Complaints</a>
+            <Link to="/">Home</Link>
+            <Link to="/about">About</Link>
+            <Link to="/services">Services</Link>
+            <Link to="/updates">Updates</Link>
           </div>
+
 
           <div>
             <h4>Citizen Portal</h4>
-            <a href="/citizen-login">Login</a>
-            <a href="/citizen-login">Register</a>
-            <a href="#track">Track Complaint</a>
+            <Link to="/citizen-login">Login</Link>
+            <Link to="/citizen-login">Register</Link>
+            <Link to="/track-complaint">Track Complaint</Link>
           </div>
+
 
           <div>
             <h4>Contact</h4>
-            <a href="#contact">Citizen Helpline</a>
-            <a href="#contact">Email Support</a>
-            <a href="#contact">FAQs</a>
+            <span>+92 42 111 123 456</span>
+            <span>support@smartcity.gov</span>
           </div>
 
         </div>
+
 
         <div className="footer-bottom">
           © 2026 Smart City Citizen Portal. All Rights Reserved.
@@ -549,6 +572,109 @@ function Home() {
 
       </footer>
 
+    </div>
+  )
+}
+
+
+/* SERVICE CARD */
+function ServiceCard({
+  icon,
+  title,
+  text,
+  color,
+}: {
+  icon: string
+  title: string
+  text: string
+  color: string
+}) {
+  return (
+    <div className="service-card">
+
+      <div className={`service-icon ${color}`}>
+        {icon}
+      </div>
+
+      <h3>{title}</h3>
+
+      <p>{text}</p>
+
+      <Link to="/track-complaint">
+        Explore →
+      </Link>
+
+    </div>
+  )
+}
+
+
+/* LIVE UPDATE */
+function Update({
+  icon,
+  title,
+  time,
+  type,
+}: {
+  icon: string
+  title: string
+  time: string
+  type: string
+}) {
+  return (
+    <div className="update-item">
+
+      <div className={`update-icon ${type}`}>
+        {icon}
+      </div>
+
+      <div>
+        <strong>{title}</strong>
+        <small>{time}</small>
+      </div>
+
+      <span className="update-live">
+        ● Live
+      </span>
+
+    </div>
+  )
+}
+
+function OverviewPoint({
+  icon,
+  title,
+  text,
+}: {
+  icon: string
+  title: string
+  text: string
+}) {
+  return (
+    <div className="overview-point">
+      <span className="point-icon">{icon}</span>
+      <div>
+        <strong>{title}</strong>
+        <p>{text}</p>
+      </div>
+    </div>
+  )
+}
+
+function ProcessStep({
+  number,
+  title,
+  text,
+}: {
+  number: string
+  title: string
+  text: string
+}) {
+  return (
+    <div className="process-step">
+      <span className="process-number">{number}</span>
+      <h3>{title}</h3>
+      <p>{text}</p>
     </div>
   )
 }
