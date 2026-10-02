@@ -97,7 +97,7 @@ function CitizenPortal() {
   useEffect(() => {
     const savedCitizen = localStorage.getItem('citizen')
 
-    if (!savedCitizen) {
+    if (!savedCitizen || !localStorage.getItem('citizen_token')) {
       window.location.href = '/citizen-login'
       return
     }

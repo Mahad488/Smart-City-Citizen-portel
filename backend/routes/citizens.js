@@ -1,8 +1,12 @@
 import express from "express";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import db from "../config/db.js";
+import { authenticate } from "../auth.js";
 
 const router = express.Router();
+
+const JWT_SECRET = process.env.JWT_SECRET || "smart-city-citizen-dev-secret";
 
 const generateCitizenId = async () => {
   try {
@@ -31,7 +35,7 @@ const generateCitizenId = async () => {
 };
 
 // GET all citizens
-router.get("/", (req, res) => {
+router.get("/", authenticate, (req, res) => {
   const sql = `
     SELECT
       id,
@@ -60,7 +64,7 @@ router.get("/", (req, res) => {
 
 
 // Citizen statistics
-router.get("/stats/summary", (req, res) => {
+router.get("/stats/summary", authenticate, (req, res) => {
   const sql = `
     SELECT
       COUNT(*) AS total,
@@ -139,8 +143,21 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    const token = jwt.sign(
+      {
+        id: citizen.id,
+        citizen_id: citizen.citizen_id,
+        email: citizen.email,
+        name: citizen.name,
+        status: citizen.status,
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
     res.json({
       message: "Login successful",
+      token,
       citizen: {
         id: citizen.id,
         citizen_id: citizen.citizen_id,
@@ -162,7 +179,7 @@ router.post("/login", async (req, res) => {
 });
 
 // Approve / Activate citizen
-router.put("/:id/activate", async (req, res) => {
+router.put("/:id/activate", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -190,7 +207,7 @@ router.put("/:id/activate", async (req, res) => {
 });
 
 // Deactivate citizen
-router.put("/:id/deactivate", async (req, res) => {
+router.put("/:id/deactivate", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -218,7 +235,7 @@ router.put("/:id/deactivate", async (req, res) => {
 });
 
 // GET citizen by ID
-router.get("/:id", (req, res) => {
+router.get("/:id", authenticate, (req, res) => {
   const { id } = req.params;
 
   const sql = `
@@ -337,7 +354,7 @@ router.post("/register", async (req, res) => {
 });
 
 // POST admin creates citizen
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const {
       name,
@@ -397,7 +414,7 @@ router.post("/", async (req, res) => {
 
 
 // PUT update citizen
-router.put("/:id", (req, res) => {
+router.put("/:id", authenticate, (req, res) => {
   const { id } = req.params;
 
   const {
@@ -447,7 +464,7 @@ router.put("/:id", (req, res) => {
 
 
 // DELETE citizen
-router.delete("/:id", (req, res) => {
+router.delete("/:id", authenticate, (req, res) => {
   const { id } = req.params;
 
   const sql = `

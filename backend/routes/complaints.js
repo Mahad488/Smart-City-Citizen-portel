@@ -1,6 +1,7 @@
 import express from "express";
 import { Buffer } from "node:buffer";
 import db from "../config/db.js";
+import { authenticate } from "../auth.js";
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ const ensureComplaintAttachmentsTable = () =>
 // =====================================================
 // GET ALL COMPLAINTS - ADMIN
 // =====================================================
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT *
@@ -40,9 +41,15 @@ router.get("/", async (req, res) => {
 // =====================================================
 // GET CITIZEN'S COMPLAINTS
 // =====================================================
-router.get("/citizen/:citizen_id", async (req, res) => {
+router.get("/citizen/:citizen_id", authenticate, async (req, res) => {
   try {
     const { citizen_id } = req.params;
+
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only view your own complaints.",
+      });
+    }
 
     const [rows] = await db.query(
       `SELECT *
@@ -66,7 +73,7 @@ router.get("/citizen/:citizen_id", async (req, res) => {
 // =====================================================
 // POST COMPLAINT FROM CITIZEN
 // =====================================================
-router.post("/citizen", async (req, res) => {
+router.post("/citizen", authenticate, async (req, res) => {
   try {
     const {
       citizen_id,
@@ -82,6 +89,12 @@ router.post("/citizen", async (req, res) => {
     if (!citizen_id || !title || !description) {
       return res.status(400).json({
         message: "Citizen, title and description are required",
+      });
+    }
+
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only create complaints for your own account.",
       });
     }
 
@@ -206,7 +219,7 @@ router.post("/citizen", async (req, res) => {
 // =====================================================
 // UPDATE CITIZEN COMPLAINT
 // =====================================================
-router.put("/citizen/:id", async (req, res) => {
+router.put("/citizen/:id", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -224,7 +237,12 @@ router.put("/citizen/:id", async (req, res) => {
       });
     }
 
-    // Make sure complaint belongs to citizen
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only update your own complaints.",
+      });
+    }
+
     const [existing] = await db.query(
       `SELECT id
        FROM complaints
@@ -270,7 +288,7 @@ router.put("/citizen/:id", async (req, res) => {
 // =====================================================
 // DELETE CITIZEN COMPLAINT
 // =====================================================
-router.delete("/citizen/:id", async (req, res) => {
+router.delete("/citizen/:id", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { citizen_id } = req.body;
@@ -278,6 +296,12 @@ router.delete("/citizen/:id", async (req, res) => {
     if (!citizen_id) {
       return res.status(400).json({
         message: "Citizen ID is required",
+      });
+    }
+
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only delete your own complaints.",
       });
     }
 
@@ -316,14 +340,30 @@ router.delete("/citizen/:id", async (req, res) => {
 // =====================================================
 // GET SINGLE COMPLAINT
 // =====================================================
-router.get("/:id/attachment", async (req, res) => {
+router.get("/:id/attachment", authenticate, async (req, res) => {
   try {
+    const complaintId = Number(req.params.id);
+    const [complaintRows] = await db.query(
+      `SELECT citizen_id FROM complaints WHERE id = ?`,
+      [complaintId]
+    );
+
+    if (complaintRows.length === 0) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+
+    if (req.user.citizen_id !== complaintRows[0].citizen_id) {
+      return res.status(403).json({
+        message: "You can only access your own complaint photo.",
+      });
+    }
+
     await ensureComplaintAttachmentsTable();
     const [rows] = await db.query(
       `SELECT mime_type, photo_data
        FROM complaint_attachments
        WHERE complaint_id = ?`,
-      [req.params.id]
+      [complaintId]
     );
 
     if (rows.length === 0) {
@@ -343,7 +383,7 @@ router.get("/:id/attachment", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT *
@@ -355,6 +395,12 @@ router.get("/:id", async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({
         message: "Complaint not found",
+      });
+    }
+
+    if (req.user.citizen_id !== rows[0].citizen_id) {
+      return res.status(403).json({
+        message: "This complaint does not belong to your account.",
       });
     }
 
@@ -373,7 +419,7 @@ router.get("/:id", async (req, res) => {
 // =====================================================
 // ADMIN CREATE COMPLAINT
 // =====================================================
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const {
       citizen_id,
@@ -429,7 +475,7 @@ router.post("/", async (req, res) => {
 // =====================================================
 // ADMIN UPDATE COMPLAINT
 // =====================================================
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticate, async (req, res) => {
   try {
     const {
       category,
@@ -486,7 +532,7 @@ router.put("/:id", async (req, res) => {
 // =====================================================
 // ADMIN DELETE COMPLAINT
 // =====================================================
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticate, async (req, res) => {
   try {
     const [result] = await db.query(
       `DELETE FROM complaints

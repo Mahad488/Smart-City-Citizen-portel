@@ -162,6 +162,7 @@ function NewComplaint() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("citizen_token") || ""}`,
           },
           body: JSON.stringify({
             citizen_id: citizen.citizen_id,
@@ -271,6 +272,7 @@ function NewComplaint() {
 
     if (label === "Logout") {
       localStorage.removeItem("citizen");
+      localStorage.removeItem("citizen_token");
       navigate("/citizen-login");
       return;
     }

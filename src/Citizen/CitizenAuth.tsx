@@ -67,6 +67,10 @@ function CitizenAuth() {
         throw new Error(data.message || "Login failed");
       }
 
+      if (data.token) {
+        localStorage.setItem("citizen_token", data.token);
+      }
+
       localStorage.setItem(
         "citizen",
         JSON.stringify(data.citizen || data)

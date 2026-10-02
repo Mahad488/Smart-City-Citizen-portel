@@ -74,7 +74,8 @@ function MyComplaints() {
       setError("");
 
       const response = await fetch(
-        `${API_BASE_URL}/api/complaints/citizen/${citizen.citizen_id}`
+        `${API_BASE_URL}/api/complaints/citizen/${citizen.citizen_id}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("citizen_token") || ""}` } },
       );
 
       const text = await response.text();
@@ -138,7 +139,10 @@ function MyComplaints() {
         `${API_BASE_URL}/api/complaints/citizen/${editingComplaint.id}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("citizen_token") || ""}`,
+          },
           body: JSON.stringify({
             citizen_id: citizen.citizen_id,
             title: editForm.title.trim(),
@@ -180,7 +184,10 @@ function MyComplaints() {
         `${API_BASE_URL}/api/complaints/citizen/${complaintToDelete.id}`,
         {
           method: "DELETE",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("citizen_token") || ""}`,
+          },
           body: JSON.stringify({ citizen_id: citizen.citizen_id }),
         },
       );
@@ -208,6 +215,7 @@ function MyComplaints() {
   const handleNavigation = (label: string) => {
     if (label === "Logout") {
       localStorage.removeItem("citizen");
+      localStorage.removeItem("citizen_token");
       navigate("/citizen-login");
       return;
     }

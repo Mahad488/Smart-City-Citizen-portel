@@ -169,6 +169,7 @@ export function CitizenNavbar({
 
   const handleLogout = () => {
     localStorage.removeItem('citizen')
+    localStorage.removeItem('citizen_token')
     setIsUserMenuOpen(false)
     navigate('/citizen-login')
   }

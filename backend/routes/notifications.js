@@ -1,10 +1,11 @@
 import express from "express";
 import db from "../config/db.js";
+import { authenticate } from "../auth.js";
 
 const router = express.Router();
 
 // GET all notifications
-router.get("/", (req, res) => {
+router.get("/", authenticate, (req, res) => {
     const sql = `
         SELECT id, title, message, type, is_read, created_at
         FROM notifications
@@ -25,7 +26,7 @@ router.get("/", (req, res) => {
 
 
 // POST new notification
-router.post("/", (req, res) => {
+router.post("/", authenticate, (req, res) => {
     const { title, message, type } = req.body;
 
     if (!title || !message) {
@@ -60,7 +61,7 @@ router.post("/", (req, res) => {
 
 
 // Mark notification as read
-router.put("/:id/read", (req, res) => {
+router.put("/:id/read", authenticate, (req, res) => {
     const { id } = req.params;
 
     const sql = `
@@ -85,7 +86,7 @@ router.put("/:id/read", (req, res) => {
 
 
 // Delete notification
-router.delete("/:id", (req, res) => {
+router.delete("/:id", authenticate, (req, res) => {
     const { id } = req.params;
 
     const sql = `

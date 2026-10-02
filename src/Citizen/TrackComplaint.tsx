@@ -149,7 +149,8 @@ function TrackComplaint() {
       setError("");
 
       const response = await fetch(
-        `${API_BASE_URL}/api/complaints/${value.trim()}`
+        `${API_BASE_URL}/api/complaints/${value.trim()}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("citizen_token") || ""}` } },
       );
 
       const text = await response.text();
@@ -309,6 +310,7 @@ function TrackComplaint() {
               localStorage.removeItem(
                 "citizen"
               );
+              localStorage.removeItem("citizen_token");
 
               navigate("/citizen-login");
             }}

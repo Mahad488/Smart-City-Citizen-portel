@@ -1,5 +1,6 @@
 import express from "express";
 import db from "../config/db.js";
+import { authenticate } from "../auth.js";
 
 const router = express.Router();
 
@@ -7,7 +8,7 @@ const router = express.Router();
 // =====================================================
 // GET ALL EMERGENCIES - ADMIN
 // =====================================================
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT *
@@ -30,9 +31,15 @@ router.get("/", async (req, res) => {
 // =====================================================
 // GET CITIZEN'S EMERGENCIES
 // =====================================================
-router.get("/citizen/:citizen_id", async (req, res) => {
+router.get("/citizen/:citizen_id", authenticate, async (req, res) => {
   try {
     const { citizen_id } = req.params;
+
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only view your own emergencies.",
+      });
+    }
 
     const [rows] = await db.query(
       `SELECT *
@@ -57,7 +64,7 @@ router.get("/citizen/:citizen_id", async (req, res) => {
 // =====================================================
 // POST EMERGENCY FROM CITIZEN
 // =====================================================
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const {
       citizen_id,
@@ -76,7 +83,12 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Check citizen
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only report emergencies for your own account.",
+      });
+    }
+
     const [citizenRows] = await db.query(
       `SELECT id, name, status
        FROM citizens
@@ -141,7 +153,7 @@ router.post("/", async (req, res) => {
 // =====================================================
 // UPDATE CITIZEN EMERGENCY
 // =====================================================
-router.put("/citizen/:id", async (req, res) => {
+router.put("/citizen/:id", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -157,7 +169,12 @@ router.put("/citizen/:id", async (req, res) => {
       });
     }
 
-    // Make sure emergency belongs to citizen
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only update your own emergencies.",
+      });
+    }
+
     const [existing] = await db.query(
       `SELECT id
        FROM emergencies
@@ -201,7 +218,7 @@ router.put("/citizen/:id", async (req, res) => {
 // =====================================================
 // DELETE CITIZEN EMERGENCY
 // =====================================================
-router.delete("/citizen/:id", async (req, res) => {
+router.delete("/citizen/:id", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { citizen_id } = req.body;
@@ -209,6 +226,12 @@ router.delete("/citizen/:id", async (req, res) => {
     if (!citizen_id) {
       return res.status(400).json({
         message: "Citizen ID is required",
+      });
+    }
+
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only delete your own emergencies.",
       });
     }
 
@@ -241,7 +264,7 @@ router.delete("/citizen/:id", async (req, res) => {
 // =====================================================
 // GET SINGLE EMERGENCY
 // =====================================================
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT *
@@ -253,6 +276,12 @@ router.get("/:id", async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({
         message: "Emergency not found",
+      });
+    }
+
+    if (req.user.citizen_id !== rows[0].citizen_id) {
+      return res.status(403).json({
+        message: "This emergency does not belong to your account.",
       });
     }
 

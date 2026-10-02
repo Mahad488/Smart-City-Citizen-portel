@@ -112,6 +112,7 @@ const Notifications: React.FC = () => {
 
     if (label === "Logout") {
       localStorage.removeItem("citizen");
+      localStorage.removeItem("citizen_token");
       navigate("/citizen-login");
       return;
     }

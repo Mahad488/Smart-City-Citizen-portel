@@ -2,6 +2,15 @@ export const API_BASE_URL = (
   import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 ).replace(/\/+$/, '')
 
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem('citizen_token')
+
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
+
 export function formatComplaintId(id: number | string) {
   return `SC-${String(id).padStart(5, '0')}`
 }
@@ -13,6 +22,7 @@ export async function getCitizenComplaints(citizenId: string) {
 
   const response = await fetch(
     `${API_BASE_URL}/api/complaints/citizen/${encodeURIComponent(citizenId)}`,
+    { headers: getAuthHeaders() },
   )
 
   if (!response.ok) {
