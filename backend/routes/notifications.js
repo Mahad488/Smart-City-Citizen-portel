@@ -1,11 +1,11 @@
 import express from "express";
 import db from "../config/db.js";
-import { authenticate } from "../auth.js";
+import { requireAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // GET all notifications
-router.get("/", authenticate, (req, res) => {
+router.get("/", (req, res) => {
     const sql = `
         SELECT id, title, message, type, is_read, created_at
         FROM notifications
@@ -26,7 +26,7 @@ router.get("/", authenticate, (req, res) => {
 
 
 // POST new notification
-router.post("/", authenticate, (req, res) => {
+router.post("/", requireAdmin, (req, res) => {
     const { title, message, type } = req.body;
 
     if (!title || !message) {
@@ -61,7 +61,7 @@ router.post("/", authenticate, (req, res) => {
 
 
 // Mark notification as read
-router.put("/:id/read", authenticate, (req, res) => {
+router.put("/:id/read", (req, res) => {
     const { id } = req.params;
 
     const sql = `
@@ -86,7 +86,7 @@ router.put("/:id/read", authenticate, (req, res) => {
 
 
 // Delete notification
-router.delete("/:id", authenticate, (req, res) => {
+router.delete("/:id", requireAdmin, (req, res) => {
     const { id } = req.params;
 
     const sql = `

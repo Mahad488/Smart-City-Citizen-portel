@@ -1,7 +1,7 @@
 import express from "express";
 import { Buffer } from "node:buffer";
 import db from "../config/db.js";
-import { authenticate } from "../auth.js";
+import { requireAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -15,11 +15,37 @@ const ensureComplaintAttachmentsTable = () =>
      ) ENGINE=InnoDB`
   );
 
+const canAccessComplaint = (req, citizenId) =>
+  req.user.role === "ADMIN" || req.user.citizen_id === citizenId;
+
+async function fetchComplaintForAccess(id, req, res) {
+  const [rows] = await db.query(
+    `SELECT *
+     FROM complaints
+     WHERE id = ?`,
+    [id]
+  );
+
+  if (rows.length === 0) {
+    res.status(404).json({ message: "Complaint not found" });
+    return null;
+  }
+
+  if (!canAccessComplaint(req, rows[0].citizen_id)) {
+    res.status(403).json({
+      message: "You can only access your own complaints.",
+    });
+    return null;
+  }
+
+  return rows[0];
+}
+
 
 // =====================================================
 // GET ALL COMPLAINTS - ADMIN
 // =====================================================
-router.get("/", authenticate, async (req, res) => {
+router.get("/", requireAdmin, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT *
@@ -41,42 +67,53 @@ router.get("/", authenticate, async (req, res) => {
 // =====================================================
 // GET CITIZEN'S COMPLAINTS
 // =====================================================
-router.get("/citizen/:citizen_id", authenticate, async (req, res) => {
+async function getMyComplaints(req, res) {
+  if (req.user.role !== "CITIZEN") {
+    return res.status(403).json({
+      message: "Citizen access is required.",
+    });
+  }
+
   try {
-    const { citizen_id } = req.params;
-
-    if (req.user.citizen_id !== citizen_id) {
-      return res.status(403).json({
-        message: "You can only view your own complaints.",
-      });
-    }
-
     const [rows] = await db.query(
       `SELECT *
        FROM complaints
        WHERE citizen_id = ?
        ORDER BY created_at DESC`,
-      [citizen_id]
+      [req.user.citizen_id]
     );
 
-    res.json(rows);
+    return res.json(rows);
   } catch (error) {
     console.error("GET CITIZEN COMPLAINTS ERROR:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: "Error fetching citizen complaints",
     });
   }
+}
+
+router.get("/me", getMyComplaints);
+router.get("/citizen/:citizen_id", (req, res) => {
+  if (
+    req.user.role !== "CITIZEN" ||
+    req.user.citizen_id !== req.params.citizen_id
+  ) {
+    return res.status(403).json({
+      message: "You can only view your own complaints.",
+    });
+  }
+
+  return getMyComplaints(req, res);
 });
 
 
 // =====================================================
 // POST COMPLAINT FROM CITIZEN
 // =====================================================
-router.post("/citizen", authenticate, async (req, res) => {
+router.post("/citizen", async (req, res) => {
   try {
     const {
-      citizen_id,
       title,
       description,
       category,
@@ -85,16 +122,17 @@ router.post("/citizen", authenticate, async (req, res) => {
       longitude,
       photo,
     } = req.body;
+    const { citizen_id } = req.user;
 
-    if (!citizen_id || !title || !description) {
-      return res.status(400).json({
-        message: "Citizen, title and description are required",
+    if (req.user.role !== "CITIZEN") {
+      return res.status(403).json({
+        message: "Citizen access is required.",
       });
     }
 
-    if (req.user.citizen_id !== citizen_id) {
-      return res.status(403).json({
-        message: "You can only create complaints for your own account.",
+    if (!title || !description) {
+      return res.status(400).json({
+        message: "Title and description are required",
       });
     }
 
@@ -219,27 +257,27 @@ router.post("/citizen", authenticate, async (req, res) => {
 // =====================================================
 // UPDATE CITIZEN COMPLAINT
 // =====================================================
-router.put("/citizen/:id", authenticate, async (req, res) => {
+router.put("/citizen/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
     const {
-      citizen_id,
       title,
       description,
       category,
       area,
     } = req.body;
+    const { citizen_id } = req.user;
 
-    if (!citizen_id || !title || !description) {
-      return res.status(400).json({
-        message: "Citizen, title and description are required",
+    if (req.user.role !== "CITIZEN") {
+      return res.status(403).json({
+        message: "Citizen access is required.",
       });
     }
 
-    if (req.user.citizen_id !== citizen_id) {
-      return res.status(403).json({
-        message: "You can only update your own complaints.",
+    if (!title || !description) {
+      return res.status(400).json({
+        message: "Title and description are required",
       });
     }
 
@@ -288,22 +326,15 @@ router.put("/citizen/:id", authenticate, async (req, res) => {
 // =====================================================
 // DELETE CITIZEN COMPLAINT
 // =====================================================
-router.delete("/citizen/:id", authenticate, async (req, res) => {
+router.delete("/citizen/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { citizen_id } = req.body;
-
-    if (!citizen_id) {
-      return res.status(400).json({
-        message: "Citizen ID is required",
-      });
-    }
-
-    if (req.user.citizen_id !== citizen_id) {
+    if (req.user.role !== "CITIZEN") {
       return res.status(403).json({
-        message: "You can only delete your own complaints.",
+        message: "Citizen access is required.",
       });
     }
+    const { citizen_id } = req.user;
 
     await ensureComplaintAttachmentsTable();
     const [result] = await db.query(
@@ -340,22 +371,12 @@ router.delete("/citizen/:id", authenticate, async (req, res) => {
 // =====================================================
 // GET SINGLE COMPLAINT
 // =====================================================
-router.get("/:id/attachment", authenticate, async (req, res) => {
+router.get("/:id/attachment", async (req, res) => {
   try {
     const complaintId = Number(req.params.id);
-    const [complaintRows] = await db.query(
-      `SELECT citizen_id FROM complaints WHERE id = ?`,
-      [complaintId]
-    );
-
-    if (complaintRows.length === 0) {
-      return res.status(404).json({ message: "Complaint not found" });
-    }
-
-    if (req.user.citizen_id !== complaintRows[0].citizen_id) {
-      return res.status(403).json({
-        message: "You can only access your own complaint photo.",
-      });
+    const complaint = await fetchComplaintForAccess(complaintId, req, res);
+    if (!complaint) {
+      return;
     }
 
     await ensureComplaintAttachmentsTable();
@@ -383,28 +404,14 @@ router.get("/:id/attachment", authenticate, async (req, res) => {
   }
 });
 
-router.get("/:id", authenticate, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const [rows] = await db.query(
-      `SELECT *
-       FROM complaints
-       WHERE id = ?`,
-      [req.params.id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({
-        message: "Complaint not found",
-      });
+    const complaint = await fetchComplaintForAccess(req.params.id, req, res);
+    if (!complaint) {
+      return;
     }
 
-    if (req.user.citizen_id !== rows[0].citizen_id) {
-      return res.status(403).json({
-        message: "This complaint does not belong to your account.",
-      });
-    }
-
-    res.json(rows[0]);
+    res.json(complaint);
 
   } catch (error) {
     console.error("GET SINGLE COMPLAINT ERROR:", error);
@@ -419,10 +426,9 @@ router.get("/:id", authenticate, async (req, res) => {
 // =====================================================
 // ADMIN CREATE COMPLAINT
 // =====================================================
-router.post("/", authenticate, async (req, res) => {
+router.post("/", requireAdmin, async (req, res) => {
   try {
     const {
-      citizen_id,
       category,
       description,
       location,
@@ -431,6 +437,7 @@ router.post("/", authenticate, async (req, res) => {
       latitude,
       longitude,
     } = req.body;
+    const { citizen_id } = req.user;
 
     const [result] = await db.query(
       `INSERT INTO complaints
@@ -475,8 +482,13 @@ router.post("/", authenticate, async (req, res) => {
 // =====================================================
 // ADMIN UPDATE COMPLAINT
 // =====================================================
-router.put("/:id", authenticate, async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
+    const complaint = await fetchComplaintForAccess(req.params.id, req, res);
+    if (!complaint) {
+      return;
+    }
+
     const {
       category,
       description,
@@ -486,6 +498,33 @@ router.put("/:id", authenticate, async (req, res) => {
       latitude,
       longitude,
     } = req.body;
+
+    if (req.user.role !== "ADMIN") {
+      const [result] = await db.query(
+        `UPDATE complaints
+         SET category = ?,
+             description = ?,
+             location = ?
+         WHERE id = ? AND citizen_id = ?`,
+        [
+          category,
+          description,
+          location,
+          req.params.id,
+          req.user.citizen_id,
+        ]
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          message: "Complaint not found",
+        });
+      }
+
+      return res.json({
+        message: "Complaint updated successfully",
+      });
+    }
 
     const [result] = await db.query(
       `UPDATE complaints
@@ -532,19 +571,37 @@ router.put("/:id", authenticate, async (req, res) => {
 // =====================================================
 // ADMIN DELETE COMPLAINT
 // =====================================================
-router.delete("/:id", authenticate, async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
-    const [result] = await db.query(
-      `DELETE FROM complaints
-       WHERE id = ?`,
-      [req.params.id]
-    );
+    const complaint = await fetchComplaintForAccess(req.params.id, req, res);
+    if (!complaint) {
+      return;
+    }
+
+    await ensureComplaintAttachmentsTable();
+    const [result] = req.user.role === "ADMIN"
+      ? await db.query(
+        `DELETE FROM complaints
+         WHERE id = ?`,
+        [req.params.id]
+      )
+      : await db.query(
+        `DELETE FROM complaints
+         WHERE id = ? AND citizen_id = ?`,
+        [req.params.id, req.user.citizen_id]
+      );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
         message: "Complaint not found",
       });
     }
+
+    await db.query(
+      `DELETE FROM complaint_attachments
+       WHERE complaint_id = ?`,
+      [req.params.id]
+    );
 
     res.json({
       message: "Complaint deleted successfully",

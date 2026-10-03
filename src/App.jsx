@@ -9,6 +9,7 @@ import NewComplaint from './Citizen/NewComplaint'
 import Notifications from './Citizen/Notifications.tsx'
 import TrackComplaint from './Citizen/TrackComplaint'
 import Home from './Home/Home.tsx'
+import ProtectedRoute from './ProtectedRoute.jsx'
 import {
   AboutPage,
   ContactPage,
@@ -30,60 +31,61 @@ function App() {
         <Route path="/track-complaint" element={<TrackComplaintPage />} />
         <Route path="/contact" element={<ContactPage />} />
 
-        {/* Existing Citizen Login */}
+        {/* Public citizen login */}
+        <Route path="/login" element={<CitizenAuth />} />
         <Route path="/citizen-login" element={<CitizenAuth />} />
 
-        {/* Existing Citizen Dashboard */}
-        <Route path="/citizen-portal" element={<CitizenPortal />} />
+        {/* Protected citizen portal */}
+        <Route path="/citizen-portal" element={<ProtectedRoute><CitizenPortal /></ProtectedRoute>} />
 
         {/* New Complaint */}
         <Route
           path="/citizen-new-complaint"
-          element={<NewComplaint />}
+          element={<ProtectedRoute><NewComplaint /></ProtectedRoute>}
         />
 
         {/* Emergency Services */}
         <Route
           path="/citizen-emergency"
-          element={<Emergency />}
+          element={<ProtectedRoute><Emergency /></ProtectedRoute>}
         />
 
         {/* Notifications */}
         <Route
           path="/citizen-notifications"
-          element={<Notifications />}
+          element={<ProtectedRoute><Notifications /></ProtectedRoute>}
         />
 
         {/* My Complaints */}
         <Route
           path="/citizen-my-complaints"
-          element={<MyComplaints />}
+          element={<ProtectedRoute><MyComplaints /></ProtectedRoute>}
         />
 
         {/* My Profile */}
         <Route
           path="/citizen-profile"
-          element={<MyProfile />}
+          element={<ProtectedRoute><MyProfile /></ProtectedRoute>}
         />
 
         {/* Track Complaint */}
         <Route
           path="/citizen-track-complaint"
-          element={<TrackComplaint />}
+          element={<ProtectedRoute><TrackComplaint /></ProtectedRoute>}
         />
         <Route
           path="/citizen-track-complaint/:id"
-          element={<ComplaintTracking />}
+          element={<ProtectedRoute><ComplaintTracking /></ProtectedRoute>}
         />
 
         {/* Complaint Tracking */}
         <Route
           path="/citizen-portal/complaint/:id"
-          element={<ComplaintTracking />}
+          element={<ProtectedRoute><ComplaintTracking /></ProtectedRoute>}
         />
 
         {/* Unknown URL */}
-        <Route path="*" element={<Navigate to="/citizen-login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>
     </BrowserRouter>

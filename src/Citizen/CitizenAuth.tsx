@@ -67,10 +67,11 @@ function CitizenAuth() {
         throw new Error(data.message || "Login failed");
       }
 
-      if (data.token) {
-        localStorage.setItem("citizen_token", data.token);
+      if (typeof data.token !== "string" || !data.token) {
+        throw new Error("Login response did not include an authentication token.");
       }
 
+      localStorage.setItem("citizen_token", data.token);
       localStorage.setItem(
         "citizen",
         JSON.stringify(data.citizen || data)

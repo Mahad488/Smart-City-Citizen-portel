@@ -1,12 +1,16 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { Buffer } from "node:buffer";
+import process from "node:process";
 import db from "../config/db.js";
-import { authenticate } from "../auth.js";
+import {
+  JWT_SECRET,
+  requireAdmin,
+  setAuthCookie,
+} from "../middleware/auth.js";
 
 const router = express.Router();
-
-const JWT_SECRET = process.env.JWT_SECRET || "smart-city-citizen-dev-secret";
 
 const generateCitizenId = async () => {
   try {
@@ -35,7 +39,7 @@ const generateCitizenId = async () => {
 };
 
 // GET all citizens
-router.get("/", authenticate, (req, res) => {
+router.get("/", requireAdmin, (req, res) => {
   const sql = `
     SELECT
       id,
@@ -64,7 +68,7 @@ router.get("/", authenticate, (req, res) => {
 
 
 // Citizen statistics
-router.get("/stats/summary", authenticate, (req, res) => {
+router.get("/stats/summary", requireAdmin, (req, res) => {
   const sql = `
     SELECT
       COUNT(*) AS total,
@@ -148,13 +152,18 @@ router.post("/login", async (req, res) => {
         id: citizen.id,
         citizen_id: citizen.citizen_id,
         email: citizen.email,
-        name: citizen.name,
-        status: citizen.status,
+        role: "CITIZEN",
       },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      {
+        expiresIn: "7d",
+        algorithm: "HS256",
+        issuer: "citizen-portal",
+        audience: "citizen-portal-api",
+      }
     );
 
+    setAuthCookie(res, token);
     res.json({
       message: "Login successful",
       token,
@@ -167,6 +176,7 @@ router.post("/login", async (req, res) => {
         area: citizen.area,
         registered_at: citizen.registered_at,
         status: citizen.status,
+        role: "CITIZEN",
       },
     });
   } catch (error) {
@@ -178,8 +188,226 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post("/admin/login", async (req, res) => {
+  const { email, password } = req.body;
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+
+  if (typeof email !== "string" || typeof password !== "string") {
+    return res.status(400).json({
+      message: "Email and password are required.",
+    });
+  }
+
+  if (
+    !adminEmail ||
+    !/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(adminPasswordHash || "")
+  ) {
+    console.error("Admin login is unavailable: ADMIN_EMAIL and ADMIN_PASSWORD_HASH must be configured.");
+    return res.status(503).json({
+      message: "Administrator login is not configured.",
+    });
+  }
+
+  if (Buffer.byteLength(password, "utf8") > 72) {
+    return res.status(400).json({
+      message: "Password must be 72 bytes or fewer.",
+    });
+  }
+
+  try {
+    const passwordMatches = await bcrypt.compare(password, adminPasswordHash);
+    if (
+      !passwordMatches ||
+      email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()
+    ) {
+      return res.status(401).json({
+        message: "Invalid email or password.",
+      });
+    }
+
+    const normalizedEmail = adminEmail.trim().toLowerCase();
+    const token = jwt.sign(
+      {
+        citizen_id: null,
+        email: normalizedEmail,
+        role: "ADMIN",
+      },
+      JWT_SECRET,
+      {
+        expiresIn: "7d",
+        algorithm: "HS256",
+        issuer: "citizen-portal",
+        audience: "citizen-portal-api",
+      }
+    );
+
+    setAuthCookie(res, token);
+    return res.json({
+      message: "Administrator login successful.",
+      token,
+      user: {
+        citizen_id: null,
+        email: normalizedEmail,
+        role: "ADMIN",
+      },
+    });
+  } catch (error) {
+    console.error("Administrator login error:", error);
+    return res.status(500).json({
+      message: "Administrator login failed.",
+    });
+  }
+});
+
+router.put("/me", async (req, res) => {
+  if (req.user.role !== "CITIZEN") {
+    return res.status(403).json({
+      message: "Citizen access is required.",
+    });
+  }
+
+  const { name, phone, address } = req.body;
+  if (
+    typeof name !== "string" ||
+    !name.trim() ||
+    name.trim().length > 255 ||
+    typeof phone !== "string" ||
+    typeof address !== "string"
+  ) {
+    return res.status(400).json({
+      message: "A valid name, phone number, and address are required.",
+    });
+  }
+
+  const normalizedPhone = phone.trim();
+  const normalizedAddress = address.trim();
+
+  if (
+    (normalizedPhone && normalizedPhone.length > 32) ||
+    (normalizedAddress && normalizedAddress.length > 255)
+  ) {
+    return res.status(400).json({
+      message: "Phone number or address is too long.",
+    });
+  }
+
+  try {
+    await db.query(
+      `UPDATE citizens
+       SET name = ?, phone = ?, area = ?
+       WHERE citizen_id = ?`,
+      [
+        name.trim(),
+        normalizedPhone,
+        normalizedAddress,
+        req.user.citizen_id,
+      ]
+    );
+
+    const [rows] = await db.query(
+      `SELECT citizen_id, name, email, phone, area
+       FROM citizens
+       WHERE citizen_id = ?`,
+      [req.user.citizen_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Citizen profile not found.",
+      });
+    }
+
+    return res.json({
+      message: "Profile updated successfully.",
+      citizen: rows[0],
+    });
+  } catch (error) {
+    console.error("Citizen profile update error:", error);
+    return res.status(500).json({
+      message: "Failed to update profile.",
+    });
+  }
+});
+
+router.put("/me/password", async (req, res) => {
+  if (req.user.role !== "CITIZEN") {
+    return res.status(403).json({
+      message: "Citizen access is required.",
+    });
+  }
+
+  const { currentPassword, newPassword } = req.body;
+  if (
+    typeof currentPassword !== "string" ||
+    typeof newPassword !== "string"
+  ) {
+    return res.status(400).json({
+      message: "Current password and new password are required.",
+    });
+  }
+
+  if (
+    Buffer.byteLength(currentPassword, "utf8") > 72 ||
+    newPassword.length < 6 ||
+    Buffer.byteLength(newPassword, "utf8") > 72
+  ) {
+    return res.status(400).json({
+      message: "New password must be at least 6 characters and no more than 72 bytes.",
+    });
+  }
+
+  if (currentPassword === newPassword) {
+    return res.status(400).json({
+      message: "New password must be different from the current password.",
+    });
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT password_hash
+       FROM citizens
+       WHERE citizen_id = ?`,
+      [req.user.citizen_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Citizen account not found.",
+      });
+    }
+
+    const passwordMatches = await bcrypt.compare(
+      currentPassword,
+      rows[0].password_hash
+    );
+    if (!passwordMatches) {
+      return res.status(400).json({
+        message: "Current password is incorrect.",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await db.query(
+      `UPDATE citizens
+       SET password_hash = ?
+       WHERE citizen_id = ?`,
+      [passwordHash, req.user.citizen_id]
+    );
+
+    return res.json({
+      message: "Password changed successfully.",
+    });
+  } catch (error) {
+    console.error("Citizen password update error:", error);
+    return res.status(500).json({
+      message: "Failed to change password.",
+    });
+  }
+});
+
 // Approve / Activate citizen
-router.put("/:id/activate", authenticate, async (req, res) => {
+router.put("/:id/activate", requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -207,7 +435,7 @@ router.put("/:id/activate", authenticate, async (req, res) => {
 });
 
 // Deactivate citizen
-router.put("/:id/deactivate", authenticate, async (req, res) => {
+router.put("/:id/deactivate", requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -235,7 +463,7 @@ router.put("/:id/deactivate", authenticate, async (req, res) => {
 });
 
 // GET citizen by ID
-router.get("/:id", authenticate, (req, res) => {
+router.get("/:id", (req, res) => {
   const { id } = req.params;
 
   const sql = `
@@ -263,6 +491,15 @@ router.get("/:id", authenticate, (req, res) => {
     if (results.length === 0) {
       return res.status(404).json({
         message: "Citizen not found"
+      });
+    }
+
+    if (
+      req.user.role !== "ADMIN" &&
+      req.user.citizen_id !== results[0].citizen_id
+    ) {
+      return res.status(403).json({
+        message: "You can only view your own citizen profile."
       });
     }
 
@@ -354,7 +591,7 @@ router.post("/register", async (req, res) => {
 });
 
 // POST admin creates citizen
-router.post("/", authenticate, async (req, res) => {
+router.post("/", requireAdmin, async (req, res) => {
   try {
     const {
       name,
@@ -414,7 +651,7 @@ router.post("/", authenticate, async (req, res) => {
 
 
 // PUT update citizen
-router.put("/:id", authenticate, (req, res) => {
+router.put("/:id", requireAdmin, (req, res) => {
   const { id } = req.params;
 
   const {
@@ -464,7 +701,7 @@ router.put("/:id", authenticate, (req, res) => {
 
 
 // DELETE citizen
-router.delete("/:id", authenticate, (req, res) => {
+router.delete("/:id", requireAdmin, (req, res) => {
   const { id } = req.params;
 
   const sql = `

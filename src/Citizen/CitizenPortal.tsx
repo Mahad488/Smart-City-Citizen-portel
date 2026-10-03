@@ -97,42 +97,23 @@ function CitizenPortal() {
   useEffect(() => {
     const savedCitizen = localStorage.getItem('citizen')
 
-    if (!savedCitizen || !localStorage.getItem('citizen_token')) {
-      window.location.href = '/citizen-login'
-      return
-    }
-
-    try {
-      const citizenData = JSON.parse(savedCitizen)
-
-      setCitizen(citizenData)
-
-      const citizenId =
-        citizenData.citizen_id ??
-        citizenData.citizenId ??
-        citizenData.id
-
-      if (!citizenId) {
-        setComplaintsError('Citizen ID not found. Please login again.')
-        setComplaintsLoading(false)
-        return
+    if (savedCitizen) {
+      try {
+        setCitizen(JSON.parse(savedCitizen))
+      } catch (error) {
+        console.error('CACHED CITIZEN DISPLAY DATA ERROR:', error)
       }
-
-      loadComplaints(String(citizenId))
-    } catch (error) {
-      console.error('CITIZEN DATA ERROR:', error)
-
-      setComplaintsError('Invalid citizen session. Please login again.')
-      setComplaintsLoading(false)
     }
+
+    loadComplaints()
   }, [])
 
-  const loadComplaints = async (citizenId: string) => {
+  const loadComplaints = async () => {
     try {
       setComplaintsLoading(true)
       setComplaintsError('')
 
-      const data = await getCitizenComplaints(citizenId)
+      const data = await getCitizenComplaints()
 
       const formattedComplaints: Complaint[] = data.map((item: any) => ({
         id: item.id,

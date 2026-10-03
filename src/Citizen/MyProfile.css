@@ -93,6 +93,12 @@
   font-weight: 700;
 }
 
+.profile-message-error {
+  background: #fff1f0;
+  border-color: #ffd3cf;
+  color: #b42318;
+}
+
 /* =========================================
    CARD
 ========================================= */

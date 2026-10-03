@@ -1,17 +1,26 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BadgeCheck, Camera, Check, LockKeyhole } from "lucide-react";
+import { changePassword, updateProfile } from "../api";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
 import "./Citizenportal.css";
 import "./MyProfile.css";
 
+interface CitizenProfile {
+  citizen_id?: string;
+  name?: string;
+  email?: string;
+  phone?: string | null;
+  area?: string | null;
+}
+
 const MyProfile: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [citizen] = useState(() => {
+  const [citizen, setCitizen] = useState<CitizenProfile | null>(() => {
     try {
       const saved = localStorage.getItem("citizen");
-      return saved ? JSON.parse(saved) : null;
+      return saved ? JSON.parse(saved) as CitizenProfile : null;
     } catch {
       return null;
     }
@@ -27,10 +36,10 @@ const MyProfile: React.FC = () => {
   });
 
   const [formData, setFormData] = useState({
-    name: "Muhammad Mahad Rafiq",
-    email: "muhammadmahad2021@gmail.com",
-    phone: "03333333333",
-    area: "South District",
+    name: citizen?.name || "",
+    email: citizen?.email || "",
+    phone: citizen?.phone || "",
+    area: citizen?.area || "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -40,6 +49,9 @@ const MyProfile: React.FC = () => {
   });
 
   const [message, setMessage] = useState("");
+  const [messageIsError, setMessageIsError] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const handleNavigation = (label: string) => {
     if (label === "My Profile") return;
@@ -151,21 +163,59 @@ const MyProfile: React.FC = () => {
     }
   };
 
-  const handleSaveProfile = () => {
-    setMessage("Profile information saved successfully.");
+  const handleSaveProfile = async () => {
+    setMessage("");
+    setSavingProfile(true);
 
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
+    try {
+      const response = await updateProfile({
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        address: formData.area.trim(),
+      });
+      const updatedCitizen = response.citizen;
+      setCitizen((previous) => ({
+        ...previous,
+        ...updatedCitizen,
+      }));
+      setFormData((previous) => ({
+        ...previous,
+        name: updatedCitizen.name,
+        email: updatedCitizen.email,
+        phone: updatedCitizen.phone || "",
+        area: updatedCitizen.area || "",
+      }));
+
+      try {
+        localStorage.setItem(
+          "citizen",
+          JSON.stringify({ ...citizen, ...updatedCitizen })
+        );
+      } catch (storageError) {
+        console.error("Unable to refresh the locally cached profile:", storageError);
+      }
+
+      setMessage(response.message || "Profile updated successfully.");
+      setMessageIsError(false);
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Failed to update profile."
+      );
+      setMessageIsError(true);
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
+    setMessage("");
     if (
       !passwordData.currentPassword ||
       !passwordData.newPassword ||
       !passwordData.confirmPassword
     ) {
       setMessage("Please fill all password fields.");
+      setMessageIsError(true);
       return;
     }
 
@@ -173,6 +223,13 @@ const MyProfile: React.FC = () => {
       setMessage(
         "New password must contain at least 6 characters."
       );
+      setMessageIsError(true);
+      return;
+    }
+
+    if (new TextEncoder().encode(passwordData.newPassword).length > 72) {
+      setMessage("New password must be no more than 72 bytes.");
+      setMessageIsError(true);
       return;
     }
 
@@ -181,20 +238,32 @@ const MyProfile: React.FC = () => {
       passwordData.confirmPassword
     ) {
       setMessage("New password and confirm password do not match.");
+      setMessageIsError(true);
       return;
     }
 
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+    setChangingPassword(true);
+    try {
+      const response = await changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
 
-    setMessage("Password changed successfully.");
-
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
+      setMessage(response.message || "Password changed successfully.");
+      setMessageIsError(false);
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Failed to change password."
+      );
+      setMessageIsError(true);
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   return (
@@ -239,8 +308,11 @@ const MyProfile: React.FC = () => {
       ========================================= */}
 
       {message && (
-        <div className="profile-message">
-          <Check size={16} aria-hidden="true" />
+        <div
+          className={`profile-message${messageIsError ? " profile-message-error" : ""}`}
+          role={messageIsError ? "alert" : "status"}
+        >
+          {!messageIsError && <Check size={16} aria-hidden="true" />}
           {message}
         </div>
       )}
@@ -305,7 +377,7 @@ const MyProfile: React.FC = () => {
             </h3>
 
             <p>
-              Citizen ID: CIT-10007
+              Citizen ID: {citizen?.citizen_id || "—"}
             </p>
 
             <div className="photo-buttons">
@@ -370,7 +442,7 @@ const MyProfile: React.FC = () => {
                   type="email"
                   name="email"
                   value={formData.email}
-                  onChange={handleChange}
+                  readOnly
                   placeholder="Enter your email"
                 />
 
@@ -399,7 +471,7 @@ const MyProfile: React.FC = () => {
               <div className="form-group">
 
                 <label>
-                  Area / District
+                  Address / District
                 </label>
 
                 <input
@@ -422,7 +494,7 @@ const MyProfile: React.FC = () => {
 
               <input
                 type="text"
-                value="CIT-10007"
+                value={citizen?.citizen_id || ""}
                 disabled
               />
 
@@ -437,7 +509,15 @@ const MyProfile: React.FC = () => {
               <button
                 type="button"
                 className="cancel-button"
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  setFormData({
+                    name: citizen?.name || "",
+                    email: citizen?.email || "",
+                    phone: citizen?.phone || "",
+                    area: citizen?.area || "",
+                  });
+                  setMessage("");
+                }}
               >
                 Cancel
               </button>
@@ -446,8 +526,9 @@ const MyProfile: React.FC = () => {
                 type="button"
                 className="save-button"
                 onClick={handleSaveProfile}
+                disabled={savingProfile}
               >
-                Save Changes
+                {savingProfile ? "Saving..." : "Save Changes"}
               </button>
 
             </div>
@@ -556,8 +637,9 @@ const MyProfile: React.FC = () => {
               type="button"
               className="save-password-button"
               onClick={handleChangePassword}
+              disabled={changingPassword}
             >
-              Change Password
+              {changingPassword ? "Changing..." : "Change Password"}
             </button>
 
           </div>
