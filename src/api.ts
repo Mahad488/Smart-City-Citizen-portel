@@ -1,13 +1,6 @@
-const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
-
-if (import.meta.env.PROD && !configuredApiUrl) {
-  throw new Error(
-    'VITE_API_URL must be configured to the backend API URL for production builds.',
-  )
-}
-
 export const API_BASE_URL = (
-  configuredApiUrl || 'http://localhost:5000'
+  import.meta.env.VITE_API_URL?.trim() ||
+  'https://smart-city-citizen-portel-production.up.railway.app'
 ).replace(/\/+$/, '')
 
 function getAuthHeaders(): HeadersInit {
