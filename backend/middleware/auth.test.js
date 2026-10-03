@@ -38,7 +38,7 @@ test("authenticateToken rejects missing credentials", () => {
   const res = createResponse();
   let nextCalled = false;
 
-  authenticateToken({ headers: {} }, res, () => {
+  authenticateToken({ method: "GET", path: "/", headers: {} }, res, () => {
     nextCalled = true;
   });
 
@@ -46,11 +46,49 @@ test("authenticateToken rejects missing credentials", () => {
   assert.equal(nextCalled, false);
 });
 
+test("authenticateToken allows OPTIONS requests without a token", () => {
+  let nextCalled = false;
+
+  authenticateToken(
+    { method: "OPTIONS", path: "/api/complaints", headers: {} },
+    createResponse(),
+    () => {
+      nextCalled = true;
+    }
+  );
+
+  assert.equal(nextCalled, true);
+});
+
+test("authenticateToken bypasses login and registration paths", () => {
+  for (const path of [
+    "/api/citizens/login",
+    "/api/citizens/register",
+    "/api/citizens/admin/login",
+  ]) {
+    let nextCalled = false;
+
+    authenticateToken(
+      { method: "POST", path, headers: {} },
+      createResponse(),
+      () => {
+        nextCalled = true;
+      }
+    );
+
+    assert.equal(nextCalled, true, `${path} should bypass token verification`);
+  }
+});
+
 test("authenticateToken rejects invalid tokens", () => {
   const res = createResponse();
 
   authenticateToken(
-    { headers: { authorization: "Bearer invalid-token" } },
+    {
+      method: "GET",
+      path: "/",
+      headers: { authorization: "Bearer invalid-token" },
+    },
     res,
     () => assert.fail("next should not run")
   );
@@ -76,7 +114,11 @@ test("authenticateToken rejects expired tokens and unsupported roles", () => {
   for (const token of [expiredToken, invalidRoleToken]) {
     const res = createResponse();
     authenticateToken(
-      { headers: { authorization: `Bearer ${token}` } },
+      {
+        method: "GET",
+        path: "/",
+        headers: { authorization: `Bearer ${token}` },
+      },
       res,
       () => assert.fail("next should not run")
     );
@@ -91,7 +133,11 @@ test("authenticateToken attaches only the expected user claims", () => {
     role: "CITIZEN",
     private_claim: "not exposed",
   });
-  const req = { headers: { authorization: `Bearer ${token}` } };
+  const req = {
+    method: "GET",
+    path: "/",
+    headers: { authorization: `Bearer ${token}` },
+  };
   let nextCalled = false;
 
   authenticateToken(req, createResponse(), () => {
@@ -112,7 +158,11 @@ test("authenticateToken accepts a token from the HttpOnly cookie", () => {
     email: "admin@example.com",
     role: "ADMIN",
   });
-  const req = { headers: { cookie: `other=value; token=${token}` } };
+  const req = {
+    method: "GET",
+    path: "/",
+    headers: { cookie: `other=value; token=${token}` },
+  };
 
   authenticateToken(req, createResponse(), () => {});
 
@@ -133,6 +183,8 @@ test("authenticateToken rejects malformed bearer headers even when a cookie exis
 
   authenticateToken(
     {
+      method: "GET",
+      path: "/",
       headers: {
         authorization: "Basic credentials",
         cookie: `token=${token}`,

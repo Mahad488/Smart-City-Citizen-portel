@@ -58,6 +58,14 @@ function getToken(req) {
 }
 
 export function authenticateToken(req, res, next) {
+  if (
+    req.method === "OPTIONS" ||
+    req.path.includes("/login") ||
+    req.path.includes("/register")
+  ) {
+    return next();
+  }
+
   const token = getToken(req);
 
   if (!token) {
