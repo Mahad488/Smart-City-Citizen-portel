@@ -1224,6 +1224,10 @@ html {
     grid-template-columns: repeat(3, 1fr);
   }
 
+  .info-grid.three-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .updates-layout {
     grid-template-columns: 1fr;
     gap: 0;
@@ -1247,6 +1251,16 @@ html {
 
   .home-container {
     width: min(1200px, calc(100% - 32px));
+  }
+
+  .info-grid.two-col,
+  .info-grid.three-col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lg-card,
+  .service-card {
+    min-height: 0;
   }
 
   .home-navbar {
