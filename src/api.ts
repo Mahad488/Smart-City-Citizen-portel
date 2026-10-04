@@ -100,3 +100,66 @@ export async function getCitizenComplaints() {
 
   return response.json()
 }
+
+export interface EmergencyRecord {
+  id: number | string
+  type: string
+  location: string
+  status: string
+  created_at?: string | null
+  description?: string | null
+}
+
+export interface EmergencyReport {
+  type: string
+  location: string
+  team: string
+  priority: string
+  status: string
+}
+
+async function getEmergencyResponse<T>(response: Response): Promise<T> {
+  const text = await response.text()
+  let result: { message?: string } & T
+
+  try {
+    const parsed: unknown = text ? JSON.parse(text) : {}
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('Response must be a JSON object')
+    }
+    result = parsed as { message?: string } & T
+  } catch {
+    throw new Error('The server returned an invalid response')
+  }
+
+  if (!response.ok) {
+    throw new Error(result.message || 'The emergency request could not be completed')
+  }
+
+  return result
+}
+
+export async function getCitizenEmergencies(citizenId: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/emergencies/citizen/${encodeURIComponent(citizenId)}`,
+    { headers: getAuthHeaders(), credentials: 'include' },
+  )
+  const records = await getEmergencyResponse<EmergencyRecord[]>(response)
+
+  if (!Array.isArray(records)) {
+    throw new Error('The server returned an invalid emergency list')
+  }
+
+  return records
+}
+
+export async function submitEmergency(report: EmergencyReport) {
+  const response = await fetch(`${API_BASE_URL}/api/emergencies`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+    body: JSON.stringify(report),
+  })
+
+  return getEmergencyResponse<{ message: string; id: number }>(response)
+}

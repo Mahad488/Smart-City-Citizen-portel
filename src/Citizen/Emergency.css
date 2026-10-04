@@ -348,6 +348,32 @@
   transform: translateY(-1px);
 }
 
+.submit-emergency:disabled {
+  cursor: wait;
+  opacity: 0.75;
+  transform: none;
+}
+
+.emergency-form-message {
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.emergency-form-message.error {
+  color: #9f2424;
+  background: #fff0f0;
+  border: 1px solid #ffd1d1;
+}
+
+.emergency-form-message.success {
+  color: #126b4d;
+  background: #eafaf3;
+  border: 1px solid #c4ecd9;
+}
+
 /* =========================================
    HISTORY
 ========================================= */

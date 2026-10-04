@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -8,6 +8,11 @@ import {
   Siren,
   X,
 } from "lucide-react";
+import {
+  getCitizenEmergencies,
+  submitEmergency,
+  type EmergencyRecord,
+} from "../api";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
 import "./Citizenportal.css";
 import "./Emergency.css";
@@ -17,7 +22,7 @@ type EmergencyRequest = {
   type: string;
   location: string;
   description: string;
-  status: "Reporting" | "Responding" | "Resolved";
+  status: string;
   date: string;
 };
 
@@ -55,6 +60,27 @@ function formatLocationAddress(result: ReverseGeocodeResponse) {
   return parts.join(", ") || result.display_name?.trim() || "";
 }
 
+function toEmergencyRequest(record: EmergencyRecord): EmergencyRequest {
+  const rawDate = record.created_at ? new Date(record.created_at) : null;
+  const date =
+    rawDate && !Number.isNaN(rawDate.getTime())
+      ? rawDate.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : "Date unavailable";
+
+  return {
+    id: `EM-${String(record.id).replace(/^EM-/i, "").padStart(4, "0")}`,
+    type: record.type,
+    location: record.location,
+    description: record.description || "Details not available.",
+    status: record.status === "Active" ? "Reporting" : record.status,
+    date,
+  };
+}
+
 const Emergency: React.FC = () => {
   const navigate = useNavigate();
   const [citizen] = useState(() => {
@@ -72,19 +98,51 @@ const Emergency: React.FC = () => {
   const [locationError, setLocationError] = useState("");
   const [description, setDescription] = useState("");
   const [phone, setPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState("");
+  const [submissionMessage, setSubmissionMessage] = useState("");
+  const [historyError, setHistoryError] = useState("");
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [trackingEmergency, setTrackingEmergency] =
     useState<EmergencyRequest | null>(null);
+  const [emergencies, setEmergencies] = useState<EmergencyRequest[]>([]);
 
-  const [emergencies, setEmergencies] = useState<EmergencyRequest[]>([
-    {
-      id: "EM-0007",
-      type: "Accident",
-      location: "Wapda Town",
-      description: "Road accident reported near main road.",
-      status: "Responding",
-      date: "29 Sep 2026",
-    },
-  ]);
+  useEffect(() => {
+    const citizenId = citizen?.citizen_id;
+    if (typeof citizenId !== "string" || !citizenId) {
+      setHistoryError("Your citizen account could not be identified. Please log in again.");
+      setHistoryLoading(false);
+      return;
+    }
+
+    let isCurrent = true;
+    getCitizenEmergencies(citizenId)
+      .then((records) => {
+        if (isCurrent) {
+          setEmergencies(records.map(toEmergencyRequest));
+          setHistoryError("");
+        }
+      })
+      .catch((error: unknown) => {
+        console.error("LOAD EMERGENCIES ERROR:", error);
+        if (isCurrent) {
+          setHistoryError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load your emergency requests.",
+          );
+        }
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setHistoryLoading(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [citizen?.citizen_id]);
 
   const useMyLocation = () => {
     setLocationError("");
@@ -181,35 +239,51 @@ const Emergency: React.FC = () => {
     navigate("/citizen-portal");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!emergencyType || !location || !description || !phone) {
-      alert("Please fill all required fields.");
+      setSubmissionError("Please fill all required fields.");
       return;
     }
 
-    const newEmergency: EmergencyRequest = {
-      id: `EM-${String(emergencies.length + 8).padStart(4, "0")}`,
-      type: emergencyType,
-      location,
-      description,
-      status: "Reporting",
-      date: new Date().toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }),
-    };
+    setSubmitting(true);
+    setSubmissionError("");
+    setSubmissionMessage("");
 
-    setEmergencies([newEmergency, ...emergencies]);
+    try {
+      const result = await submitEmergency({
+        type: emergencyType,
+        location,
+        team: "Emergency Response Team",
+        priority: "High",
+        status: "Active",
+      });
+      const newEmergency = toEmergencyRequest({
+        id: result.id,
+        type: emergencyType,
+        location,
+        status: "Active",
+        created_at: new Date().toISOString(),
+        description,
+      });
 
-    setEmergencyType("");
-    setLocation("");
-    setDescription("");
-    setPhone("");
-
-    alert("Emergency request submitted successfully.");
+      setEmergencies((current) => [newEmergency, ...current]);
+      setSubmissionMessage(`Emergency request ${newEmergency.id} was sent to the response team.`);
+      setEmergencyType("");
+      setLocation("");
+      setDescription("");
+      setPhone("");
+    } catch (error) {
+      console.error("SUBMIT EMERGENCY ERROR:", error);
+      setSubmissionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit the emergency request. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -378,12 +452,27 @@ const Emergency: React.FC = () => {
                 </div>
               </div>
 
-              <button type="submit" className="submit-emergency">
-                <Siren size={17} aria-hidden="true" /> Submit Emergency
+              <button
+                type="submit"
+                className="submit-emergency"
+                disabled={submitting}
+              >
+                <Siren size={17} aria-hidden="true" />
+                {submitting ? "Sending..." : "Submit Emergency"}
               </button>
 
             </div>
 
+            {submissionError && (
+              <p className="emergency-form-message error" role="alert">
+                {submissionError}
+              </p>
+            )}
+            {submissionMessage && (
+              <p className="emergency-form-message success" role="status">
+                {submissionMessage}
+              </p>
+            )}
           </form>
         </section>
 
@@ -404,7 +493,16 @@ const Emergency: React.FC = () => {
 
           <div className="emergency-list">
 
-            {emergencies.length === 0 ? (
+            {historyLoading ? (
+              <div className="empty-emergency">
+                <p>Loading your emergency requests...</p>
+              </div>
+            ) : historyError ? (
+              <div className="empty-emergency" role="alert">
+                <h3>Unable to load emergency requests</h3>
+                <p>{historyError}</p>
+              </div>
+            ) : emergencies.length === 0 ? (
               <div className="empty-emergency">
                 <div><Siren size={24} aria-hidden="true" /></div>
                 <h3>No Emergency Requests</h3>
