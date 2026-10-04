@@ -24,6 +24,7 @@ import {
   Zap,
 } from "lucide-react";
 import { API_BASE_URL, formatComplaintId } from "../api";
+import { reverseGeocodeCoordinates } from "../location";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
 import "./NewComplaint.css";
 import "./Citizenportal.css";
@@ -244,12 +245,33 @@ function NewComplaint() {
     setLocating(true);
     setLocationError("");
     navigator.geolocation.getCurrentPosition(
-      ({ coords: currentCoords }) => {
-        setCoordinates({
+      async ({ coords: currentCoords }) => {
+        const currentCoordinates = {
           latitude: currentCoords.latitude,
           longitude: currentCoords.longitude,
-        });
-        setLocating(false);
+        };
+        const coordinateText =
+          `Lat ${currentCoords.latitude.toFixed(6)}, Lng ${currentCoords.longitude.toFixed(6)}`;
+
+        setCoordinates(currentCoordinates);
+
+        try {
+          updateField(
+            "area",
+            await reverseGeocodeCoordinates(
+              currentCoords.latitude,
+              currentCoords.longitude
+            )
+          );
+        } catch (error) {
+          console.error("COMPLAINT LOCATION LOOKUP ERROR:", error);
+          updateField("area", coordinateText);
+          setLocationError(
+            "We couldn't find a street address, so your coordinates were added instead."
+          );
+        } finally {
+          setLocating(false);
+        }
       },
       (error) => {
         setLocationError(
@@ -440,23 +462,36 @@ function NewComplaint() {
                       <span>*</span>
                     </label>
 
-                    <div className="input-with-icon">
-
-                      <span><MapPin size={16} aria-hidden="true" /></span>
-
-                      <input
-                        type="text"
-                        value={form.area}
-                        onChange={(event) =>
-                          updateField(
-                            "area",
-                            event.target.value
-                          )
-                        }
-                        placeholder="e.g. Johar Town"
-                      />
-
+                    <div className="area-location-control">
+                      <div className="input-with-icon">
+                        <span><MapPin size={16} aria-hidden="true" /></span>
+                        <input
+                          type="text"
+                          value={form.area}
+                          onChange={(event) => {
+                            updateField("area", event.target.value);
+                            setCoordinates(null);
+                            setLocationError("");
+                          }}
+                          placeholder="e.g. Johar Town"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="location-button"
+                        onClick={useCurrentLocation}
+                        disabled={locating}
+                      >
+                        {locating
+                          ? "Finding location..."
+                          : <><MapPin size={15} aria-hidden="true" /> Use My Location</>}
+                      </button>
                     </div>
+                    {locationError && (
+                      <p className="location-error" role="alert">
+                        {locationError}
+                      </p>
+                    )}
 
                   </div>
 
@@ -577,23 +612,14 @@ function NewComplaint() {
                     <div className="location-box">
                       <div className="location-text">
                         <strong>
-                          {coordinates ? "Current location selected" : "Choose your complaint location"}
+                          {coordinates ? "Current location selected" : "Map preview"}
                         </strong>
                         <span>
                           {coordinates
                             ? `${coordinates.latitude.toFixed(6)}, ${coordinates.longitude.toFixed(6)}`
-                            : "Use your device location to center the map."}
+                            : "Use My Location above to center the map."}
                         </span>
                       </div>
-
-                      <button
-                        type="button"
-                        className="location-button"
-                        onClick={useCurrentLocation}
-                        disabled={locating}
-                      >
-                        {locating ? "Finding location..." : <><MapPin size={15} aria-hidden="true" /> Use Current Location</>}
-                      </button>
                     </div>
 
                     <iframe
@@ -605,11 +631,6 @@ function NewComplaint() {
                       allowFullScreen
                     />
 
-                    {locationError && (
-                      <p className="location-error" role="alert">
-                        {locationError}
-                      </p>
-                    )}
                   </div>
 
                 </div>

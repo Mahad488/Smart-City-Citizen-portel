@@ -318,6 +318,17 @@
   gap: 10px;
 }
 
+.area-location-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.area-location-control .input-with-icon {
+  min-width: 0;
+}
+
 .complaint-map {
   display: block;
   width: 100%;
@@ -352,13 +363,15 @@
 }
 
 .location-button {
-  height: 34px;
+  min-height: 43px;
   border: 1px solid #4e9aec;
   background: white;
   color: #0874e8;
   border-radius: 6px;
   padding: 0 12px;
-  font-size: 9px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -605,6 +618,10 @@
   .location-box {
     align-items: flex-start;
     flex-wrap: wrap;
+  }
+
+  .area-location-control {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .location-button {
