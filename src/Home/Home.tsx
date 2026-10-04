@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import smartCityMark from '../assets/smart-city-mark.svg'
+import HomeNavbar from './HomeNavbar'
 import './Home.css'
 
 function Home() {
@@ -24,39 +25,7 @@ function Home() {
   return (
     <div className="smart-home">
 
-      {/* NAVBAR */}
-      <header className="home-navbar">
-        <div className="home-container nav-inner">
-
-          <a href="#home" className="home-brand">
-            <img
-              src={smartCityMark}
-              className="brand-icon"
-              alt="Smart City"
-            />
-
-            <div>
-              <strong>Smart City</strong>
-              <span>Citizen Portal</span>
-            </div>
-          </a>
-
-          <nav className="home-nav">
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-            <Link to="/services">Services</Link>
-            <Link to="/updates">Updates</Link>
-            <Link to="/track-complaint">Track Complaint</Link>
-            <Link to="/contact">Contact</Link>
-          </nav>
-
-          <Link to="/citizen-login" className="home-login-btn">
-            Login
-          </Link>
-
-        </div>
-      </header>
-
+      <HomeNavbar />
 
       {/* HERO */}
       <section className="home-hero" id="home">
