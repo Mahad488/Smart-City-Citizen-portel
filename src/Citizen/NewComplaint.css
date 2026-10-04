@@ -302,22 +302,6 @@
 
 /* LOCATION */
 
-.location-box {
-  min-height: 70px;
-  background: #f1f8ff;
-  border: 1px solid #d4e8fb;
-  border-radius: 8px;
-  padding: 9px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.location-picker {
-  display: grid;
-  gap: 10px;
-}
-
 .area-location-control {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -329,37 +313,10 @@
   min-width: 0;
 }
 
-.complaint-map {
-  display: block;
-  width: 100%;
-  min-height: 300px;
-  aspect-ratio: 16 / 9;
-  border: 1px solid #d4e0e8;
-  border-radius: 7px;
-}
-
 .location-error {
   margin: 0;
   color: #b33b42;
   font-size: 11px;
-}
-
-.location-text {
-  flex: 1;
-  min-width: 160px;
-}
-
-.location-text strong {
-  display: block;
-  font-size: 10px;
-  color: #416a8f;
-}
-
-.location-text span {
-  display: block;
-  margin-top: 4px;
-  font-size: 8px;
-  color: #8ca1b6;
 }
 
 .location-button {
@@ -613,11 +570,6 @@
     width: 55px;
     height: 55px;
     font-size: 30px;
-  }
-
-  .location-box {
-    align-items: flex-start;
-    flex-wrap: wrap;
   }
 
   .area-location-control {

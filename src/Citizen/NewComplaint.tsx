@@ -43,7 +43,6 @@ interface Coordinates {
 
 function NewComplaint() {
   const navigate = useNavigate();
-  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   const [citizen] = useState<Citizen | null>(() => {
     try {
@@ -70,16 +69,6 @@ function NewComplaint() {
   const [photoName, setPhotoName] = useState("");
   const [photoError, setPhotoError] = useState("");
   const [photoProcessing, setPhotoProcessing] = useState(false);
-
-  const mapCenter = coordinates ?? {
-    latitude: 31.5204,
-    longitude: 74.358,
-  };
-  const mapUrl = googleMapsApiKey
-    ? `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(
-        googleMapsApiKey
-      )}&q=${mapCenter.latitude},${mapCenter.longitude}&zoom=15&maptype=roadmap`
-    : `https://maps.google.com/maps?q=${mapCenter.latitude},${mapCenter.longitude}&z=15&output=embed`;
 
   const updateField = (
     field: keyof typeof form,
@@ -597,41 +586,6 @@ function NewComplaint() {
                   {photoError && (
                     <p className="photo-error" role="alert">{photoError}</p>
                   )}
-
-                </div>
-
-                {/* LOCATION */}
-                <div className="form-field">
-
-                  <label>
-                    Location
-                    <em>(Optional)</em>
-                  </label>
-
-                  <div className="location-picker">
-                    <div className="location-box">
-                      <div className="location-text">
-                        <strong>
-                          {coordinates ? "Current location selected" : "Map preview"}
-                        </strong>
-                        <span>
-                          {coordinates
-                            ? `${coordinates.latitude.toFixed(6)}, ${coordinates.longitude.toFixed(6)}`
-                            : "Use My Location above to center the map."}
-                        </span>
-                      </div>
-                    </div>
-
-                    <iframe
-                      className="complaint-map"
-                      title="Complaint location map"
-                      src={mapUrl}
-                      loading="lazy"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                      allowFullScreen
-                    />
-
-                  </div>
 
                 </div>
 
