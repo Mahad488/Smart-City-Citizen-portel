@@ -54,6 +54,7 @@ html {
   position: sticky;
   top: 0;
   z-index: 100;
+  overflow: visible;
 }
 
 .about-section,
@@ -70,6 +71,7 @@ html {
   align-items: center;
   justify-content: space-between;
   gap: 30px;
+  position: relative;
 }
 
 .contact-layout > div:first-child {
@@ -115,6 +117,26 @@ html {
 
 .home-nav a:hover {
   color: #0878e8;
+}
+
+.mobile-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid #dce5ef;
+  border-radius: 10px;
+  color: #102c50;
+  background: white;
+  cursor: pointer;
+}
+
+.mobile-nav-toggle svg {
+  width: 21px;
+  height: 21px;
 }
 
 .smart-home .home-login-btn {
@@ -1115,6 +1137,54 @@ html {
 
   .home-nav {
     display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    z-index: 101;
+    align-items: stretch;
+    gap: 0;
+    padding: 8px;
+    border: 1px solid #e8eef5;
+    border-radius: 0 0 14px 14px;
+    background: white;
+    box-shadow: 0 12px 24px rgb(16 35 63 / 12%);
+  }
+
+  .home-nav.is-open {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .home-nav a {
+    padding: 12px 14px;
+    border-radius: 8px;
+  }
+
+  .home-nav a:hover {
+    background: #f2f7fc;
+  }
+
+  .nav-inner {
+    gap: 14px;
+  }
+
+  .mobile-nav-toggle {
+    display: inline-flex;
+    order: 0;
+  }
+
+  .home-brand {
+    order: 1;
+    margin-right: auto;
+  }
+
+  .smart-home .home-login-btn {
+    order: 2;
+  }
+
+  .smart-home .home-login-btn {
+    padding: 9px 15px;
   }
 
   .live-snapshot {
@@ -1182,8 +1252,12 @@ html {
     height: 65px;
   }
 
-  .home-login-btn {
-    padding: 9px 15px;
+  .home-brand {
+    gap: 7px;
+  }
+
+  .nav-inner {
+    gap: 8px;
   }
 
   .home-hero {

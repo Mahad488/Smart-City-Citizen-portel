@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -32,13 +32,18 @@ function getTitle(description = '') {
 function ComplaintTracking() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const returnTo = useRef(
+    `${window.location.pathname}${window.location.search}`,
+  )
 
   const [complaint, setComplaint] = useState<Complaint | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [errorTitle, setErrorTitle] = useState('Unable to Load Complaint')
 
   useEffect(() => {
     if (!id) {
+      setErrorTitle('Complaint Not Found')
       setError('Complaint ID is missing.')
       setLoading(false)
       return
@@ -48,9 +53,25 @@ function ComplaintTracking() {
       try {
         setLoading(true)
         setError('')
+        setErrorTitle('Unable to Load Complaint')
+
+        const token = localStorage.getItem('citizen_token')
+
+        if (!token) {
+          navigate(
+            `/citizen-login?sessionExpired=1&redirectTo=${encodeURIComponent(returnTo.current)}`,
+            { replace: true },
+          )
+          return
+        }
 
         const response = await fetch(
           `${API_BASE_URL}/api/complaints/${encodeURIComponent(id)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
         )
 
         if (!response.ok) {
@@ -63,6 +84,22 @@ function ComplaintTracking() {
             message = data?.message || message
           } catch {
             console.error('Non-JSON response:', text)
+          }
+
+          if (response.status === 401) {
+            localStorage.removeItem('citizen')
+            localStorage.removeItem('citizen_token')
+            navigate(
+              `/citizen-login?sessionExpired=1&redirectTo=${encodeURIComponent(returnTo.current)}`,
+              { replace: true },
+            )
+            return
+          }
+
+          if (response.status === 403) {
+            setErrorTitle('Access Denied')
+          } else if (response.status === 404) {
+            setErrorTitle('Complaint Not Found')
           }
 
           throw new Error(message)
@@ -85,7 +122,7 @@ function ComplaintTracking() {
     }
 
     loadComplaint()
-  }, [id])
+  }, [id, navigate])
 
   if (loading) {
     return (
@@ -104,7 +141,7 @@ function ComplaintTracking() {
         <div className="tracking-error">
           <div className="error-icon"><Clock3 size={24} aria-hidden="true" /></div>
 
-          <h2>Complaint Not Found</h2>
+          <h2>{errorTitle}</h2>
 
           <p>{error || 'This complaint could not be found.'}</p>
 

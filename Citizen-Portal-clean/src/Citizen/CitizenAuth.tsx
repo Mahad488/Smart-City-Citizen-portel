@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "../api";
 import {
   ArrowRight,
@@ -17,11 +18,17 @@ import "./CitizenAuth.css";
 type Mode = "login" | "register";
 
 function CitizenAuth() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<Mode>("login");
   const [loading, setLoading] = useState(false);
 
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() =>
+    searchParams.get("sessionExpired") === "1"
+      ? "Your session expired. Please log in again to continue."
+      : ""
+  );
 
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -78,7 +85,15 @@ function CitizenAuth() {
 
       setMessage("Login successful!");
 
-      window.location.href = "/citizen-portal";
+      const redirectTo = searchParams.get("redirectTo");
+      const destination =
+        redirectTo?.startsWith("/") &&
+        !redirectTo.startsWith("//") &&
+        !redirectTo.startsWith("/citizen-login")
+          ? redirectTo
+          : "/citizen-portal";
+
+      navigate(destination, { replace: true });
 
     } catch (err) {
       setError(
