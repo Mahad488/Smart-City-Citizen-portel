@@ -952,6 +952,86 @@
 }
 
 @media (max-width: 550px) {
+  .dashboard-sidebar {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: calc(68px + env(safe-area-inset-bottom, 0px));
+    min-height: 0;
+    padding: 4px 6px env(safe-area-inset-bottom, 0px);
+    flex-direction: row;
+    overflow: hidden;
+    box-shadow: 0 -5px 18px rgba(3, 35, 69, 0.18);
+  }
+
+  .sidebar-brand,
+  .sidebar-footer {
+    display: none;
+  }
+
+  .sidebar-navigation {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 2px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .sidebar-navigation::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar-item {
+    position: relative;
+    flex: 0 0 60px;
+    min-width: 60px;
+    min-height: 56px;
+    padding: 4px 2px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    font-size: 10px;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .sidebar-item span:not(.portal-icon):not(.notification-count) {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .sidebar-item .portal-icon {
+    width: 19px;
+    height: 19px;
+  }
+
+  .sidebar-item.logout-item {
+    margin: 0;
+  }
+
+  .sidebar-item .notification-count {
+    position: absolute;
+    top: 1px;
+    right: calc(50% - 19px);
+    margin: 0;
+    min-width: 15px;
+    height: 15px;
+    font-size: 8px;
+  }
+
+  .dashboard-main {
+    width: 100%;
+    margin-left: 0;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
   .dashboard-topbar {
     height: 58px;
   }
