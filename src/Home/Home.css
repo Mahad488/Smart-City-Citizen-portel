@@ -1101,6 +1101,10 @@ html {
   align-items: center;
 }
 
+.footer-brand strong {
+  color: white;
+}
+
 .footer-content p,
 .footer-content span,
 .footer-content a {
