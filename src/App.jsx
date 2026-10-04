@@ -1,4 +1,11 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useLayoutEffect } from 'react'
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom'
 import CitizenAuth from './Citizen/CitizenAuth.tsx'
 import CitizenPortal from './Citizen/CitizenPortal.tsx'
 import ComplaintTracking from './Citizen/ComplaintTracking'
@@ -18,9 +25,20 @@ import {
   UpdatesPage,
 } from './Home/InfoPages.tsx'
 
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [pathname])
+
+  return null
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
 
         {/* Public Smart City Homepage */}
