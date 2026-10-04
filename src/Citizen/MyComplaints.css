@@ -56,31 +56,26 @@
 .complaint-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
+  gap: 12px;
   margin-bottom: 22px;
 }
 
 .stat-card {
-  min-height: 95px;
+  min-height: 73px;
   background: white;
   border: 1px solid #e0e9f1;
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 17px;
-  box-shadow: 0 3px 12px rgba(
-    27,
-    65,
-    100,
-    .025
-  );
+  gap: 11px;
+  padding: 13px;
 }
 
 .stat-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 9px;
+  width: 35px;
+  height: 35px;
+  flex: 0 0 35px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,14 +121,14 @@
 .stat-card span {
   display: block;
   color: #8497aa;
-  font-size: 9px;
+  font-size: 8px;
 }
 
 .stat-card strong {
   display: block;
   color: #183f68;
-  font-size: 24px;
-  margin-top: 5px;
+  font-size: 17px;
+  margin-top: 3px;
 }
 
 /* COMPLAINT CARD */
@@ -640,7 +635,24 @@
 
 @media (max-width: 600px) {
   .complaint-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .complaint-stats .stat-card {
+    min-width: 0;
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .complaint-stats .stat-card span {
+    font-size: 8px;
+  }
+
+  .complaint-stats .stat-icon {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
   }
 
   .card-header {

@@ -99,6 +99,7 @@ function CitizenAuth() {
           ? requestedPath
           : "/citizen-portal";
 
+      window.scrollTo(0, 0);
       navigate(destination, { replace: true });
 
     } catch (err) {

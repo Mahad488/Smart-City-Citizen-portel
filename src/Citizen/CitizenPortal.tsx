@@ -1,4 +1,5 @@
 import {
+  useLayoutEffect,
   useEffect,
   useMemo,
   useState,
@@ -93,6 +94,10 @@ function CitizenPortal() {
   const [complaintsError, setComplaintsError] = useState('')
   const [activeMenu, setActiveMenu] = useState('Dashboard')
   const [search, setSearch] = useState('')
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   useEffect(() => {
     const savedCitizen = localStorage.getItem('citizen')
