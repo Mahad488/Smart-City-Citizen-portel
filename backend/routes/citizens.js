@@ -756,6 +756,12 @@ router.post("/register", async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
+    if (!normalizedEmail.endsWith(".com")) {
+      return res.status(400).json({
+        message: "Email address must end with .com.",
+      });
+    }
+
     const [existing] = await db.query(
       "SELECT id FROM citizens WHERE email = ?",
       [normalizedEmail]
@@ -949,28 +955,88 @@ router.put("/:id", requireAdmin, (req, res) => {
 });
 
 
-// DELETE citizen
-router.delete("/:id", requireAdmin, (req, res) => {
-  const { id } = req.params;
+// DELETE citizen and all citizen-owned requests and attachments
+router.delete("/:id", requireAdmin, async (req, res) => {
+  let connection;
+  let transactionStarted = false;
 
-  const sql = `
-    DELETE FROM citizens
-    WHERE id = ?
-  `;
+  try {
+    const [attachmentTables] = await db.query(
+      `SELECT 1
+       FROM information_schema.TABLES
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = 'complaint_attachments'
+       LIMIT 1`
+    );
 
-  db.query(sql, [id], (err) => {
-    if (err) {
-      console.error("Error deleting citizen:", err);
+    connection = await db.promise().getConnection();
+    await connection.beginTransaction();
+    transactionStarted = true;
 
-      return res.status(500).json({
-        message: "Failed to delete citizen"
+    const [citizens] = await connection.execute(
+      `SELECT citizen_id
+       FROM citizens
+       WHERE id = ?
+       FOR UPDATE`,
+      [req.params.id]
+    );
+
+    if (citizens.length === 0) {
+      await connection.rollback();
+      transactionStarted = false;
+      return res.status(404).json({
+        message: "Citizen not found",
       });
     }
 
-    res.json({
-      message: "Citizen deleted successfully"
+    const { citizen_id: citizenId } = citizens[0];
+
+    if (attachmentTables.length > 0) {
+      await connection.execute(
+        `DELETE attachments
+         FROM complaint_attachments AS attachments
+         INNER JOIN complaints
+           ON complaints.id = attachments.complaint_id
+         WHERE complaints.citizen_id = ?`,
+        [citizenId]
+      );
+    }
+
+    await connection.execute(
+      "DELETE FROM complaints WHERE citizen_id = ?",
+      [citizenId]
+    );
+    await connection.execute(
+      "DELETE FROM emergencies WHERE citizen_id = ?",
+      [citizenId]
+    );
+    await connection.execute(
+      "DELETE FROM citizens WHERE id = ?",
+      [req.params.id]
+    );
+
+    await connection.commit();
+    transactionStarted = false;
+
+    return res.json({
+      message: "Citizen and associated records deleted successfully",
     });
-  });
+  } catch (error) {
+    if (transactionStarted && connection) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error rolling back citizen deletion:", rollbackError);
+      }
+    }
+
+    console.error("Error deleting citizen and associated records:", error);
+    return res.status(500).json({
+      message: "Failed to delete citizen and associated records",
+    });
+  } finally {
+    connection?.release();
+  }
 });
 
 export default router;

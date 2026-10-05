@@ -26,6 +26,7 @@ import {
 import { API_BASE_URL, formatComplaintId } from "../api";
 import { reverseGeocodeCoordinates } from "../location";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
+import { addNotification } from "./notificationStore";
 import "./NewComplaint.css";
 import "./Citizenportal.css";
 
@@ -195,6 +196,15 @@ function NewComplaint() {
             : "N/A"
         }`
       );
+      addNotification({
+        type: "complaint",
+        title: "Request submitted successfully",
+        message: `Your ${form.category} complaint was submitted successfully.`,
+        reference:
+          data.complaintId != null
+            ? formatComplaintId(data.complaintId)
+            : undefined,
+      });
 
       setForm({
         title: "",
@@ -206,9 +216,6 @@ function NewComplaint() {
       setPhotoDataUrl("");
       setPhotoName("");
 
-      setTimeout(() => {
-        navigate("/citizen-portal");
-      }, 1500);
     } catch (error) {
       setMessage(
         error instanceof Error

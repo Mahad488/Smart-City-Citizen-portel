@@ -337,6 +337,11 @@ function CitizenAuth() {
       return;
     }
 
+    if (!registerForm.email.trim().toLowerCase().endsWith(".com")) {
+      setError("Email address must end with .com.");
+      return;
+    }
+
     if (
       registerForm.password.length < 6 ||
       !/[A-Z]/.test(registerForm.password) ||

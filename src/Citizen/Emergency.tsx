@@ -15,6 +15,7 @@ import {
 } from "../api";
 import { reverseGeocodeCoordinates } from "../location";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
+import { addNotification } from "./notificationStore";
 import "./Citizenportal.css";
 import "./Emergency.css";
 
@@ -216,6 +217,12 @@ const Emergency: React.FC = () => {
 
       setEmergencies((current) => [newEmergency, ...current]);
       setSubmissionMessage(`Emergency request ${newEmergency.id} was sent to the response team.`);
+      addNotification({
+        type: "emergency",
+        title: "Request submitted successfully",
+        message: `Your ${emergencyType} emergency request was sent to the response team.`,
+        reference: newEmergency.id,
+      });
       setEmergencyType("");
       setLocation("");
       setDescription("");

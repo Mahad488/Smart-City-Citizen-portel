@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -35,6 +35,23 @@ const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>(
     loadNotifications,
   );
+
+  useEffect(() => {
+    const refreshNotifications = () => {
+      setNotifications(loadNotifications());
+    };
+
+    window.addEventListener("citizen-notifications-updated", refreshNotifications);
+    window.addEventListener("storage", refreshNotifications);
+
+    return () => {
+      window.removeEventListener(
+        "citizen-notifications-updated",
+        refreshNotifications,
+      );
+      window.removeEventListener("storage", refreshNotifications);
+    };
+  }, []);
 
   const filters = [
     "All",

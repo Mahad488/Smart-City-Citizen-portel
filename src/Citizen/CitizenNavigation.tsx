@@ -10,9 +10,16 @@ import {
   Search,
   Siren,
   UserRound,
+  X,
 } from 'lucide-react'
 import smartCityMark from '../assets/smart-city-mark.svg'
-import { useUnreadNotificationCount } from './notificationStore'
+import {
+  clearPendingNotificationToast,
+  consumePendingNotificationToast,
+  getNotificationCreatedEventName,
+  useUnreadNotificationCount,
+  type Notification,
+} from './notificationStore'
 
 const navigationItems = [
   { label: 'Dashboard', Icon: LayoutGrid },
@@ -130,6 +137,9 @@ export function CitizenNavbar({
   const userMenuRef = useRef<HTMLDivElement>(null)
   const [localSearch, setLocalSearch] = useState('')
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [notificationToast, setNotificationToast] = useState<Notification | null>(
+    consumePendingNotificationToast,
+  )
   const [storedProfileImage] = useState(getStoredProfileImage)
   const avatarImage = profileImage !== undefined ? profileImage : storedProfileImage
   const currentSearch = searchValue ?? localSearch
@@ -157,6 +167,37 @@ export function CitizenNavbar({
       document.removeEventListener('keydown', closeOnEscape)
     }
   }, [isUserMenuOpen])
+
+  useEffect(() => {
+    const showNotification = (event: Event) => {
+      const notification = (event as CustomEvent<Notification>).detail
+      if (notification) {
+        setNotificationToast(notification)
+      }
+    }
+
+    window.addEventListener(
+      getNotificationCreatedEventName(),
+      showNotification,
+    )
+    return () => {
+      window.removeEventListener(
+        getNotificationCreatedEventName(),
+        showNotification,
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!notificationToast) return
+
+    const timeout = window.setTimeout(() => {
+      setNotificationToast(null)
+      clearPendingNotificationToast()
+    }, 7000)
+
+    return () => window.clearTimeout(timeout)
+  }, [notificationToast])
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onSearchChange) {
@@ -257,6 +298,34 @@ export function CitizenNavbar({
           )}
         </div>
       </div>
+
+      {notificationToast && (
+        <div className="citizen-notification-toast" role="status">
+          <button
+            type="button"
+            className="citizen-notification-toast-content"
+            onClick={() => {
+              clearPendingNotificationToast()
+              setNotificationToast(null)
+              navigate('/citizen-notifications')
+            }}
+          >
+            <strong>{notificationToast.title}</strong>
+            <span>{notificationToast.message}</span>
+          </button>
+          <button
+            type="button"
+            className="citizen-notification-toast-close"
+            aria-label="Dismiss notification"
+            onClick={() => {
+              clearPendingNotificationToast()
+              setNotificationToast(null)
+            }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
     </header>
   )
 }
