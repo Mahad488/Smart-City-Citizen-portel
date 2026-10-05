@@ -13,7 +13,7 @@ import {
 
 const router = express.Router();
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
 
 const createCitizenToken = (citizen) => {
   return jwt.sign(
@@ -205,8 +205,8 @@ router.post("/google", async (req, res) => {
     });
   }
 
-  if (!process.env.GOOGLE_CLIENT_ID) {
-    console.error("GOOGLE_CLIENT_ID is not configured.");
+  if (!process.env.VITE_GOOGLE_CLIENT_ID) {
+    console.error("VITE_GOOGLE_CLIENT_ID is not configured.");
     return res.status(503).json({
       message: "Google authentication is not configured.",
     });
@@ -216,7 +216,7 @@ router.post("/google", async (req, res) => {
   try {
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: process.env.VITE_GOOGLE_CLIENT_ID,
     });
     payload = ticket.getPayload();
   } catch (error) {

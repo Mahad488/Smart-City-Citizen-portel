@@ -144,12 +144,12 @@ function CitizenAuth() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/citizens/google-login`, {
+      const res = await fetch(`${API_BASE_URL}/api/citizens/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token: response.credential }),
+        body: JSON.stringify({ credential: response.credential }),
       });
 
       const data = await res.json();

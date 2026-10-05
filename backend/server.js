@@ -52,7 +52,12 @@ app.get("/", (req, res) => {
 app.use(
   "/api/citizens",
   (req, res, next) => {
-    const publicAuthPaths = ["/login", "/register", "/admin/login"];
+    const publicAuthPaths = [
+      "/login",
+      "/register",
+      "/admin/login",
+      "/google",
+    ];
     const requestPath = req.path.replace(/\/+$/, "").toLowerCase() || "/";
     if (req.method === "POST" && publicAuthPaths.includes(requestPath)) {
       return next();
