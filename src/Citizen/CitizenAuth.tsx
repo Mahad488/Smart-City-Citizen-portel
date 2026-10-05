@@ -194,9 +194,10 @@ function CitizenAuth() {
 
   const handleGoogleLoginClick = () => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    console.log("Env Client ID:", clientId);
 
     if (!clientId) {
-      setError("Google Client ID missing! Check .env file and restart server.");
+      setError(`Google Client ID missing! Env value is: "${clientId}"`);
       return;
     }
 
