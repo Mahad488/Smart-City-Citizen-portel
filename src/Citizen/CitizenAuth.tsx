@@ -138,7 +138,10 @@ function CitizenAuth() {
   // GOOGLE SIGN-IN HANDLER
   // =========================
 
-  const handleGoogleCallback = async (response: any) => {
+  const handleGoogleCallback = async (
+    response: any,
+    intent: "login" | "register",
+  ) => {
     setError("");
     setMessage("");
     setLoading(true);
@@ -149,13 +152,21 @@ function CitizenAuth() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ credential: response.credential }),
+        body: JSON.stringify({ credential: response.credential, intent }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(data.message || "Google authentication failed.");
+      }
+
+      if (intent === "register") {
+        setMessage(
+          "Google account created successfully. Please continue with Google from the login tab."
+        );
+        setMode("login");
+        return;
       }
 
       if (typeof data.token !== "string" || !data.token) {
@@ -192,7 +203,7 @@ function CitizenAuth() {
     }
   };
 
-  const handleGoogleLoginClick = () => {
+  const handleGoogleLoginClick = (intent: "login" | "register") => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     console.log("Env Client ID:", clientId);
 
@@ -204,7 +215,7 @@ function CitizenAuth() {
     if (window.google?.accounts?.id) {
       window.google.accounts.id.initialize({
         client_id: clientId,
-        callback: handleGoogleCallback,
+        callback: (response: any) => handleGoogleCallback(response, intent),
       });
       window.google.accounts.id.prompt();
     } else {
@@ -345,10 +356,10 @@ function CitizenAuth() {
     setMessage("");
   };
 
-  const renderGoogleButton = (text: string) => (
+  const renderGoogleButton = (text: string, intent: "login" | "register") => (
     <button
       type="button"
-      onClick={handleGoogleLoginClick}
+      onClick={() => handleGoogleLoginClick(intent)}
       style={{
         width: "100%",
         height: "44px",
@@ -585,7 +596,7 @@ function CitizenAuth() {
                   </div>
                 </form>
 
-                {renderGoogleButton("Continue with Google")}
+                {renderGoogleButton("Continue with Google", "login")}
 
                 <p className="auth-switch-text" style={{ textAlign: "center" }}>
                   Don't have an account?{" "}
@@ -756,7 +767,7 @@ function CitizenAuth() {
                   </div>
                 </form>
 
-                {renderGoogleButton("Sign up with Google")}
+                {renderGoogleButton("Sign up with Google", "register")}
 
                 <p className="auth-switch-text" style={{ textAlign: "center" }}>
                   Already registered?{" "}

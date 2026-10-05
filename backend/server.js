@@ -9,7 +9,7 @@ import notificationRoutes from "./routes/notifications.js";
 import { authenticateToken } from "./middleware/auth.js";
 
 const app = express();
-const port = Number(process.env.PORT) || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 const allowedOrigins = (process.env.CORS_ORIGIN || "")
   .split(",")
   .map((origin) => origin.trim().replace(/\/+$/, ""))
@@ -71,6 +71,6 @@ app.use("/api/emergencies", authenticateToken, emergenciesRoutes);
 app.use("/api/emergency", authenticateToken, emergenciesRoutes);
 app.use("/api/notifications", authenticateToken, notificationRoutes);
 
-app.listen(port, () => {
-  console.log(`Backend server listening on port ${port}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Backend server listening on port ${PORT}`);
 });

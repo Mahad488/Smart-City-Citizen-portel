@@ -197,11 +197,17 @@ router.post("/login", async (req, res) => {
 
 // POST Google citizen login
 router.post("/google", async (req, res) => {
-  const { credential } = req.body ?? {};
+  const { credential, intent } = req.body ?? {};
 
   if (typeof credential !== "string" || !credential.trim()) {
     return res.status(400).json({
       message: "Google credential is required.",
+    });
+  }
+
+  if (intent !== "register" && intent !== "login") {
+    return res.status(400).json({
+      message: "Google authentication intent must be login or register.",
     });
   }
 
@@ -293,6 +299,19 @@ router.post("/google", async (req, res) => {
       citizen = emailMatches[0];
     }
 
+    if (intent === "register" && citizen) {
+      return res.status(409).json({
+        message:
+          "Email already registered. Please continue with Google from the login page.",
+      });
+    }
+
+    if (intent === "login" && !citizen) {
+      return res.status(404).json({
+        message: "No account found. Please register with Google first.",
+      });
+    }
+
     if (citizen) {
       if (citizen.status === "Inactive") {
         return res.status(403).json({
@@ -346,6 +365,13 @@ router.post("/google", async (req, res) => {
         registered_at: new Date(),
         status: "Active",
       };
+    }
+
+    if (intent === "register") {
+      return res.status(201).json({
+        message:
+          "Google account created successfully. Please continue with Google from the login tab.",
+      });
     }
 
     const token = createCitizenToken(citizen);
