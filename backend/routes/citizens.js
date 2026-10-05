@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Buffer } from "node:buffer";
 import process from "node:process";
+import { OAuth2Client } from "google-auth-library";
 import db from "../config/db.js";
 import {
   JWT_SECRET,
@@ -11,6 +12,26 @@ import {
 } from "../middleware/auth.js";
 
 const router = express.Router();
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const createCitizenToken = (citizen) => {
+  return jwt.sign(
+    {
+      id: citizen.id,
+      citizen_id: citizen.citizen_id,
+      email: citizen.email,
+      role: "CITIZEN",
+    },
+    JWT_SECRET,
+    {
+      expiresIn: "7d",
+      algorithm: "HS256",
+      issuer: "citizen-portal",
+      audience: "citizen-portal-api",
+    }
+  );
+};
 
 const generateCitizenId = async () => {
   try {
@@ -73,7 +94,6 @@ router.get("/stats/summary", requireAdmin, (req, res) => {
     SELECT
       COUNT(*) AS total,
       SUM(status = 'Active') AS active,
-      SUM(status = 'Pending') AS pending,
       SUM(status = 'Inactive') AS inactive
     FROM citizens
   `;
@@ -127,17 +147,18 @@ router.post("/login", async (req, res) => {
 
     const citizen = rows[0];
 
+    if (!citizen.password_hash) {
+      return res.status(401).json({
+        message:
+          "This account uses Google Sign-In. Please continue with Google.",
+      });
+    }
+
     const passwordMatch = await bcrypt.compare(password, citizen.password_hash);
 
     if (!passwordMatch) {
       return res.status(401).json({
         message: "Invalid email or password"
-      });
-    }
-
-    if (citizen.status === "Pending") {
-      return res.status(403).json({
-        message: "Your account is waiting for admin approval."
       });
     }
 
@@ -147,21 +168,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      {
-        id: citizen.id,
-        citizen_id: citizen.citizen_id,
-        email: citizen.email,
-        role: "CITIZEN",
-      },
-      JWT_SECRET,
-      {
-        expiresIn: "7d",
-        algorithm: "HS256",
-        issuer: "citizen-portal",
-        audience: "citizen-portal-api",
-      }
-    );
+    const token = createCitizenToken(citizen);
 
     setAuthCookie(res, token);
     res.json({
@@ -184,6 +191,185 @@ router.post("/login", async (req, res) => {
 
     res.status(500).json({
       message: "Login failed"
+    });
+  }
+});
+
+// POST Google citizen login
+router.post("/google", async (req, res) => {
+  const { credential } = req.body ?? {};
+
+  if (typeof credential !== "string" || !credential.trim()) {
+    return res.status(400).json({
+      message: "Google credential is required.",
+    });
+  }
+
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    console.error("GOOGLE_CLIENT_ID is not configured.");
+    return res.status(503).json({
+      message: "Google authentication is not configured.",
+    });
+  }
+
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch (error) {
+    console.error("Google ID token verification failed:", error);
+    return res.status(401).json({
+      message: "Google authentication failed.",
+    });
+  }
+
+  if (!payload) {
+    return res.status(401).json({
+      message: "Invalid Google authentication token.",
+    });
+  }
+
+  const { sub: googleId, email, name } = payload;
+  if (
+    typeof googleId !== "string" ||
+    typeof email !== "string" ||
+    typeof name !== "string"
+  ) {
+    return res.status(401).json({
+      message: "Google account information is incomplete.",
+    });
+  }
+
+  if (payload.email_verified !== true) {
+    return res.status(401).json({
+      message: "Google email address is not verified.",
+    });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedName = name.trim();
+
+  if (!normalizedEmail || !normalizedName) {
+    return res.status(401).json({
+      message: "Google account information is incomplete.",
+    });
+  }
+
+  try {
+    const citizenFields = `
+      id,
+      citizen_id,
+      name,
+      email,
+      google_id,
+      password_hash,
+      phone,
+      area,
+      registered_at,
+      status
+    `;
+
+    const [googleMatches] = await db.query(
+      `SELECT ${citizenFields}
+       FROM citizens
+       WHERE google_id = ?
+       LIMIT 1`,
+      [googleId]
+    );
+
+    let citizen = googleMatches[0];
+
+    if (!citizen) {
+      const [emailMatches] = await db.query(
+        `SELECT ${citizenFields}
+         FROM citizens
+         WHERE email = ?
+         LIMIT 1`,
+        [normalizedEmail]
+      );
+      citizen = emailMatches[0];
+    }
+
+    if (citizen) {
+      if (citizen.status === "Inactive") {
+        return res.status(403).json({
+          message:
+            "Your account has been deactivated by the administrator.",
+        });
+      }
+
+      if (citizen.google_id && citizen.google_id !== googleId) {
+        return res.status(409).json({
+          message:
+            "This email is already linked to another Google account.",
+        });
+      }
+
+      if (!citizen.google_id) {
+        await db.query(
+          `UPDATE citizens
+           SET google_id = ?
+           WHERE id = ?`,
+          [googleId, citizen.id]
+        );
+        citizen.google_id = googleId;
+      }
+    } else {
+      const citizenId = await generateCitizenId();
+      const [result] = await db.query(
+        `INSERT INTO citizens
+         (
+           citizen_id,
+           name,
+           email,
+           google_id,
+           password_hash,
+           phone,
+           area,
+           status
+         )
+         VALUES (?, ?, ?, ?, NULL, NULL, NULL, 'Active')`,
+        [citizenId, normalizedName, normalizedEmail, googleId]
+      );
+
+      citizen = {
+        id: result.insertId,
+        citizen_id: citizenId,
+        name: normalizedName,
+        email: normalizedEmail,
+        google_id: googleId,
+        phone: null,
+        area: null,
+        registered_at: new Date(),
+        status: "Active",
+      };
+    }
+
+    const token = createCitizenToken(citizen);
+    setAuthCookie(res, token);
+
+    return res.json({
+      message: "Google login successful.",
+      token,
+      citizen: {
+        id: citizen.id,
+        citizen_id: citizen.citizen_id,
+        name: citizen.name,
+        email: citizen.email,
+        phone: citizen.phone,
+        area: citizen.area,
+        registered_at: citizen.registered_at,
+        status: citizen.status,
+        role: "CITIZEN",
+      },
+    });
+  } catch (error) {
+    console.error("Google citizen authentication error:", error);
+    return res.status(500).json({
+      message: "Google authentication could not be completed.",
     });
   }
 });
@@ -513,15 +699,35 @@ router.post("/register", async (req, res) => {
   try {
     const { name, email, password, phone, area } = req.body;
 
-    if (!name || !email || !password) {
+    if (
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !name.trim() ||
+      !email.trim() ||
+      !password
+    ) {
       return res.status(400).json({
         message: "Name, email and password are required",
       });
     }
 
+    if (
+      password.length < 6 ||
+      !/[A-Z]/.test(password) ||
+      !/[^A-Za-z0-9]/.test(password)
+    ) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 6 characters and include an uppercase letter and a special character.",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
     const [existing] = await db.query(
       "SELECT id FROM citizens WHERE email = ?",
-      [email]
+      [normalizedEmail]
     );
 
     if (existing.length > 0) {
@@ -558,11 +764,11 @@ router.post("/register", async (req, res) => {
     const [result] = await db.query(
       `INSERT INTO citizens
        (citizen_id, name, email, password_hash, phone, area, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'Pending')`,
+       VALUES (?, ?, ?, ?, ?, ?, 'Active')`,
       [
         citizenId,
-        name,
-        email,
+        name.trim(),
+        normalizedEmail,
         passwordHash,
         phone || null,
         area || null,
@@ -570,19 +776,25 @@ router.post("/register", async (req, res) => {
     );
 
     res.status(201).json({
-      message: "Registration successful. Waiting for admin approval.",
+      message: "Registration successful. Your account is now active.",
       citizen: {
         id: result.insertId,
         citizen_id: citizenId,
-        name,
-        email,
+        name: name.trim(),
+        email: normalizedEmail,
         phone,
         area,
-        status: "Pending",
+        status: "Active",
       },
     });
   } catch (error) {
     console.error("Citizen registration error:", error);
+
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        message: "Email already registered",
+      });
+    }
 
     res.status(500).json({
       message: "Server error during registration",
@@ -632,7 +844,7 @@ router.post("/", requireAdmin, async (req, res) => {
       email,
       phone || null,
       area || null,
-      status || "Pending"
+      status || "Active"
     ]);
 
     res.status(201).json({
@@ -661,6 +873,12 @@ router.put("/:id", requireAdmin, (req, res) => {
     area,
     status
   } = req.body;
+
+  if (status !== "Active" && status !== "Inactive") {
+    return res.status(400).json({
+      message: "Status must be Active or Inactive"
+    });
+  }
 
   const sql = `
     UPDATE citizens
