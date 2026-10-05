@@ -197,11 +197,16 @@ router.post("/login", async (req, res) => {
 
 // POST Google citizen login
 router.post("/google", async (req, res) => {
-  const { credential, intent } = req.body ?? {};
+  const { intent } = req.body ?? {};
+  const credential = [
+    req.body?.credential,
+    req.body?.token,
+    req.body?.idToken,
+  ].find((value) => typeof value === "string" && value.trim());
 
   if (typeof credential !== "string" || !credential.trim()) {
     return res.status(400).json({
-      message: "Google credential is required.",
+      message: "Google token is required.",
     });
   }
 

@@ -152,7 +152,12 @@ function CitizenAuth() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ credential: response.credential, intent }),
+        body: JSON.stringify({
+          token: response.credential,
+          credential: response.credential,
+          idToken: response.credential,
+          intent,
+        }),
       });
 
       const data = await res.json();
