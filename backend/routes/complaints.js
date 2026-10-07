@@ -40,11 +40,17 @@ router.get("/", authenticate, async (req, res) => {
 
 
 // =====================================================
-// GET CITIZEN'S COMPLAINTS
+// GET CITIZEN'S COMPLAINTS (/me or /citizen/:citizen_id)
 // =====================================================
-router.get("/citizen/:citizen_id", authenticate, async (req, res) => {
+router.get(["/me", "/citizen/:citizen_id"], authenticate, async (req, res) => {
   try {
-    const { citizen_id } = req.params;
+    const citizen_id = req.params.citizen_id || req.user?.citizen_id;
+
+    if (!citizen_id) {
+      return res.status(400).json({
+        message: "Citizen ID could not be identified from session",
+      });
+    }
 
     if (
       req.user.role !== "ADMIN" &&

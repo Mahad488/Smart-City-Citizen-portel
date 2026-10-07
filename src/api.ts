@@ -77,9 +77,13 @@ export function formatComplaintId(id: number | string) {
   return `SC-${String(id).padStart(5, '0')}`
 }
 
-export async function getCitizenComplaints() {
+export async function getCitizenComplaints(citizenId?: string) {
+  const url = citizenId
+    ? `${API_BASE_URL}/api/complaints/citizen/${encodeURIComponent(citizenId)}`
+    : `${API_BASE_URL}/api/complaints/me`
+
   const response = await fetch(
-    `${API_BASE_URL}/api/complaints/me`,
+    url,
     { headers: getAuthHeaders(), credentials: 'include' },
   )
 

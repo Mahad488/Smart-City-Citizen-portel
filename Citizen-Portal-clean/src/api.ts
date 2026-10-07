@@ -19,18 +19,15 @@ export function formatComplaintId(id: number | string) {
 }
 
 // Get Citizen Complaints
-export async function getCitizenComplaints(citizenId: string) {
-  if (!citizenId) {
-    throw new Error('Citizen ID is required');
-  }
+export async function getCitizenComplaints(citizenId?: string) {
+  const url = citizenId
+    ? `${API_BASE_URL}/api/complaints/citizen/${encodeURIComponent(citizenId)}`
+    : `${API_BASE_URL}/api/complaints/me`;
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/complaints/citizen/${encodeURIComponent(citizenId)}`,
-    {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    }
-  );
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     const text = await response.text();
