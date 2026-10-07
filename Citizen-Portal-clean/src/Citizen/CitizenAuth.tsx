@@ -156,6 +156,7 @@ function CitizenAuth() {
       }
 
       localStorage.setItem("citizen_token", data.token);
+      localStorage.setItem("citizen", JSON.stringify(data.citizen));
       localStorage.setItem("citizen_data", JSON.stringify(data.citizen));
 
       setMessage("Google login successful!");

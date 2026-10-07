@@ -182,7 +182,7 @@ router.post("/login", async (req, res) => {
 });
 
 // POST google login
-router.post("/google-login", async (req, res) => {
+router.post(["/google-login", "/google"], async (req, res) => {
   try {
     const { token } = req.body;
 

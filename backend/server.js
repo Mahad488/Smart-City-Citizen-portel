@@ -28,12 +28,15 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization, X-Requested-With, Accept, Origin"
   );
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
 
-  if (
-    typeof origin === "string" &&
-    allowedOrigins.includes(origin.replace(/\/+$/, ""))
-  ) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
+  if (typeof origin === "string") {
+    if (
+      allowedOrigins.length === 0 ||
+      allowedOrigins.includes(origin.replace(/\/+$/, ""))
+    ) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
   }
 
   if (req.method === "OPTIONS") {
@@ -57,6 +60,7 @@ app.use(
       "/register",
       "/admin/login",
       "/google",
+      "/google-login",
     ];
     const requestPath = req.path.replace(/\/+$/, "").toLowerCase() || "/";
     if (req.method === "POST" && publicAuthPaths.includes(requestPath)) {
