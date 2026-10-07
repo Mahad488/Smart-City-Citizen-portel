@@ -6,7 +6,7 @@ import citizenRoutes from "./routes/citizens.js";
 import complaintsRoutes from "./routes/complaints.js";
 import emergenciesRoutes from "./routes/emergencies.js";
 import notificationRoutes from "./routes/notifications.js";
-import { authenticateToken } from "./middleware/auth.js";
+import { authenticate } from "./auth.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -56,28 +56,11 @@ app.get("/", (req, res) => {
   res.send("Backend API is running successfully!");
 });
 
-app.use(
-  "/api/citizens",
-  (req, res, next) => {
-    const publicAuthPaths = [
-      "/login",
-      "/register",
-      "/admin/login",
-      "/google",
-      "/google-login",
-    ];
-    const requestPath = req.path.replace(/\/+$/, "").toLowerCase() || "/";
-    if (req.method === "POST" && publicAuthPaths.includes(requestPath)) {
-      return next();
-    }
-    return authenticateToken(req, res, next);
-  },
-  citizenRoutes
-);
-app.use("/api/complaints", authenticateToken, complaintsRoutes);
-app.use("/api/emergencies", authenticateToken, emergenciesRoutes);
-app.use("/api/emergency", authenticateToken, emergenciesRoutes);
-app.use("/api/notifications", authenticateToken, notificationRoutes);
+app.use("/api/citizens", citizenRoutes);
+app.use("/api/complaints", authenticate, complaintsRoutes);
+app.use("/api/emergencies", authenticate, emergenciesRoutes);
+app.use("/api/emergency", authenticate, emergenciesRoutes);
+app.use("/api/notifications", authenticate, notificationRoutes);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Backend server listening on port ${PORT}`);

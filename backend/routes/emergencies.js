@@ -1,6 +1,6 @@
 import express from "express";
 import db from "../config/db.js";
-import { requireAdmin } from "../middleware/auth.js";
+import { authenticate } from "../auth.js";
 
 const router = express.Router();
 
@@ -8,7 +8,7 @@ const router = express.Router();
 // =====================================================
 // GET ALL EMERGENCIES - ADMIN
 // =====================================================
-router.get("/", requireAdmin, async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT *
@@ -31,18 +31,18 @@ router.get("/", requireAdmin, async (req, res) => {
 // =====================================================
 // GET CITIZEN'S EMERGENCIES
 // =====================================================
-router.get("/citizen/:citizen_id", async (req, res) => {
+router.get("/citizen/:citizen_id", authenticate, async (req, res) => {
   try {
+    const { citizen_id } = req.params;
+
     if (
-      req.user.role !== "CITIZEN" ||
-      req.user.citizen_id !== req.params.citizen_id
+      req.user.role !== "ADMIN" &&
+      String(req.user.citizen_id || "").trim() !== String(citizen_id || "").trim()
     ) {
       return res.status(403).json({
         message: "You can only view your own emergencies.",
       });
     }
-
-    const { citizen_id } = req.user;
 
     const [rows] = await db.query(
       `SELECT *
@@ -67,9 +67,10 @@ router.get("/citizen/:citizen_id", async (req, res) => {
 // =====================================================
 // POST EMERGENCY FROM CITIZEN
 // =====================================================
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const {
+      citizen_id,
       type,
       location,
       team,
@@ -78,17 +79,16 @@ router.post("/", async (req, res) => {
       latitude,
       longitude,
     } = req.body;
-    const { citizen_id } = req.user;
 
-    if (req.user.role !== "CITIZEN") {
-      return res.status(403).json({
-        message: "Citizen access is required.",
+    if (!citizen_id || !type || !location) {
+      return res.status(400).json({
+        message: "Citizen, emergency type and location are required",
       });
     }
 
-    if (!type || !location) {
-      return res.status(400).json({
-        message: "Emergency type and location are required",
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only report emergencies for your own account.",
       });
     }
 
@@ -156,25 +156,25 @@ router.post("/", async (req, res) => {
 // =====================================================
 // UPDATE CITIZEN EMERGENCY
 // =====================================================
-router.put("/citizen/:id", async (req, res) => {
+router.put("/citizen/:id", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
 
     const {
+      citizen_id,
       type,
       location,
     } = req.body;
-    const { citizen_id } = req.user;
 
-    if (req.user.role !== "CITIZEN") {
-      return res.status(403).json({
-        message: "Citizen access is required.",
+    if (!citizen_id || !type || !location) {
+      return res.status(400).json({
+        message: "Citizen, emergency type and location are required",
       });
     }
 
-    if (!type || !location) {
-      return res.status(400).json({
-        message: "Emergency type and location are required",
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only update your own emergencies.",
       });
     }
 
@@ -221,15 +221,22 @@ router.put("/citizen/:id", async (req, res) => {
 // =====================================================
 // DELETE CITIZEN EMERGENCY
 // =====================================================
-router.delete("/citizen/:id", async (req, res) => {
+router.delete("/citizen/:id", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    if (req.user.role !== "CITIZEN") {
-      return res.status(403).json({
-        message: "Citizen access is required.",
+    const { citizen_id } = req.body;
+
+    if (!citizen_id) {
+      return res.status(400).json({
+        message: "Citizen ID is required",
       });
     }
-    const { citizen_id } = req.user;
+
+    if (req.user.citizen_id !== citizen_id) {
+      return res.status(403).json({
+        message: "You can only delete your own emergencies.",
+      });
+    }
 
     const [result] = await db.query(
       `DELETE FROM emergencies
@@ -260,7 +267,7 @@ router.delete("/citizen/:id", async (req, res) => {
 // =====================================================
 // GET SINGLE EMERGENCY
 // =====================================================
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT *
@@ -275,10 +282,7 @@ router.get("/:id", async (req, res) => {
       });
     }
 
-    if (
-      req.user.role !== "ADMIN" &&
-      req.user.citizen_id !== rows[0].citizen_id
-    ) {
+    if (req.user.citizen_id !== rows[0].citizen_id) {
       return res.status(403).json({
         message: "This emergency does not belong to your account.",
       });
@@ -299,7 +303,7 @@ router.get("/:id", async (req, res) => {
 // =====================================================
 // ADMIN UPDATE EMERGENCY
 // =====================================================
-router.put("/:id", requireAdmin, async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const {
       type,
@@ -356,7 +360,7 @@ router.put("/:id", requireAdmin, async (req, res) => {
 // =====================================================
 // ADMIN DELETE EMERGENCY
 // =====================================================
-router.delete("/:id", requireAdmin, async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const [result] = await db.query(
       `DELETE FROM emergencies

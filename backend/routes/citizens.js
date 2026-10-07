@@ -153,6 +153,7 @@ router.post("/login", async (req, res) => {
         email: citizen.email,
         name: citizen.name,
         status: citizen.status,
+        role: "CITIZEN",
       },
       JWT_SECRET,
       { expiresIn: "7d" }
@@ -252,6 +253,7 @@ router.post(["/google-login", "/google"], async (req, res) => {
         email: citizen.email,
         name: citizen.name,
         status: citizen.status,
+        role: "CITIZEN",
       },
       JWT_SECRET,
       { expiresIn: "7d" }

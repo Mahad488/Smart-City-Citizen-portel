@@ -35,7 +35,10 @@ router.get("/citizen/:citizen_id", authenticate, async (req, res) => {
   try {
     const { citizen_id } = req.params;
 
-    if (req.user.citizen_id !== citizen_id) {
+    if (
+      req.user.role !== "ADMIN" &&
+      String(req.user.citizen_id || "").trim() !== String(citizen_id || "").trim()
+    ) {
       return res.status(403).json({
         message: "You can only view your own emergencies.",
       });

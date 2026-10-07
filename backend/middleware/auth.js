@@ -74,11 +74,7 @@ export function authenticateToken(req, res, next) {
 
   let decoded;
   try {
-    decoded = jwt.verify(token, JWT_SECRET, {
-      algorithms: ["HS256"],
-      issuer: JWT_ISSUER,
-      audience: JWT_AUDIENCE,
-    });
+    decoded = jwt.verify(token, JWT_SECRET);
   } catch {
     return unauthorized(res);
   }
@@ -87,22 +83,18 @@ export function authenticateToken(req, res, next) {
     !decoded ||
     typeof decoded !== "object" ||
     typeof decoded.email !== "string" ||
-    decoded.email.trim().length === 0 ||
-    !Number.isInteger(decoded.exp) ||
-    decoded.exp <= Math.floor(Date.now() / 1000) ||
-    !["ADMIN", "CITIZEN"].includes(decoded.role) ||
-    (decoded.role === "ADMIN" && decoded.citizen_id !== null) ||
-    (decoded.role === "CITIZEN" &&
-      (typeof decoded.citizen_id !== "string" ||
-        decoded.citizen_id.length === 0))
+    decoded.email.trim().length === 0
   ) {
     return unauthorized(res);
   }
 
+  const role = decoded.role || (decoded.citizen_id ? "CITIZEN" : "ADMIN");
+
   req.user = {
-    citizen_id: decoded.citizen_id,
+    ...decoded,
+    citizen_id: decoded.citizen_id || null,
     email: decoded.email,
-    role: decoded.role,
+    role: role,
   };
 
   return next();
