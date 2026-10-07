@@ -1,36 +1,84 @@
-import { useLayoutEffect } from 'react'
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-} from 'react-router-dom'
-import CitizenAuth from './Citizen/CitizenAuth.tsx'
-import CitizenPortal from './Citizen/CitizenPortal.tsx'
-import ComplaintTracking from './Citizen/ComplaintTracking'
-import Emergency from './Citizen/Emergency.tsx'
-import MyComplaints from './Citizen/MyComplaints'
-import MyProfile from './Citizen/MyProfile'
-import NewComplaint from './Citizen/NewComplaint'
-import Notifications from './Citizen/Notifications.tsx'
-import TrackComplaint from './Citizen/TrackComplaint'
-import Home from './Home/Home.tsx'
-import ProtectedRoute from './ProtectedRoute.jsx'
-import {
-  AboutPage,
-  ContactPage,
-  ServicesPage,
-  TrackComplaintPage,
-  UpdatesPage,
-} from './Home/InfoPages.tsx'
+import { lazy, Suspense, useEffect } from 'react'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { ProtectedRoute } from './components/ProtectedRoute'
 
-function ScrollToTop() {
-  const { pathname } = useLocation()
+/* ──────────────────────────────────────────────────
+   Lazy-loaded route components (code splitting)
+────────────────────────────────────────────────── */
+const Home              = lazy(() => import('./Home/Home'))
+const InfoPages         = lazy(() => import('./Home/InfoPages').then(m => ({ default: m.AboutPage })))
+const ServicesPage      = lazy(() => import('./Home/InfoPages').then(m => ({ default: m.ServicesPage })))
+const UpdatesPage       = lazy(() => import('./Home/InfoPages').then(m => ({ default: m.UpdatesPage })))
+const TrackComplaintPage = lazy(() => import('./Home/InfoPages').then(m => ({ default: m.TrackComplaintPage })))
+const ContactPage       = lazy(() => import('./Home/InfoPages').then(m => ({ default: m.ContactPage })))
 
-  useLayoutEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-  }, [pathname])
+const CitizenAuth       = lazy(() => import('./Citizen/CitizenAuth'))
+const CitizenPortal     = lazy(() => import('./Citizen/CitizenPortal'))
+const NewComplaint      = lazy(() => import('./Citizen/NewComplaint'))
+const Emergency         = lazy(() => import('./Citizen/Emergency'))
+const Notifications     = lazy(() => import('./Citizen/Notifications'))
+const MyComplaints      = lazy(() => import('./Citizen/MyComplaints'))
+const MyProfile         = lazy(() => import('./Citizen/MyProfile'))
+const TrackComplaint    = lazy(() => import('./Citizen/TrackComplaint'))
+const ComplaintTracking = lazy(() => import('./Citizen/ComplaintTracking'))
+
+/* ──────────────────────────────────────────────────
+   Loading spinner shown while lazy chunks load
+────────────────────────────────────────────────── */
+function PageLoader() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      background: '#f1f5f9',
+    }}>
+      <div style={{
+        width: 42,
+        height: 42,
+        border: '4px solid #dde5f0',
+        borderTopColor: '#0878e8',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
+      }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
+}
+
+/* ──────────────────────────────────────────────────
+   Scroll-reveal: adds .is-visible to .scroll-reveal
+   elements as they enter the viewport
+────────────────────────────────────────────────── */
+function ScrollRevealObserver() {
+  const location = useLocation()
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.12 }
+    )
+
+    // Observe after paint so lazy-loaded content is in the DOM
+    const tid = setTimeout(() => {
+      document.querySelectorAll('.scroll-reveal').forEach((el) => {
+        observer.observe(el)
+      })
+    }, 100)
+
+    return () => {
+      clearTimeout(tid)
+      observer.disconnect()
+    }
+  }, [location.pathname])
 
   return null
 }
@@ -38,76 +86,63 @@ function ScrollToTop() {
 function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
+      {/* Accessibility: skip to main content */}
+      <a href="#main-content" className="skip-to-main">
+        Skip to main content
+      </a>
 
-        {/* Public Smart City Homepage */}
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/services" element={<ServicesPage />} />
-        <Route path="/updates" element={<UpdatesPage />} />
-        <Route path="/track-complaint" element={<TrackComplaintPage />} />
-        <Route path="/contact" element={<ContactPage />} />
+      <ScrollRevealObserver />
 
-        {/* Public citizen login */}
-        <Route path="/login" element={<CitizenAuth />} />
-        <Route path="/citizen-login" element={<CitizenAuth />} />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
 
-        {/* Protected citizen portal */}
-        <Route path="/citizen-portal" element={<ProtectedRoute><CitizenPortal /></ProtectedRoute>} />
+          {/* ── Public: Smart City Homepage ── */}
+          <Route path="/"               element={<Home />} />
+          <Route path="/about"          element={<InfoPages />} />
+          <Route path="/services"       element={<ServicesPage />} />
+          <Route path="/updates"        element={<UpdatesPage />} />
+          <Route path="/track-complaint" element={<TrackComplaintPage />} />
+          <Route path="/contact"        element={<ContactPage />} />
 
-        {/* New Complaint */}
-        <Route
-          path="/citizen-new-complaint"
-          element={<ProtectedRoute><NewComplaint /></ProtectedRoute>}
-        />
+          {/* ── Citizen Auth ── */}
+          <Route path="/citizen-login" element={<CitizenAuth />} />
 
-        {/* Emergency Services */}
-        <Route
-          path="/citizen-emergency"
-          element={<ProtectedRoute><Emergency /></ProtectedRoute>}
-        />
+          {/* ── Protected Citizen Routes ── */}
+          <Route path="/citizen-portal" element={
+            <ProtectedRoute><CitizenPortal /></ProtectedRoute>
+          } />
+          <Route path="/citizen-new-complaint" element={
+            <ProtectedRoute><NewComplaint /></ProtectedRoute>
+          } />
+          <Route path="/citizen-emergency" element={
+            <ProtectedRoute><Emergency /></ProtectedRoute>
+          } />
+          <Route path="/citizen-notifications" element={
+            <ProtectedRoute><Notifications /></ProtectedRoute>
+          } />
+          <Route path="/citizen-my-complaints" element={
+            <ProtectedRoute><MyComplaints /></ProtectedRoute>
+          } />
+          <Route path="/citizen-profile" element={
+            <ProtectedRoute><MyProfile /></ProtectedRoute>
+          } />
+          <Route path="/citizen-track-complaint" element={
+            <ProtectedRoute><TrackComplaint /></ProtectedRoute>
+          } />
+          <Route path="/citizen-track-complaint/:id" element={
+            <ProtectedRoute><ComplaintTracking /></ProtectedRoute>
+          } />
+          <Route path="/citizen-portal/complaint/:id" element={
+            <ProtectedRoute><ComplaintTracking /></ProtectedRoute>
+          } />
 
-        {/* Notifications */}
-        <Route
-          path="/citizen-notifications"
-          element={<ProtectedRoute><Notifications /></ProtectedRoute>}
-        />
+          {/* ── Fallback: unknown URL → home ── */}
+          <Route path="*" element={<Navigate to="/" replace />} />
 
-        {/* My Complaints */}
-        <Route
-          path="/citizen-my-complaints"
-          element={<ProtectedRoute><MyComplaints /></ProtectedRoute>}
-        />
-
-        {/* My Profile */}
-        <Route
-          path="/citizen-profile"
-          element={<ProtectedRoute><MyProfile /></ProtectedRoute>}
-        />
-
-        {/* Track Complaint */}
-        <Route
-          path="/citizen-track-complaint"
-          element={<ProtectedRoute><TrackComplaint /></ProtectedRoute>}
-        />
-        <Route
-          path="/citizen-track-complaint/:id"
-          element={<ProtectedRoute><ComplaintTracking /></ProtectedRoute>}
-        />
-
-        {/* Complaint Tracking */}
-        <Route
-          path="/citizen-portal/complaint/:id"
-          element={<ProtectedRoute><ComplaintTracking /></ProtectedRoute>}
-        />
-
-        {/* Unknown URL */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }
 
-export default App
+export default App

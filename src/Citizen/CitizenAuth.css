@@ -259,12 +259,6 @@
   font-weight: 700;
 }
 
-.auth-field-hint {
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
 .auth-input-wrapper {
   display: flex;
   align-items: center;
@@ -274,10 +268,6 @@
   background: #fff;
   overflow: hidden;
   transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-
-.register-password-wrapper {
-  width: 100%;
 }
 
 .auth-input-wrapper:focus-within {
@@ -526,14 +516,6 @@
 .auth-switch-text button:hover {
   color: #1d4ed8;
   text-decoration: underline;
-}
-
-.google-signin-container {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  min-height: 44px;
-  margin: 12px 0 20px;
 }
 
 .register-grid {

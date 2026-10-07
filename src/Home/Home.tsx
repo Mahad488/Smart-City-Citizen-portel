@@ -28,37 +28,36 @@ function Home() {
       <HomeNavbar />
 
       {/* HERO */}
-      <section className="home-hero" id="home">
-
+      <section className="home-hero" id="home" aria-label="Hero">
         <div className="hero-overlay" />
 
         <div className="home-container hero-inner">
 
           <div className="hero-content">
 
-            <div className="hero-small-title">
+            <div className="hero-small-title animate-fade-up">
               ● SMART CITY CITIZEN PORTAL
             </div>
 
-            <h1>
+            <h1 className="animate-fade-up delay-1">
               A smarter city starts
               <span>with citizen action</span>
             </h1>
 
-            <p>
+            <p className="animate-fade-up delay-2">
               This platform brings together complaint reporting,
               service discovery, public updates and real-time
               transparency so residents can connect directly with
               the city and help improve everyday life.
             </p>
 
-            <div className="hero-badges" aria-label="Smart city benefits">
+            <div className="hero-badges animate-fade-up delay-3" aria-label="Smart city benefits">
               <span>Public Services</span>
               <span>Live Updates</span>
               <span>Transparent Tracking</span>
             </div>
 
-            <div className="hero-buttons">
+            <div className="hero-buttons animate-fade-up delay-4">
               <a
                 href="/citizen-login"
                 className="primary-button"
@@ -78,7 +77,7 @@ function Home() {
 
 
           {/* FLOATING CARDS */}
-          <div className="hero-floating-cards">
+          <div className="hero-floating-cards animate-fade-right delay-3">
 
             <div className="floating-card">
               <span className="green-icon">🌿</span>
@@ -109,9 +108,11 @@ function Home() {
         </div>
       </section>
 
+      <main id="main-content">
+
 
       {/* PROJECT OVERVIEW */}
-      <section className="project-overview" id="about">
+      <section className="project-overview scroll-reveal" id="about">
         <div className="home-container overview-grid">
           <div className="overview-copy">
             <span className="section-label">WHY THIS PLATFORM MATTERS</span>
@@ -147,6 +148,9 @@ function Home() {
               <img
                 src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=85"
                 alt="Smart city skyline"
+                loading="lazy"
+                width="1200"
+                height="800"
               />
             </div>
             <div className="visual-card stat-visual">
@@ -160,7 +164,7 @@ function Home() {
 
 
       {/* SERVICES */}
-      <section className="services-section" id="services">
+      <section className="services-section scroll-reveal" id="services">
 
         <div className="home-container">
 
@@ -225,7 +229,7 @@ function Home() {
 
 
       {/* HOW IT WORKS */}
-      <section className="process-section">
+      <section className="process-section scroll-reveal">
         <div className="home-container">
           <div className="section-heading centered-heading">
             <span>HOW IT WORKS</span>
@@ -254,7 +258,7 @@ function Home() {
 
 
       {/* CITY STATUS */}
-      <section className="status-section">
+      <section className="status-section scroll-reveal">
 
         <div className="home-container status-grid">
 
@@ -283,7 +287,7 @@ function Home() {
 
 
       {/* ABOUT */}
-      <section className="about-section" id="about-brief">
+      <section className="about-section scroll-reveal" id="about-brief">
 
         <div className="home-container about-layout">
 
@@ -292,6 +296,9 @@ function Home() {
             <img
               src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1000&q=85"
               alt="Modern smart city"
+              loading="lazy"
+              width="1000"
+              height="667"
             />
 
             <div className="image-caption">
@@ -337,7 +344,7 @@ function Home() {
 
 
       {/* LIVE UPDATES */}
-      <section className="updates-section" id="updates">
+      <section className="updates-section scroll-reveal" id="updates">
 
         <div className="home-container updates-layout">
 
@@ -483,6 +490,8 @@ function Home() {
         </div>
       </section>
 
+
+      </main>
 
       {/* FOOTER */}
       <footer className="home-footer">
