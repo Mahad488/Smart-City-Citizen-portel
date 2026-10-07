@@ -145,7 +145,7 @@ Smart City Citizen Portal Team
         service: process.env.EMAIL_SERVICE || "gmail",
         auth: {
           user: emailUser,
-          pass: emailPass,
+          pass: emailPass.replace(/\s+/g, ""),
         },
       });
 
