@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BadgeCheck, Camera, Check, LockKeyhole } from "lucide-react";
+import { BadgeCheck, Camera, Check, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { changePassword, updateProfile } from "../api";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
 import "./Citizenportal.css";
@@ -47,6 +47,10 @@ const MyProfile: React.FC = () => {
     newPassword: "",
     confirmPassword: "",
   });
+
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [message, setMessage] = useState("");
   const [messageIsError, setMessageIsError] = useState(false);
@@ -571,13 +575,24 @@ const MyProfile: React.FC = () => {
               Current Password
             </label>
 
-            <input
-              type="password"
-              name="currentPassword"
-              value={passwordData.currentPassword}
-              onChange={handlePasswordChange}
-              placeholder="Enter current password"
-            />
+            <div className="profile-password-wrapper">
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                name="currentPassword"
+                value={passwordData.currentPassword}
+                onChange={handlePasswordChange}
+                placeholder="Enter current password"
+              />
+              <button
+                type="button"
+                className="profile-password-toggle"
+                onClick={() => setShowCurrentPassword((prev) => !prev)}
+                aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                tabIndex={-1}
+              >
+                {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
 
           </div>
 
@@ -589,13 +604,24 @@ const MyProfile: React.FC = () => {
                 New Password
               </label>
 
-              <input
-                type="password"
-                name="newPassword"
-                value={passwordData.newPassword}
-                onChange={handlePasswordChange}
-                placeholder="Enter new password"
-              />
+              <div className="profile-password-wrapper">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  className="profile-password-toggle"
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                  aria-label={showNewPassword ? "Hide password" : "Show password"}
+                  tabIndex={-1}
+                >
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
 
             </div>
 
@@ -605,13 +631,24 @@ const MyProfile: React.FC = () => {
                 Confirm New Password
               </label>
 
-              <input
-                type="password"
-                name="confirmPassword"
-                value={passwordData.confirmPassword}
-                onChange={handlePasswordChange}
-                placeholder="Confirm new password"
-              />
+              <div className="profile-password-wrapper">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Confirm new password"
+                />
+                <button
+                  type="button"
+                  className="profile-password-toggle"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
 
             </div>
 

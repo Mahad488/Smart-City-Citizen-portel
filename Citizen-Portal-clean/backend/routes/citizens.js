@@ -1,12 +1,15 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import db from "../config/db.js";
 import { authenticate } from "../auth.js";
 
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || "smart-city-citizen-dev-secret";
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const generateCitizenId = async () => {
   try {
@@ -175,6 +178,93 @@ router.post("/login", async (req, res) => {
     res.status(500).json({
       message: "Login failed"
     });
+  }
+});
+
+// POST google login
+router.post("/google-login", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ message: "Google ID token is required" });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name } = payload;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is missing from Google account" });
+    }
+
+    let [rows] = await db.query(
+      `SELECT
+        id, citizen_id, name, email, phone, area, registered_at, status
+       FROM citizens
+       WHERE email = ?`,
+      [email]
+    );
+
+    let citizen;
+
+    if (rows.length === 0) {
+      // Auto-register citizen if they don't exist
+      const citizen_id = await generateCitizenId();
+      // Create a dummy strong password for OAuth users
+      const dummyPassword = await bcrypt.hash(Math.random().toString(36).slice(-8) + Date.now(), 10);
+      
+      const [result] = await db.query(
+        `INSERT INTO citizens
+         (citizen_id, name, email, password_hash, status)
+         VALUES (?, ?, ?, ?, 'Active')`, // Auto-activate OAuth accounts
+        [citizen_id, name, email, dummyPassword]
+      );
+
+      citizen = {
+        id: result.insertId,
+        citizen_id,
+        name,
+        email,
+        phone: null,
+        area: null,
+        status: "Active"
+      };
+    } else {
+      citizen = rows[0];
+
+      if (citizen.status === "Pending") {
+        return res.status(403).json({ message: "Your account is waiting for admin approval." });
+      }
+
+      if (citizen.status === "Inactive") {
+        return res.status(403).json({ message: "Your account has been deactivated by the administrator." });
+      }
+    }
+
+    const jwtToken = jwt.sign(
+      {
+        id: citizen.id,
+        citizen_id: citizen.citizen_id,
+        email: citizen.email,
+        name: citizen.name,
+        status: citizen.status,
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      message: "Login successful",
+      token: jwtToken,
+      citizen,
+    });
+  } catch (error) {
+    console.error("Google login error:", error);
+    res.status(500).json({ message: "Google login failed" });
   }
 });
 

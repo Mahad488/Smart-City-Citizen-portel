@@ -173,11 +173,11 @@
 
 .citizen-auth-card {
   width: 100%;
-  max-width: 360px;
+  max-width: 440px;
   box-sizing: border-box;
-  padding: 18px 16px 16px;
+  padding: 22px 20px 20px;
   border: 1px solid #edf1f6;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
   animation: auth-enter 300ms ease-out both;
@@ -289,6 +289,8 @@
 .auth-form-group input,
 .auth-form-group select {
   width: 100%;
+  flex: 1;
+  min-width: 0;
   min-height: 48px;
   box-sizing: border-box;
   border: none;
@@ -298,6 +300,73 @@
   font-size: 15px;
   padding: 13px 14px 13px 12px;
   outline: none;
+}
+
+.password-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  padding: 0 14px;
+  cursor: pointer;
+  transition: color 150ms ease, transform 100ms ease;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.password-toggle-btn:hover {
+  color: #1e293b;
+}
+
+.password-toggle-btn:active {
+  transform: scale(0.92);
+}
+
+.auth-phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+}
+
+.phone-country-select-wrapper {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  height: 52px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.phone-country-select {
+  width: auto !important;
+  flex: none !important;
+  background: transparent !important;
+  border: none !important;
+  font: inherit;
+  font-size: 14px !important;
+  font-weight: 600;
+  color: #1e293b !important;
+  padding: 0 10px 0 14px !important;
+  height: 100% !important;
+  cursor: pointer;
+  outline: none !important;
+}
+
+.phone-country-select:focus {
+  background: #f1f5f9 !important;
+}
+
+.phone-number-field {
+  flex: 1 !important;
+  min-width: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 14px 16px !important;
+  font-size: 15px !important;
+  letter-spacing: 0.3px;
+  outline: none !important;
 }
 
 .auth-form-group input::placeholder {

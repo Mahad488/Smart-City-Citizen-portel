@@ -517,6 +517,42 @@
   background: #086bcf;
 }
 
+.profile-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.profile-password-wrapper input {
+  width: 100%;
+  padding-right: 42px !important;
+}
+
+.profile-password-toggle {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #7b90a5;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 4px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.profile-password-toggle:hover {
+  color: #1478df;
+  background-color: #f0f6ff;
+}
+
+.profile-password-toggle:focus-visible {
+  outline: 2px solid #1478df;
+}
+
 /* =========================================
    ACCOUNT INFO
 ========================================= */

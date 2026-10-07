@@ -5,6 +5,8 @@ import {
   ArrowRight,
   Check,
   CircleAlert,
+  Eye,
+  EyeOff,
   LockKeyhole,
   Mail,
   MapPin,
@@ -14,6 +16,26 @@ import {
 } from "lucide-react";
 import smartCityMark from "../assets/smart-city-mark.svg";
 import "./CitizenAuth.css";
+
+const COUNTRY_CODES = [
+  { code: "+92", label: "🇵🇰 +92 (PK)" },
+  { code: "+971", label: "🇦🇪 +971 (UAE)" },
+  { code: "+966", label: "🇸🇦 +966 (SA)" },
+  { code: "+44", label: "🇬🇧 +44 (UK)" },
+  { code: "+1", label: "🇺🇸 +1 (US)" },
+  { code: "+974", label: "🇶🇦 +974 (QA)" },
+  { code: "+968", label: "🇴🇲 +968 (OM)" },
+  { code: "+965", label: "🇰🇼 +965 (KW)" },
+  { code: "+973", label: "🇧🇭 +973 (BH)" },
+  { code: "+90", label: "🇹🇷 +90 (TR)" },
+  { code: "+49", label: "🇩🇪 +49 (DE)" },
+  { code: "+61", label: "🇦🇺 +61 (AU)" },
+  { code: "+91", label: "🇮🇳 +91 (IN)" },
+  { code: "+880", label: "🇧🇩 +880 (BD)" },
+  { code: "+60", label: "🇲🇾 +60 (MY)" },
+  { code: "+65", label: "🇸🇬 +65 (SG)" },
+  { code: "+86", label: "🇨🇳 +86 (CN)" },
+];
 
 type Mode = "login" | "register";
 
@@ -29,6 +51,10 @@ function CitizenAuth() {
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<Mode>("login");
   const [loading, setLoading] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [countryCode, setCountryCode] = useState("+92");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [fetchingLocation, setFetchingLocation] = useState(false);
   const [googleSdkLoaded, setGoogleSdkLoaded] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
@@ -353,6 +379,10 @@ function CitizenAuth() {
       return;
     }
 
+    const formattedPhone = phoneNumber.trim()
+      ? `${countryCode} ${phoneNumber.trim().replace(/^0+/, "")}`
+      : "";
+
     setLoading(true);
 
     try {
@@ -361,7 +391,10 @@ function CitizenAuth() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(registerForm),
+        body: JSON.stringify({
+          ...registerForm,
+          phone: formattedPhone,
+        }),
       });
 
       const data = await response.json();
@@ -546,7 +579,7 @@ function CitizenAuth() {
                         <LockKeyhole size={16} aria-hidden="true" />
                       </span>
                       <input
-                        type="password"
+                        type={showLoginPassword ? "text" : "password"}
                         placeholder="Enter your password"
                         value={loginForm.password}
                         required
@@ -557,6 +590,15 @@ function CitizenAuth() {
                           })
                         }
                       />
+                      <button
+                        type="button"
+                        className="password-toggle-btn"
+                        onClick={() => setShowLoginPassword((prev) => !prev)}
+                        aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                        tabIndex={-1}
+                      >
+                        {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
                     </div>
                   </div>
 
@@ -631,7 +673,7 @@ function CitizenAuth() {
                       </div>
                     </div>
 
-                    <div className="auth-form-group">
+                    <div className="auth-form-group full">
                       <label>Email Address</label>
                       <div className="auth-input-wrapper">
                         <span className="input-icon">
@@ -652,22 +694,32 @@ function CitizenAuth() {
                       </div>
                     </div>
 
-                    <div className="auth-form-group">
-                      <label>Phone</label>
-                      <div className="auth-input-wrapper">
-                        <span className="input-icon">
-                          <Phone size={16} aria-hidden="true" />
-                        </span>
+                    <div className="auth-form-group full">
+                      <label>Phone / Contact Number</label>
+                      <div className="auth-input-wrapper auth-phone-input-wrapper">
+                        <div className="phone-country-select-wrapper">
+                          <select
+                            value={countryCode}
+                            onChange={(e) => setCountryCode(e.target.value)}
+                            className="phone-country-select"
+                            aria-label="Country Code"
+                          >
+                            {COUNTRY_CODES.map((item, idx) => (
+                              <option key={`${item.code}-${idx}`} value={item.code}>
+                                {item.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                         <input
-                          type="text"
-                          placeholder="+92 300 1234567"
-                          value={registerForm.phone}
-                          onChange={(e) =>
-                            setRegisterForm({
-                              ...registerForm,
-                              phone: e.target.value,
-                            })
-                          }
+                          type="tel"
+                          placeholder="300 1234567"
+                          value={phoneNumber}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9\s-]/g, "");
+                            setPhoneNumber(val);
+                          }}
+                          className="phone-number-field"
                         />
                       </div>
                     </div>
@@ -679,7 +731,7 @@ function CitizenAuth() {
                           <LockKeyhole size={16} aria-hidden="true" />
                         </span>
                         <input
-                          type="password"
+                          type={showRegisterPassword ? "text" : "password"}
                           placeholder="Create a password"
                           value={registerForm.password}
                           required
@@ -693,6 +745,15 @@ function CitizenAuth() {
                             })
                           }
                         />
+                        <button
+                          type="button"
+                          className="password-toggle-btn"
+                          onClick={() => setShowRegisterPassword((prev) => !prev)}
+                          aria-label={showRegisterPassword ? "Hide password" : "Show password"}
+                          tabIndex={-1}
+                        >
+                          {showRegisterPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                       </div>
                       <small className="auth-field-hint">
                         At least 6 characters, including one uppercase letter

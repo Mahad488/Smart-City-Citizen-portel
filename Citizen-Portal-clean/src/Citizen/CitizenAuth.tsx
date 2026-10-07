@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "../api";
 import {
   ArrowRight,
   Check,
   CircleAlert,
+  Eye,
+  EyeOff,
   Info,
   LockKeyhole,
   Mail,
@@ -15,6 +18,26 @@ import {
 import smartCityMark from "../assets/smart-city-mark.svg";
 import "./CitizenAuth.css";
 
+const COUNTRY_CODES = [
+  { code: "+92", label: "🇵🇰 +92 (PK)" },
+  { code: "+971", label: "🇦🇪 +971 (UAE)" },
+  { code: "+966", label: "🇸🇦 +966 (SA)" },
+  { code: "+44", label: "🇬🇧 +44 (UK)" },
+  { code: "+1", label: "🇺🇸 +1 (US)" },
+  { code: "+974", label: "🇶🇦 +974 (QA)" },
+  { code: "+968", label: "🇴🇲 +968 (OM)" },
+  { code: "+965", label: "🇰🇼 +965 (KW)" },
+  { code: "+973", label: "🇧🇭 +973 (BH)" },
+  { code: "+90", label: "🇹🇷 +90 (TR)" },
+  { code: "+49", label: "🇩🇪 +49 (DE)" },
+  { code: "+61", label: "🇦🇺 +61 (AU)" },
+  { code: "+91", label: "🇮🇳 +91 (IN)" },
+  { code: "+880", label: "🇧🇩 +880 (BD)" },
+  { code: "+60", label: "🇲🇾 +60 (MY)" },
+  { code: "+65", label: "🇸🇬 +65 (SG)" },
+  { code: "+86", label: "🇨🇳 +86 (CN)" },
+];
+
 type Mode = "login" | "register";
 
 function CitizenAuth() {
@@ -22,6 +45,10 @@ function CitizenAuth() {
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<Mode>("login");
   const [loading, setLoading] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [countryCode, setCountryCode] = useState("+92");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState(() =>
@@ -107,6 +134,49 @@ function CitizenAuth() {
   };
 
   // =========================
+  // GOOGLE LOGIN
+  // =========================
+
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    setError("");
+    setMessage("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/citizens/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: credentialResponse.credential }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Google login failed");
+      }
+
+      localStorage.setItem("citizen_token", data.token);
+      localStorage.setItem("citizen_data", JSON.stringify(data.citizen));
+
+      setMessage("Google login successful!");
+
+      const redirectTo = searchParams.get("redirectTo");
+      const destination =
+        redirectTo?.startsWith("/") &&
+        !redirectTo.startsWith("//") &&
+        !redirectTo.startsWith("/citizen-login")
+          ? redirectTo
+          : "/citizen-portal";
+
+      navigate(destination, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================
   // REGISTER
   // =========================
 
@@ -129,6 +199,10 @@ function CitizenAuth() {
 
     setLoading(true);
 
+    const formattedPhone = phoneNumber.trim()
+      ? `${countryCode} ${phoneNumber.trim().replace(/^0+/, "")}`
+      : "";
+
     try {
       const response = await fetch(
         `${API_BASE_URL}/api/citizens/register`,
@@ -137,7 +211,10 @@ function CitizenAuth() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(registerForm),
+          body: JSON.stringify({
+            ...registerForm,
+            phone: formattedPhone,
+          }),
         }
       );
 
@@ -160,6 +237,8 @@ function CitizenAuth() {
         phone: "",
         area: "Central City",
       });
+      setPhoneNumber("");
+      setCountryCode("+92");
 
       setTimeout(() => {
         setMode("login");
@@ -372,7 +451,7 @@ function CitizenAuth() {
                     </span>
 
                     <input
-                      type="password"
+                      type={showLoginPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       value={loginForm.password}
                       required
@@ -383,6 +462,16 @@ function CitizenAuth() {
                         })
                       }
                     />
+
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowLoginPassword((prev) => !prev)}
+                      aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                      tabIndex={-1}
+                    >
+                      {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
 
                 </div>
@@ -426,6 +515,17 @@ function CitizenAuth() {
 
                 <div className="auth-divider">
                   <span>OR</span>
+                </div>
+
+                <div className="google-auth-container" style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => setError("Google Login Failed")}
+                    theme="filled_blue"
+                    shape="pill"
+                    text="continue_with"
+                    width="300"
+                  />
                 </div>
 
 
@@ -483,7 +583,7 @@ function CitizenAuth() {
                   </div>
 
 
-                  <div className="auth-form-group">
+                  <div className="auth-form-group full">
 
                     <label>Email Address</label>
 
@@ -509,25 +609,35 @@ function CitizenAuth() {
                   </div>
 
 
-                  <div className="auth-form-group">
+                  <div className="auth-form-group full">
 
-                    <label>Phone</label>
+                    <label>Phone / Contact Number</label>
 
-                    <div className="auth-input-wrapper">
-                      <span className="input-icon">
-                        <Phone size={16} aria-hidden="true" />
-                      </span>
+                    <div className="auth-input-wrapper auth-phone-input-wrapper">
+                      <div className="phone-country-select-wrapper">
+                        <select
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                          className="phone-country-select"
+                          aria-label="Country Code"
+                        >
+                          {COUNTRY_CODES.map((item, idx) => (
+                            <option key={`${item.code}-${idx}`} value={item.code}>
+                              {item.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
                       <input
-                        type="text"
-                        placeholder="+92 300 1234567"
-                        value={registerForm.phone}
-                        onChange={(e) =>
-                          setRegisterForm({
-                            ...registerForm,
-                            phone: e.target.value,
-                          })
-                        }
+                        type="tel"
+                        placeholder="300 1234567"
+                        value={phoneNumber}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9\s-]/g, "");
+                          setPhoneNumber(val);
+                        }}
+                        className="phone-number-field"
                       />
                     </div>
 
@@ -544,7 +654,7 @@ function CitizenAuth() {
                       </span>
 
                       <input
-                        type="password"
+                        type={showRegisterPassword ? "text" : "password"}
                         placeholder="Create a password"
                         value={registerForm.password}
                         required
@@ -556,6 +666,16 @@ function CitizenAuth() {
                           })
                         }
                       />
+
+                      <button
+                        type="button"
+                        className="password-toggle-btn"
+                        onClick={() => setShowRegisterPassword((prev) => !prev)}
+                        aria-label={showRegisterPassword ? "Hide password" : "Show password"}
+                        tabIndex={-1}
+                      >
+                        {showRegisterPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
                     </div>
 
                   </div>
@@ -601,6 +721,21 @@ function CitizenAuth() {
                     ? "Creating account..."
                     : "Create Citizen Account"}
                 </button>
+
+                <div className="auth-divider" style={{ marginTop: '20px' }}>
+                  <span>OR</span>
+                </div>
+
+                <div className="google-auth-container" style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', marginBottom: '20px' }}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => setError("Google Login Failed")}
+                    theme="filled_blue"
+                    shape="pill"
+                    text="signup_with"
+                    width="300"
+                  />
+                </div>
 
 
                 <div className="auth-note">

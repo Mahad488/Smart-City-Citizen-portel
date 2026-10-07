@@ -49,12 +49,20 @@ html {
 
 .home-navbar {
   height: 76px;
-  background: white;
-  border-bottom: 1px solid #e8eef5;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(232, 238, 245, 0.8);
   position: sticky;
   top: 0;
   z-index: 100;
   overflow: visible;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.home-navbar.scrolled {
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 4px 24px rgba(10, 35, 66, 0.08);
 }
 
 .about-section,
@@ -152,7 +160,7 @@ html {
 /* ================= HERO ================= */
 
 .home-hero {
-  min-height: 550px;
+  min-height: 100svh;
   position: relative;
   color: white;
 
@@ -161,6 +169,7 @@ html {
 
   background-size: cover;
   background-position: center;
+  background-attachment: fixed;
 }
 
 .hero-overlay {
@@ -177,10 +186,11 @@ html {
 
 .hero-inner {
   position: relative;
-  min-height: 550px;
+  min-height: 100svh;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 120px 0 80px;
 }
 
 .hero-content {
@@ -246,6 +256,7 @@ html {
   border-radius: 30px;
   font-weight: 700;
   display: inline-block;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 .smart-home .primary-button {
@@ -253,16 +264,32 @@ html {
   color: white;
 }
 
+.smart-home .primary-button:hover {
+  background: #0566cc;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(8, 120, 232, 0.45);
+}
+
 .smart-home .secondary-button {
-  border: 1px solid white;
+  border: 1px solid rgba(255,255,255,0.7);
   color: white;
+  backdrop-filter: blur(4px);
+}
+
+.smart-home .secondary-button:hover {
+  background: rgba(255,255,255,0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255,255,255,0.15);
 }
 
 
 /* FLOATING CARDS */
 
 .hero-floating-cards {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 2;
 }
 
 .floating-card {
@@ -727,12 +754,14 @@ html {
   border: 1px solid #e4ebf3;
   border-radius: 15px;
   background: white;
-  transition: .25s;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+  cursor: default;
 }
 
 .service-card:hover {
-  transform: translateY(-7px);
-  box-shadow: 0 15px 40px rgba(19, 56, 95, .1);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 48px rgba(8, 120, 232, 0.13);
+  border-color: #c8deff;
 }
 
 .service-icon {
@@ -815,7 +844,10 @@ html {
 }
 
 .status-grid strong {
-  font-size: 28px;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  animation: countUp 0.5s ease both;
 }
 
 .status-grid span {
@@ -886,6 +918,13 @@ html {
   padding: 12px 22px;
   border-radius: 25px;
   font-weight: 700;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+
+.smart-home .outline-button:hover {
+  background: #0878e8;
+  color: white;
+  transform: translateY(-2px);
 }
 
 
@@ -963,6 +1002,8 @@ html {
   color: #0ca86c;
   font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
+  animation: pulse-dot 2s ease-in-out infinite;
 }
 
 
@@ -1027,6 +1068,12 @@ html {
   border-radius: 28px;
   cursor: pointer;
   font-weight: 700;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.tracking-form button:hover {
+  background: #0878e8;
+  transform: scale(1.03);
 }
 
 .smart-home .tracking-error {

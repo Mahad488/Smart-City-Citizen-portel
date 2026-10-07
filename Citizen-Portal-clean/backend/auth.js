@@ -1,7 +1,12 @@
 import jwt from "jsonwebtoken";
 import process from "node:process";
 
-const JWT_SECRET = process.env.JWT_SECRET || "smart-city-citizen-dev-secret";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error("FATAL: JWT_SECRET environment variable is not set. Server cannot start securely.");
+  process.exit(1);
+}
 
 export function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
