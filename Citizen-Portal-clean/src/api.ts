@@ -1,8 +1,8 @@
 
 export const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ||
-  'http://localhost:5000'
-).replace(/\/+$/, '');
+  import.meta.env.VITE_API_URL?.trim() ||
+  'https://smart-city-citizen-portel-production.up.railway.app'
+).replace(/\/+$/, '')
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('citizen_token');

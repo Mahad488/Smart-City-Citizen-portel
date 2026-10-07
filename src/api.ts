@@ -1,6 +1,6 @@
 export const API_BASE_URL = (
   import.meta.env.VITE_API_URL?.trim() ||
-  'http://localhost:5000'
+  'https://smart-city-citizen-portel-production.up.railway.app'
 ).replace(/\/+$/, '')
 
 function getAuthHeaders(): HeadersInit {

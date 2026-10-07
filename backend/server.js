@@ -31,9 +31,13 @@ app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
 
   if (typeof origin === "string") {
+    const cleanOrigin = origin.replace(/\/+$/, "");
     if (
       allowedOrigins.length === 0 ||
-      allowedOrigins.includes(origin.replace(/\/+$/, ""))
+      allowedOrigins.includes(cleanOrigin) ||
+      cleanOrigin === "https://smart-city-citizen-portel-a37g.vercel.app" ||
+      cleanOrigin.endsWith(".vercel.app") ||
+      cleanOrigin.includes("localhost")
     ) {
       res.setHeader("Access-Control-Allow-Origin", origin);
     }
