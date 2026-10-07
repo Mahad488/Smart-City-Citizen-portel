@@ -326,6 +326,111 @@ router.put("/:id/deactivate", authenticate, async (req, res) => {
   }
 });
 
+// GET current citizen profile
+router.get("/me", authenticate, async (req, res) => {
+  try {
+    const citizen_id = req.user.citizen_id;
+    const numericId = Number(req.user.id);
+    const whereClause = citizen_id ? "citizen_id = ?" : "id = ?";
+    const whereParam = citizen_id || numericId;
+
+    const [rows] = await db.query(
+      `SELECT id, citizen_id, name, email, phone, area, registered_at, status
+       FROM citizens
+       WHERE ${whereClause}`,
+      [whereParam]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Citizen not found" });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("Error fetching current citizen:", error);
+    res.status(500).json({ message: "Failed to fetch profile" });
+  }
+});
+
+// PUT update current citizen profile
+router.put("/me", authenticate, async (req, res) => {
+  try {
+    const citizen_id = req.user.citizen_id;
+    const numericId = Number(req.user.id);
+    const whereClause = citizen_id ? "citizen_id = ?" : "id = ?";
+    const whereParam = citizen_id || numericId;
+
+    const { name, phone, area, address } = req.body;
+    const chosenArea = area || address || null;
+
+    await db.query(
+      `UPDATE citizens
+       SET name = COALESCE(?, name),
+           phone = COALESCE(?, phone),
+           area = COALESCE(?, area)
+       WHERE ${whereClause}`,
+      [name || null, phone || null, chosenArea, whereParam]
+    );
+
+    const [rows] = await db.query(
+      `SELECT id, citizen_id, name, email, phone, area, registered_at, status
+       FROM citizens
+       WHERE ${whereClause}`,
+      [whereParam]
+    );
+
+    res.json({
+      message: "Profile updated successfully",
+      citizen: rows[0],
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Failed to update profile" });
+  }
+});
+
+// PUT update current citizen password
+router.put("/me/password", authenticate, async (req, res) => {
+  try {
+    const citizen_id = req.user.citizen_id;
+    const numericId = Number(req.user.id);
+    const whereClause = citizen_id ? "citizen_id = ?" : "id = ?";
+    const whereParam = citizen_id || numericId;
+
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current and new password are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const [rows] = await db.query(
+      `SELECT id, password_hash FROM citizens WHERE ${whereClause}`,
+      [whereParam]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Citizen not found" });
+    }
+
+    const match = await bcrypt.compare(currentPassword, rows[0].password_hash);
+    if (!match) {
+      return res.status(400).json({ message: "Incorrect current password" });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await db.query(`UPDATE citizens SET password_hash = ? WHERE id = ?`, [newHash, rows[0].id]);
+
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res.status(500).json({ message: "Failed to update password" });
+  }
+});
+
 // GET citizen by ID
 router.get("/:id", authenticate, (req, res) => {
   const { id } = req.params;

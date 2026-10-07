@@ -1,23 +1,24 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BadgeCheck, Camera, Check, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
+import { API_BASE_URL } from "../api";
 import "./Citizenportal.css";
 import "./MyProfile.css";
 
 const MyProfile: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [citizen] = useState(() => {
+  const [citizen, setCitizen] = useState(() => {
     try {
-      const saved = localStorage.getItem("citizen");
+      const saved = localStorage.getItem("citizen") || localStorage.getItem("citizen_data");
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
   });
 
-  const profileImageKey = `citizen-profile-image-${citizen?.citizen_id || "current"}`;
+  const profileImageKey = `citizen-profile-image-${citizen?.citizen_id || citizen?.id || "current"}`;
   const [profileImage, setProfileImage] = useState<string | null>(() => {
     try {
       return localStorage.getItem(profileImageKey);
@@ -27,11 +28,72 @@ const MyProfile: React.FC = () => {
   });
 
   const [formData, setFormData] = useState({
-    name: "Muhammad Mahad Rafiq",
-    email: "muhammadmahad2021@gmail.com",
-    phone: "03333333333",
-    area: "South District",
+    name: citizen?.name || "",
+    email: citizen?.email || "",
+    phone: citizen?.phone || "",
+    area: citizen?.area || "",
   });
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      const token = localStorage.getItem("citizen_token");
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/citizens/me`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setCitizen(data);
+            setFormData({
+              name: data.name || "",
+              email: data.email || "",
+              phone: data.phone || "",
+              area: data.area || "",
+            });
+            localStorage.setItem("citizen", JSON.stringify(data));
+            localStorage.setItem("citizen_data", JSON.stringify(data));
+            return;
+          }
+        } catch (err) {
+          console.error("Failed to load live profile:", err);
+        }
+      }
+
+      // Fallback to localStorage
+      try {
+        const saved = localStorage.getItem("citizen") || localStorage.getItem("citizen_data");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setCitizen(parsed);
+          setFormData({
+            name: parsed.name || "",
+            email: parsed.email || "",
+            phone: parsed.phone || "",
+            area: parsed.area || "",
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
+  const getInitials = (name?: string) => {
+    if (!name) return "C";
+    return name
+      .trim()
+      .split(/\s+/)
+      .map((part) => part[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "C";
+  };
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -155,15 +217,45 @@ const MyProfile: React.FC = () => {
     }
   };
 
-  const handleSaveProfile = () => {
-    setMessage("Profile information saved successfully.");
+  const handleSaveProfile = async () => {
+    const token = localStorage.getItem("citizen_token");
+    try {
+      if (token) {
+        const res = await fetch(`${API_BASE_URL}/api/citizens/me`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(formData),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Failed to update profile");
+        }
+        if (data.citizen) {
+          setCitizen(data.citizen);
+          localStorage.setItem("citizen", JSON.stringify(data.citizen));
+          localStorage.setItem("citizen_data", JSON.stringify(data.citizen));
+        }
+      } else {
+        const updated = { ...citizen, ...formData };
+        setCitizen(updated);
+        localStorage.setItem("citizen", JSON.stringify(updated));
+        localStorage.setItem("citizen_data", JSON.stringify(updated));
+      }
+
+      setMessage("Profile information saved successfully.");
+    } catch (err: any) {
+      setMessage(err.message || "Failed to update profile.");
+    }
 
     setTimeout(() => {
       setMessage("");
     }, 3000);
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (
       !passwordData.currentPassword ||
       !passwordData.newPassword ||
@@ -188,13 +280,36 @@ const MyProfile: React.FC = () => {
       return;
     }
 
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+    const token = localStorage.getItem("citizen_token");
+    try {
+      if (token) {
+        const res = await fetch(`${API_BASE_URL}/api/citizens/me/password`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            currentPassword: passwordData.currentPassword,
+            newPassword: passwordData.newPassword,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Failed to change password");
+        }
+      }
 
-    setMessage("Password changed successfully.");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      setMessage("Password changed successfully.");
+    } catch (err: any) {
+      setMessage(err.message || "Failed to change password.");
+    }
 
     setTimeout(() => {
       setMessage("");
@@ -280,7 +395,7 @@ const MyProfile: React.FC = () => {
                 />
               ) : (
                 <div className="profile-photo-placeholder">
-                  MR
+                  {getInitials(formData.name || citizen?.name)}
                 </div>
               )}
 
@@ -305,11 +420,11 @@ const MyProfile: React.FC = () => {
             />
 
             <h3>
-              {formData.name}
+              {formData.name || "Citizen"}
             </h3>
 
             <p>
-              Citizen ID: CIT-10007
+              Citizen ID: {citizen?.citizen_id || "CIT-00000"}
             </p>
 
             <div className="photo-buttons">
