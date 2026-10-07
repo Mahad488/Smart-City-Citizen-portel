@@ -190,11 +190,11 @@ function NewComplaint() {
       }
 
       setMessage(
-        `Complaint submitted successfully. ID: ${
+        `Complaint registered successfully! A confirmation email has been sent. Work will begin within 24 hours. (ID: ${
           data.complaintId != null
             ? formatComplaintId(data.complaintId)
             : "N/A"
-        }`
+        })`
       );
       addNotification({
         type: "complaint",

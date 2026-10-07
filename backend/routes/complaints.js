@@ -2,6 +2,7 @@ import express from "express";
 import { Buffer } from "node:buffer";
 import db from "../config/db.js";
 import { requireAdmin } from "../middleware/auth.js";
+import { sendComplaintConfirmationEmail } from "../services/emailService.js";
 
 const router = express.Router();
 
@@ -238,6 +239,18 @@ router.post("/citizen", async (req, res) => {
         throw error;
       }
     }
+
+    // Send confirmation email asynchronously without blocking response
+    sendComplaintConfirmationEmail({
+      citizenName: citizen.name,
+      citizenEmail: citizen.email,
+      complaintId: result.insertId,
+      title: title,
+      category: category || "Other",
+      area: area || citizen.area || "Not provided",
+    }).catch((emailErr) => {
+      console.error("[COMPLAINT ROUTE] Error sending complaint confirmation email:", emailErr);
+    });
 
     res.status(201).json({
       message: "Complaint submitted successfully",
