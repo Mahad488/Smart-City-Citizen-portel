@@ -1,6 +1,81 @@
 import nodemailer from "nodemailer";
 
 /**
+ * Dispatch an email via Resend HTTPS REST API.
+ * In Resend's free sandbox mode (using onboarding@resend.dev), emails can only be sent
+ * to the registered account owner (muhammadmahad2021@gmail.com).
+ * If a citizen files with another email and Resend returns 403, we automatically
+ * forward the notification to muhammadmahad2021@gmail.com with clear context so
+ * testing emails are never lost.
+ */
+const sendViaResend = async ({ from, to, subject, html, text }) => {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) return null;
+
+  const defaultFrom = from || process.env.RESEND_FROM || "Smart City Portal <onboarding@resend.dev>";
+  const sandboxOwner = "muhammadmahad2021@gmail.com";
+
+  try {
+    const resendRes = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${resendApiKey.trim()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: defaultFrom,
+        to: [to],
+        subject,
+        html,
+        text,
+      }),
+    });
+
+    const resendData = await resendRes.json();
+    if (resendRes.ok) {
+      console.log(`[EMAIL SERVICE] Email successfully delivered via Resend to ${to}. ID: ${resendData.id}`);
+      return { success: true, messageId: resendData.id, provider: "resend" };
+    }
+
+    // Handle 403 sandbox limitation
+    if (resendData.statusCode === 403 && to.toLowerCase() !== sandboxOwner.toLowerCase()) {
+      console.warn(`[EMAIL SERVICE] Resend sandbox restriction (403): Testing emails only allowed to owner (${sandboxOwner}). Forwarding notification for ${to} to owner inbox...`);
+
+      const noticeHtml = `<div style="background:#fff3cd;padding:12px 16px;border:1px solid #ffeeba;border-radius:8px;margin-bottom:16px;color:#856404;font-size:13px;font-family:sans-serif;"><strong>Resend Sandbox Notice:</strong> This notification was addressed to <strong>${to}</strong>. Delivered to your registered Resend developer account (${sandboxOwner}). To send directly to any public email, verify a custom domain at resend.com/domains.</div>`;
+
+      const fallbackRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: defaultFrom,
+          to: [sandboxOwner],
+          subject: `[For: ${to}] ${subject}`,
+          html: noticeHtml + html,
+          text: `[Notification intended for: ${to}]\n\n` + text,
+        }),
+      });
+
+      const fallbackData = await fallbackRes.json();
+      if (fallbackRes.ok) {
+        console.log(`[EMAIL SERVICE] Notification delivered to owner ${sandboxOwner} (intended for ${to}). ID: ${fallbackData.id}`);
+        return { success: true, messageId: fallbackData.id, provider: "resend", redirected: true };
+      } else {
+        console.error("[EMAIL SERVICE] Resend sandbox fallback error:", fallbackData);
+      }
+    } else {
+      console.error("[EMAIL SERVICE] Resend API error:", resendData);
+    }
+  } catch (err) {
+    console.error("[EMAIL SERVICE] Exception contacting Resend API:", err.message);
+  }
+
+  return null;
+};
+
+/**
  * Send complaint registration confirmation email to the citizen.
  *
  * @param {Object} params
@@ -148,34 +223,15 @@ Smart City Citizen Portal Administration
 </html>
 `;
 
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (resendApiKey) {
-    try {
-      const resendRes = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${resendApiKey.trim()}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: process.env.RESEND_FROM || "Smart City Portal <onboarding@resend.dev>",
-          to: [citizenEmail],
-          subject: `Complaint Confirmation #${formattedId} - Smart City Citizen Portal`,
-          html: htmlContent,
-          text: textContent,
-        }),
-      });
-
-      const resendData = await resendRes.json();
-      if (resendRes.ok) {
-        console.log(`[EMAIL SERVICE] Email sent via Resend HTTPS API to ${citizenEmail}. ID: ${resendData.id}`);
-        return { success: true, messageId: resendData.id, provider: "resend" };
-      } else {
-        console.error("[EMAIL SERVICE] Resend API error:", resendData);
-      }
-    } catch (apiErr) {
-      console.error("[EMAIL SERVICE] Error calling Resend API:", apiErr.message);
-    }
+  const resendResult = await sendViaResend({
+    from: process.env.RESEND_FROM || "Smart City Portal <onboarding@resend.dev>",
+    to: citizenEmail,
+    subject: `Complaint Confirmation #${formattedId} - Smart City Citizen Portal`,
+    html: htmlContent,
+    text: textContent,
+  });
+  if (resendResult && resendResult.success) {
+    return resendResult;
   }
 
   if (emailUser && emailPass) {
@@ -362,34 +418,15 @@ Smart City Citizen Portal Emergency Team
 </html>
 `;
 
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (resendApiKey) {
-    try {
-      const resendRes = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${resendApiKey.trim()}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: process.env.RESEND_FROM || "Smart City Emergency <onboarding@resend.dev>",
-          to: [citizenEmail],
-          subject: `Emergency Report Received #${formattedId} - Smart City Citizen Portal`,
-          html: htmlContent,
-          text: textContent,
-        }),
-      });
-
-      const resendData = await resendRes.json();
-      if (resendRes.ok) {
-        console.log(`[EMAIL SERVICE] Emergency email sent via Resend HTTPS API to ${citizenEmail}. ID: ${resendData.id}`);
-        return { success: true, messageId: resendData.id, provider: "resend" };
-      } else {
-        console.error("[EMAIL SERVICE] Resend API error:", resendData);
-      }
-    } catch (apiErr) {
-      console.error("[EMAIL SERVICE] Error calling Resend API for emergency:", apiErr.message);
-    }
+  const resendResult = await sendViaResend({
+    from: process.env.RESEND_FROM || "Smart City Emergency <onboarding@resend.dev>",
+    to: citizenEmail,
+    subject: `Emergency Report Received #${formattedId} - Smart City Citizen Portal`,
+    html: htmlContent,
+    text: textContent,
+  });
+  if (resendResult && resendResult.success) {
+    return resendResult;
   }
 
   if (emailUser && emailPass) {
