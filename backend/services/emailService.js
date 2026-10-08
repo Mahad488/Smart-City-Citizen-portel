@@ -32,23 +32,26 @@ export const sendComplaintConfirmationEmail = async ({
   const textContent = `
 Assalam-o-Alaikum ${citizenName || "Citizen"},
 
-Aap ki report hum tak pohanch chuki hai.
-Aap ke report karne ka shukriya!
-Aap ki report par 24 hours (24 ghanton) mein kaam shuru kiya jaye ga.
+Your report is being under process. It will take up to 24 hours to respond by the admin. Thanks for contacting us!
+
+Aap ki report par kaam jari hai. Admin ki taraf se 24 ghanton ke andar response diya jaye ga. Hum se rabta karne ka shukriya!
 
 Complaint Details:
 - Tracking ID: #${formattedId} (ID: ${complaintId})
 - Title: ${title || "Civic Complaint"}
 - Category: ${category || "General"}
 - Location: ${area || "Not provided"}
-- Current Status: Pending Review
-- SLA: Action initiated within 24 hours
+- Current Status: Under Process
+- Response Time: Within 24 hours
 
 Aap Smart City Citizen Portal par ja kar apni complaint track kar saktay hain:
 https://smart-city-citizen-portel-a37g.vercel.app/citizen-my-complaints
 
-Shukriya,
-Smart City Citizen Portal Team
+Helpline: +92 42 111 123 456
+Email: support@smartcity.gov
+
+Thanks for contacting us,
+Smart City Citizen Portal Administration
 `;
 
   const htmlContent = `
@@ -65,15 +68,15 @@ Smart City Citizen Portal Team
     .email-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
     .email-body { padding: 32px 28px; }
     .greeting { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px; }
-    .highlight-card { background: #f0f7ff; border-left: 4px solid #0878e8; padding: 18px 20px; border-radius: 8px; margin: 20px 0; }
-    .highlight-card p { margin: 0; font-size: 15px; line-height: 1.6; color: #1e3a8a; font-weight: 700; }
-    .highlight-card .sub-text { margin-top: 8px; font-size: 14px; color: #2563eb; font-weight: 600; }
+    .highlight-card { background: #f0f7ff; border-left: 4px solid #0878e8; padding: 20px 22px; border-radius: 8px; margin: 20px 0; }
+    .highlight-card p { margin: 0; font-size: 16px; line-height: 1.6; color: #0f3d75; font-weight: 700; }
+    .highlight-card .sub-text { margin-top: 8px; font-size: 14px; color: #1e40af; font-weight: 600; }
     .details-table { width: 100%; border-collapse: collapse; margin: 24px 0; }
     .details-table td { padding: 12px 14px; border-bottom: 1px solid #edf2f7; font-size: 14px; }
     .details-table td.label { font-weight: 600; color: #64748b; width: 38%; }
     .details-table td.value { font-weight: 700; color: #1e293b; }
-    .status-badge { display: inline-block; background: #fef3c7; color: #b45309; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
-    .sla-badge { display: inline-block; background: #ecfdf5; color: #047857; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .status-badge { display: inline-block; background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .sla-badge { display: inline-block; background: #ecfdf5; color: #047857; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; }
     .btn-container { text-align: center; margin: 30px 0 10px; }
     .btn { display: inline-block; background: #0878e8; color: #ffffff !important; text-decoration: none; padding: 13px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 3px 10px rgba(8,120,232,0.3); }
     .email-footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 24px; text-align: center; font-size: 12px; color: #94a3b8; }
@@ -91,12 +94,12 @@ Smart City Citizen Portal Team
       <div class="greeting">Assalam-o-Alaikum ${citizenName || "Citizen"},</div>
 
       <div class="highlight-card">
-        <p>Aap ki report hum tak pohanch chuki hai. Aap ke report karne ka shukriya!</p>
-        <p class="sub-text">Aap ki report par 24 hours (24 ghanton) mein kaam shuru kiya jaye ga.</p>
+        <p>Your report is being under process. It will take up to 24 hours to respond by the admin.</p>
+        <p class="sub-text">Thanks for contacting us!</p>
       </div>
 
       <p style="font-size: 14px; line-height: 1.6; color: #475569;">
-        Your civic issue report has been registered into our municipal tracking system. Below are the registered details of your complaint:
+        Aap ki report receive ho chuki hai aur registered kar li gayi hai. Report ki tafseelat darj zail hain:
       </p>
 
       <table class="details-table">
@@ -206,17 +209,25 @@ export const sendEmergencyConfirmationEmail = async ({
   const textContent = `
 Assalam-o-Alaikum ${citizenName || "Citizen"},
 
-Your emergency report has been received and is now under process.
-Our response team will get back to you within 24 hours.
+Your report is being under process. It will take up to 24 hours to respond by the admin. Thanks for contacting us!
+
+Aap ki emergency report par foran kaam shuru kar diya gaya hai. Admin team 24 ghanton ke andar response kare gi. Hum se rabta karne ka shukriya!
 
 Emergency Details:
-- Reference ID: #${formattedId}
-- Type: ${emergencyType || "Emergency"}
+- Reference ID: #${formattedId} (ID: ${emergencyId})
+- Emergency Type: ${emergencyType || "Emergency"}
 - Location: ${location || "Not provided"}
-- Status: Under Process
+- Current Status: Under Process (Priority Response)
+- Response Time: Within 24 hours
 
-Thanks for contacting us.
-Smart City Citizen Portal Team
+Aap Smart City Citizen Portal par ja kar apni emergency report track kar saktay hain:
+https://smart-city-citizen-portel-a37g.vercel.app/citizen-emergency
+
+Emergency Helpline: +92 42 111 123 456
+Rescue: 1122
+
+Thanks for contacting us,
+Smart City Citizen Portal Emergency Team
 `;
 
   const htmlContent = `
@@ -233,15 +244,15 @@ Smart City Citizen Portal Team
     .email-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
     .email-body { padding: 32px 28px; }
     .greeting { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px; }
-    .highlight-card { background: #fff5f5; border-left: 4px solid #e8380a; padding: 18px 20px; border-radius: 8px; margin: 20px 0; }
-    .highlight-card p { margin: 0; font-size: 15px; line-height: 1.6; color: #7f1d1d; font-weight: 700; }
+    .highlight-card { background: #fff5f5; border-left: 4px solid #e8380a; padding: 20px 22px; border-radius: 8px; margin: 20px 0; }
+    .highlight-card p { margin: 0; font-size: 16px; line-height: 1.6; color: #991b1b; font-weight: 700; }
     .highlight-card .sub-text { margin-top: 8px; font-size: 14px; color: #b91c1c; font-weight: 600; }
     .details-table { width: 100%; border-collapse: collapse; margin: 24px 0; }
     .details-table td { padding: 12px 14px; border-bottom: 1px solid #edf2f7; font-size: 14px; }
     .details-table td.label { font-weight: 600; color: #64748b; width: 38%; }
     .details-table td.value { font-weight: 700; color: #1e293b; }
-    .status-badge { display: inline-block; background: #fef3c7; color: #b45309; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
-    .sla-badge { display: inline-block; background: #ecfdf5; color: #047857; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .status-badge { display: inline-block; background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .sla-badge { display: inline-block; background: #ecfdf5; color: #047857; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; }
     .btn-container { text-align: center; margin: 30px 0 10px; }
     .btn { display: inline-block; background: #e8380a; color: #ffffff !important; text-decoration: none; padding: 13px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 3px 10px rgba(232,56,10,0.3); }
     .email-footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 24px; text-align: center; font-size: 12px; color: #94a3b8; }
@@ -251,7 +262,7 @@ Smart City Citizen Portal Team
 <body>
   <div class="email-container">
     <div class="email-header">
-      <div class="email-badge">🚨 Emergency Response Notification</div>
+      <div class="email-badge">🚨 Official Emergency Notification</div>
       <h1>Smart City Citizen Portal</h1>
       <p>Emergency Report Confirmation</p>
     </div>
@@ -259,12 +270,12 @@ Smart City Citizen Portal Team
       <div class="greeting">Assalam-o-Alaikum ${citizenName || "Citizen"},</div>
 
       <div class="highlight-card">
-        <p>✅ Your report is being under process.</p>
-        <p class="sub-text">It will take up to 24 hours to respond by the admin. Thanks for contacting us!</p>
+        <p>Your report is being under process. It will take up to 24 hours to respond by the admin.</p>
+        <p class="sub-text">Thanks for contacting us!</p>
       </div>
 
       <p style="font-size: 14px; line-height: 1.6; color: #475569;">
-        Your emergency report has been received and forwarded to the Smart City Emergency Response Team. Below are the details of your report:
+        Aap ki emergency report register ho kar Emergency Response Team ko assign kar di gayi hai. Report ki tafseelat darj zail hain:
       </p>
 
       <table class="details-table">
