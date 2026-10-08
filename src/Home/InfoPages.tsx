@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, type FormEvent, type ReactNode } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import smartCityMark from '../assets/smart-city-mark.svg'
 import HomeNavbar from './HomeNavbar'
 
@@ -116,8 +116,8 @@ function InfoLayout({
 
           <div>
             <h4>Contact</h4>
-            <span>+92 42 111 123 456</span>
-            <span>support@smartcity.gov</span>
+            <a href="tel:+9242111123456">+92 42 111 123 456</a>
+            <a href="mailto:support@smartcity.gov">support@smartcity.gov</a>
           </div>
         </div>
 
@@ -159,19 +159,19 @@ export function AboutPage() {
 
       <div className="info-grid three-col">
         <div className="info-card">
-          <span className="info-icon">📣</span>
+          <span className="info-icon" aria-hidden="true">📣</span>
           <h3>Citizen-first</h3>
           <p>Residents can report problems from anywhere and follow their request without repeated calls or confusion.</p>
         </div>
 
         <div className="info-card">
-          <span className="info-icon">📊</span>
+          <span className="info-icon" aria-hidden="true">📊</span>
           <h3>Transparent</h3>
           <p>Every status update helps people understand what is happening and what step is next.</p>
         </div>
 
         <div className="info-card">
-          <span className="info-icon">🌱</span>
+          <span className="info-icon" aria-hidden="true">🌱</span>
           <h3>Impact-driven</h3>
           <p>The platform strengthens services that improve quality of life, sustainability and public trust.</p>
         </div>
@@ -190,7 +190,7 @@ export function ServicesPage() {
       <div className="info-grid three-col">
         {serviceDetails.map((service) => (
           <div className="info-card service-card" key={service.title}>
-            <span className="info-icon">{service.icon}</span>
+            <span className="info-icon" aria-hidden="true">{service.icon}</span>
             <h3>{service.title}</h3>
             <p>{service.text}</p>
           </div>
@@ -221,12 +221,44 @@ export function UpdatesPage() {
 }
 
 export function TrackComplaintPage() {
+  const navigate = useNavigate()
+  const [complaintId, setComplaintId] = useState('')
+  const [trackingError, setTrackingError] = useState('')
+
+  const handleTrack = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const normalized = complaintId.trim().replace(/^SC-/i, '')
+    if (!/^\d+$/.test(normalized)) {
+      setTrackingError('Enter a valid complaint ID, such as SC-00123.')
+      return
+    }
+    navigate(`/citizen-portal/complaint/${normalized}`)
+  }
+
   return (
     <InfoLayout
       badge="TRACK COMPLAINT"
       title="Check the progress of your complaint request"
       intro="Use the complaint tracking system to monitor the current stage of your issue and understand what action has been taken."
     >
+      <div className="info-tracking-search">
+        <form className="info-tracking-form" onSubmit={handleTrack}>
+          <input
+            type="text"
+            placeholder="e.g. SC-00123"
+            value={complaintId}
+            onChange={(e) => {
+              setComplaintId(e.target.value)
+              setTrackingError('')
+            }}
+            aria-label="Complaint ID"
+            required
+          />
+          <button type="submit">Track Status →</button>
+        </form>
+        {trackingError && <p className="tracking-error-text">{trackingError}</p>}
+      </div>
+
       <div className="info-grid two-col">
         <div className="info-card lg-card">
           <h3>How tracking works</h3>
@@ -240,15 +272,40 @@ export function TrackComplaintPage() {
 
         <div className="info-card accent-card">
           <h3>Example complaint IDs</h3>
+          <p>Tap any sample ID to test tracking:</p>
           <div className="complaint-samples">
-            <span>SC-00123</span>
-            <span>SC-00476</span>
-            <span>SC-00911</span>
+            <button
+              type="button"
+              onClick={() => {
+                setComplaintId('SC-00123')
+                setTrackingError('')
+              }}
+            >
+              SC-00123
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setComplaintId('SC-00476')
+                setTrackingError('')
+              }}
+            >
+              SC-00476
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setComplaintId('SC-00911')
+                setTrackingError('')
+              }}
+            >
+              SC-00911
+            </button>
           </div>
           <p>
-            Enter your valid complaint ID in the complaint tracking section to view the latest progress for your request.
+            Enter your valid complaint ID in the tracking search above to view the latest progress for your request.
           </p>
-          <Link to="/citizen-login" className="primary-button inline-action">Open Complaint Portal</Link>
+          <Link to="/citizen-login" className="primary-button inline-action">Open Citizen Portal</Link>
         </div>
       </div>
     </InfoLayout>
@@ -264,19 +321,23 @@ export function ContactPage() {
     >
       <div className="info-grid three-col">
         <div className="info-card">
-          <span className="info-icon">📞</span>
+          <span className="info-icon" aria-hidden="true">📞</span>
           <h3>Helpline</h3>
-          <p>+92 42 111 123 456</p>
+          <p>
+            <a href="tel:+9242111123456" className="info-contact-action">+92 42 111 123 456</a>
+          </p>
         </div>
 
         <div className="info-card">
-          <span className="info-icon">✉️</span>
+          <span className="info-icon" aria-hidden="true">✉️</span>
           <h3>Email</h3>
-          <p>support@smartcity.gov</p>
+          <p>
+            <a href="mailto:support@smartcity.gov" className="info-contact-action">support@smartcity.gov</a>
+          </p>
         </div>
 
         <div className="info-card">
-          <span className="info-icon">🕒</span>
+          <span className="info-icon" aria-hidden="true">🕒</span>
           <h3>Working hours</h3>
           <p>Monday to Saturday: 9:00 AM to 6:00 PM</p>
         </div>

@@ -474,10 +474,10 @@ function Home() {
 
           <div className="contact-info">
             <strong>Citizen Helpline</strong>
-            <span>+92 42 111 123 456</span>
+            <a href="tel:+9242111123456" className="contact-link">+92 42 111 123 456</a>
 
             <strong>Email</strong>
-            <span>support@smartcity.gov</span>
+            <a href="mailto:support@smartcity.gov" className="contact-link">support@smartcity.gov</a>
 
             <Link
               to="/citizen-login"
@@ -537,8 +537,8 @@ function Home() {
 
           <div>
             <h4>Contact</h4>
-            <span>+92 42 111 123 456</span>
-            <span>support@smartcity.gov</span>
+            <a href="tel:+9242111123456">+92 42 111 123 456</a>
+            <a href="mailto:support@smartcity.gov">support@smartcity.gov</a>
           </div>
 
         </div>
