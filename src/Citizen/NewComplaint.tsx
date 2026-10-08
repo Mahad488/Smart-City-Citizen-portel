@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { API_BASE_URL, formatComplaintId } from "../api";
 import { CitizenNavbar, CitizenSidebar } from "./CitizenNavigation";
+import { addNotification } from "./notificationStore";
 import "./NewComplaint.css";
 import "./Citizenportal.css";
 
@@ -198,13 +199,25 @@ function NewComplaint() {
         );
       }
 
+      const complaintLabel =
+        data.complaintId != null
+          ? formatComplaintId(data.complaintId)
+          : null;
+
       setMessage(
-        `Complaint registered successfully! A confirmation email has been sent. Work will begin within 24 hours. (ID: ${
-          data.complaintId != null
-            ? formatComplaintId(data.complaintId)
-            : "N/A"
-        })`
+        `Complaint registered successfully! A confirmation email has been sent. Work will begin within 24 hours.${
+          complaintLabel ? ` (ID: ${complaintLabel})` : ""
+        }`
       );
+
+      addNotification({
+        type: "complaint",
+        title: "Complaint submitted successfully",
+        message: `Your complaint "${form.title.trim()}" has been submitted.${
+          complaintLabel ? ` Reference: ${complaintLabel}` : ""
+        }`,
+        reference: complaintLabel ?? undefined,
+      });
 
       setForm({
         title: "",

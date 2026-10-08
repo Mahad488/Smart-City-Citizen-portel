@@ -200,8 +200,10 @@ const Emergency: React.FC = () => {
 
     try {
       const result = await submitEmergency({
+        citizen_id: citizen?.citizen_id,
         type: emergencyType,
         location,
+        description,
         team: "Emergency Response Team",
         priority: "High",
         status: "Active",

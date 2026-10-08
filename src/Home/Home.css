@@ -1461,6 +1461,19 @@ html {
   }
 }
 
+/* ================= SCROLL REVEAL ================= */
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .smart-home *,
   .smart-home *::before,

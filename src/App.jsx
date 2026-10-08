@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { SuccessToast } from './components/SuccessToast'
 
 /* ──────────────────────────────────────────────────
    Lazy-loaded route components (code splitting)
@@ -92,6 +93,7 @@ function App() {
       </a>
 
       <ScrollRevealObserver />
+      <SuccessToast />
 
       <Suspense fallback={<PageLoader />}>
         <Routes>

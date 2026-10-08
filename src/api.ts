@@ -115,8 +115,10 @@ export interface EmergencyRecord {
 }
 
 export interface EmergencyReport {
+  citizen_id?: string
   type: string
   location: string
+  description?: string
   team: string
   priority: string
   status: string

@@ -1,0 +1,146 @@
+/* ============================================
+   SUCCESS TOAST NOTIFICATIONS
+   ============================================ */
+
+.toast-container {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 380px;
+  width: calc(100vw - 40px);
+  pointer-events: none;
+}
+
+.toast-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 16px 16px 18px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow:
+    0 8px 32px rgba(10, 30, 60, 0.18),
+    0 2px 8px rgba(10, 30, 60, 0.08);
+  border-left: 4px solid #0878e8;
+  pointer-events: all;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.toast-item.emergency {
+  border-left-color: #e8380a;
+}
+
+.toast-enter {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  animation: toast-slide-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.toast-exit {
+  opacity: 0;
+  transform: translateY(16px) scale(0.95);
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Icon */
+.toast-icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e8f4ff;
+  display: grid;
+  place-items: center;
+  color: #0878e8;
+}
+
+.toast-item.emergency .toast-icon {
+  background: #fff0ec;
+  color: #e8380a;
+}
+
+/* Body */
+.toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-body strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #102f53;
+  margin-bottom: 3px;
+}
+
+.toast-item.emergency .toast-body strong {
+  color: #7a1a07;
+}
+
+.toast-body p {
+  margin: 0;
+  font-size: 13px;
+  color: #5b7080;
+  line-height: 1.5;
+}
+
+.toast-ref {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0878e8;
+  background: #edf5ff;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.toast-item.emergency .toast-ref {
+  color: #c0380a;
+  background: #fff0ec;
+}
+
+/* Close button */
+.toast-close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  color: #8fa4ba;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s, color 0.2s;
+  padding: 0;
+}
+
+.toast-close:hover {
+  background: #f0f5fa;
+  color: #4a6070;
+}
+
+@media (max-width: 480px) {
+  .toast-container {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    max-width: none;
+  }
+}
