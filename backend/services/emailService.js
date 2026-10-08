@@ -148,6 +148,36 @@ Smart City Citizen Portal Administration
 </html>
 `;
 
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      const resendRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: process.env.RESEND_FROM || "Smart City Portal <onboarding@resend.dev>",
+          to: [citizenEmail],
+          subject: `Complaint Confirmation #${formattedId} - Smart City Citizen Portal`,
+          html: htmlContent,
+          text: textContent,
+        }),
+      });
+
+      const resendData = await resendRes.json();
+      if (resendRes.ok) {
+        console.log(`[EMAIL SERVICE] Email sent via Resend HTTPS API to ${citizenEmail}. ID: ${resendData.id}`);
+        return { success: true, messageId: resendData.id, provider: "resend" };
+      } else {
+        console.error("[EMAIL SERVICE] Resend API error:", resendData);
+      }
+    } catch (apiErr) {
+      console.error("[EMAIL SERVICE] Error calling Resend API:", apiErr.message);
+    }
+  }
+
   if (emailUser && emailPass) {
     try {
       const transporter = nodemailer.createTransport({
@@ -331,6 +361,36 @@ Smart City Citizen Portal Emergency Team
 </body>
 </html>
 `;
+
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      const resendRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: process.env.RESEND_FROM || "Smart City Emergency <onboarding@resend.dev>",
+          to: [citizenEmail],
+          subject: `Emergency Report Received #${formattedId} - Smart City Citizen Portal`,
+          html: htmlContent,
+          text: textContent,
+        }),
+      });
+
+      const resendData = await resendRes.json();
+      if (resendRes.ok) {
+        console.log(`[EMAIL SERVICE] Emergency email sent via Resend HTTPS API to ${citizenEmail}. ID: ${resendData.id}`);
+        return { success: true, messageId: resendData.id, provider: "resend" };
+      } else {
+        console.error("[EMAIL SERVICE] Resend API error:", resendData);
+      }
+    } catch (apiErr) {
+      console.error("[EMAIL SERVICE] Error calling Resend API for emergency:", apiErr.message);
+    }
+  }
 
   if (emailUser && emailPass) {
     try {
