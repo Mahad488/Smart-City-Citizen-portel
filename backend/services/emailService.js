@@ -571,3 +571,190 @@ Smart City Citizen Portal Emergency Team
     return { success: true, simulated: true };
   }
 };
+
+/**
+ * Send a welcome & login alert email to the citizen upon login.
+ *
+ * @param {Object} params
+ * @param {string} params.citizenName
+ * @param {string} params.citizenEmail
+ * @param {string} [params.loginType] - e.g. "Google Login" or "Portal Login"
+ */
+export const sendLoginWelcomeEmail = async ({
+  citizenName,
+  citizenEmail,
+  loginType = "Portal Login",
+}) => {
+  if (!citizenEmail) {
+    console.warn("[EMAIL SERVICE] No citizen email provided for welcome email. Skipping.");
+    return { success: false, reason: "No recipient email" };
+  }
+
+  const nowFormatted = new Date().toLocaleString("en-PK", {
+    timeZone: "Asia/Karachi",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  const textContent = `
+Assalam-o-Alaikum ${citizenName || "Citizen"},
+
+Welcome to Smart City Citizen Portal!
+
+Aap ka portal par login kamyabi se ho chuka hai (${nowFormatted} PKT).
+
+Login Details:
+- Citizen Name: ${citizenName || "Citizen"}
+- Account Email: ${citizenEmail}
+- Login Method: ${loginType}
+- Time: ${nowFormatted} (PKT)
+- Status: Active & Secured
+
+Aap kisi bhi waqt Smart City Citizen Portal par ja kar apni complaints file kar saktay hain, emergency report submit kar saktay hain, aur tracking check kar saktay hain:
+https://smart-city-citizen-portel-a37g.vercel.app/citizen-portal
+
+Helpline: +92 42 111 123 456
+Email Support: support@smartcity.gov
+
+Smart City Citizen Portal Administration
+`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 24px 10px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #0d5ea8, #0878e8); background-color: #0878e8; padding: 32px 24px; text-align: center; color: #ffffff;">
+      <div style="display: inline-block; background-color: rgba(255,255,255,0.2); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; color: #ffffff;">Account Activity</div>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">Welcome to Smart City Portal</h1>
+      <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95; color: #ffffff;">Citizen Login Notification</p>
+    </div>
+    
+    <!-- Body -->
+    <div style="padding: 32px 28px;">
+      <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Assalam-o-Alaikum ${citizenName || "Citizen"},</div>
+
+      <!-- Welcome Card -->
+      <div style="background-color: #f0fdf4; border-left: 5px solid #16a34a; padding: 18px 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #14532d; font-weight: 700;">Welcome back! Aap ka Smart City Citizen Portal me login kamyabi se ho chuka hai.</p>
+        <p style="margin: 8px 0 0; font-size: 14px; color: #15803d; font-weight: 600;">Hum aap ki civic khidmat ke liye 24/7 dastyaab hain.</p>
+      </div>
+
+      <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 16px 0;">
+        Aap ke account ke login session ki tafseelat darj zail hain:
+      </p>
+
+      <!-- Details Table -->
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px; width: 40%;">Citizen Name</td>
+          <td style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${citizenName || "Citizen"}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Account Email</td>
+          <td style="padding: 12px 14px; font-weight: 700; color: #0878e8; font-size: 14px;">${citizenEmail}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Login Method</td>
+          <td style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">${loginType}</span></td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Login Timestamp</td>
+          <td style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${nowFormatted} PKT</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Security Status</td>
+          <td style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #ecfdf5; color: #047857; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Authorized Session</span></td>
+        </tr>
+      </table>
+
+      <!-- Quick Action Buttons -->
+      <div style="text-align: center; margin: 32px 0 12px;">
+        <a href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-portal" style="display: inline-block; background-color: #0878e8; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(8,120,232,0.35); margin-right: 8px;">Open Dashboard</a>
+        <a href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-new-complaint" style="display: inline-block; background-color: #f1f5f9; color: #0f172a !important; text-decoration: none; padding: 14px 22px; border-radius: 8px; font-weight: 700; font-size: 14px; border: 1px solid #cbd5e1;">Lodge Complaint</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 22px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
+      <p style="margin: 4px 0;">This is an automated security and welcome notification from Smart City Authority.</p>
+      <p style="margin: 4px 0;">Agar yeh login aap ne nahi kiya, toh foran helpline par call karein: +92 42 111 123 456</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+  // 1. Send via Google Gmail REST API (sends to ANY email, 100% free, no domain needed)
+  const gmailResult = await sendViaGmailApi({
+    to: citizenEmail,
+    subject: `Welcome to Smart City Portal - Login Successful`,
+    html: htmlContent,
+    text: textContent,
+  });
+  if (gmailResult && gmailResult.success) {
+    return gmailResult;
+  }
+
+  // 2. Fallback to Resend HTTPS API
+  const resendResult = await sendViaResend({
+    from: process.env.RESEND_FROM || "Smart City Portal <onboarding@resend.dev>",
+    to: citizenEmail,
+    subject: `Welcome to Smart City Portal - Login Successful`,
+    html: htmlContent,
+    text: textContent,
+  });
+  if (resendResult && resendResult.success) {
+    return resendResult;
+  }
+
+  // 3. Fallback to nodemailer SMTP
+  const emailUser =
+    process.env.EMAIL_USER ||
+    process.env.SMTP_USER ||
+    "muhammadmahad2021@gmail.com";
+  const emailPass =
+    process.env.EMAIL_PASS ||
+    process.env.SMTP_PASS ||
+    "tqbl rvld orck dctq";
+
+  if (emailUser && emailPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        family: 4,
+        auth: {
+          user: emailUser,
+          pass: emailPass.replace(/\s+/g, ""),
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
+
+      const info = await transporter.sendMail({
+        from: `"${process.env.EMAIL_FROM_NAME || "Smart City Citizen Portal"}" <${emailUser}>`,
+        to: citizenEmail,
+        subject: `Welcome to Smart City Portal - Login Successful`,
+        text: textContent,
+        html: htmlContent,
+      });
+
+      console.log(`[EMAIL SERVICE] Welcome email sent to ${citizenEmail}. MessageId: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error("[EMAIL SERVICE] Error sending welcome email:", err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  return { success: true, simulated: true };
+};
+

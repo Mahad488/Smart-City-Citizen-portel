@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import db from "../config/db.js";
 import { authenticate } from "../auth.js";
+import { sendLoginWelcomeEmail } from "../services/emailService.js";
 
 const router = express.Router();
 
@@ -159,6 +160,15 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    // Send welcome / login notification email asynchronously
+    sendLoginWelcomeEmail({
+      citizenName: citizen.name,
+      citizenEmail: citizen.email,
+      loginType: "Standard Portal Login",
+    }).catch((emailErr) => {
+      console.error("[CITIZEN ROUTE] Error sending login welcome email:", emailErr);
+    });
+
     res.json({
       message: "Login successful",
       token,
@@ -258,6 +268,15 @@ router.post(["/google-login", "/google"], async (req, res) => {
       JWT_SECRET,
       { expiresIn: "7d" }
     );
+
+    // Send welcome / login notification email asynchronously
+    sendLoginWelcomeEmail({
+      citizenName: citizen.name,
+      citizenEmail: citizen.email,
+      loginType: "Google OAuth Login",
+    }).catch((emailErr) => {
+      console.error("[CITIZEN ROUTE] Error sending Google login welcome email:", emailErr);
+    });
 
     res.json({
       message: "Login successful",
