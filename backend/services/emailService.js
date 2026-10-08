@@ -24,8 +24,14 @@ export const sendComplaintConfirmationEmail = async ({
     return { success: false, reason: "No recipient email" };
   }
 
-  const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER;
-  const emailPass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
+  const emailUser =
+    process.env.EMAIL_USER ||
+    process.env.SMTP_USER ||
+    "muhammadmahad2021@gmail.com";
+  const emailPass =
+    process.env.EMAIL_PASS ||
+    process.env.SMTP_PASS ||
+    "tqbl rvld orck dctq";
 
   const formattedId = `CMP-${String(complaintId).padStart(5, "0")}`;
 
@@ -201,8 +207,14 @@ export const sendEmergencyConfirmationEmail = async ({
     return { success: false, reason: "No recipient email" };
   }
 
-  const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER;
-  const emailPass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
+  const emailUser =
+    process.env.EMAIL_USER ||
+    process.env.SMTP_USER ||
+    "muhammadmahad2021@gmail.com";
+  const emailPass =
+    process.env.EMAIL_PASS ||
+    process.env.SMTP_PASS ||
+    "tqbl rvld orck dctq";
 
   const formattedId = `EM-${String(emergencyId).padStart(4, "0")}`;
 
