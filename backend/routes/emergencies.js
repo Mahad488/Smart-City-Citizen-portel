@@ -1,6 +1,7 @@
 import express from "express";
 import db from "../config/db.js";
 import { authenticate } from "../auth.js";
+import { sendEmergencyConfirmationEmail } from "../services/emailService.js";
 
 const router = express.Router();
 
@@ -99,7 +100,7 @@ router.post("/", authenticate, async (req, res) => {
     }
 
     const [citizenRows] = await db.query(
-      `SELECT id, name, status
+      `SELECT id, name, email, status
        FROM citizens
        WHERE citizen_id = ?`,
       [citizen_id]
@@ -147,6 +148,17 @@ router.post("/", authenticate, async (req, res) => {
     res.status(201).json({
       message: "Emergency reported successfully",
       id: result.insertId,
+    });
+
+    // Send confirmation email asynchronously (non-blocking)
+    sendEmergencyConfirmationEmail({
+      citizenName: citizen.name,
+      citizenEmail: citizen.email,
+      emergencyId: result.insertId,
+      emergencyType: type,
+      location,
+    }).catch((emailErr) => {
+      console.error("[EMERGENCY ROUTE] Error sending emergency confirmation email:", emailErr);
     });
 
   } catch (error) {
