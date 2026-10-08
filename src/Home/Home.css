@@ -1309,6 +1309,7 @@ html {
 
   .home-hero {
     min-height: auto;
+    background-attachment: scroll;
   }
 
   .hero-inner {
@@ -1464,9 +1465,9 @@ html {
 /* ================= SCROLL REVEAL ================= */
 
 .scroll-reveal {
-  opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 0.65s ease, transform 0.65s ease;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
 .scroll-reveal.is-visible {

@@ -121,11 +121,11 @@ body {
 .delay-4 { animation-delay: 0.5s; }
 .delay-5 { animation-delay: 0.65s; }
 
-/* IntersectionObserver targets — hidden until JS adds .is-visible */
+/* IntersectionObserver targets — visible by default so content never disappears */
 .scroll-reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.55s ease, transform 0.55s ease;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
 .scroll-reveal.is-visible {

@@ -3,10 +3,12 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { SuccessToast } from './components/SuccessToast'
 
+import Home from './Home/Home'
+
 /* ──────────────────────────────────────────────────
    Lazy-loaded route components (code splitting)
 ────────────────────────────────────────────────── */
-const Home              = lazy(() => import('./Home/Home'))
+
 const InfoPages         = lazy(() => import('./Home/InfoPages').then(m => ({ default: m.AboutPage })))
 const ServicesPage      = lazy(() => import('./Home/InfoPages').then(m => ({ default: m.ServicesPage })))
 const UpdatesPage       = lazy(() => import('./Home/InfoPages').then(m => ({ default: m.UpdatesPage })))
@@ -68,12 +70,14 @@ function ScrollRevealObserver() {
       { threshold: 0.12 }
     )
 
-    // Observe after paint so lazy-loaded content is in the DOM
-    const tid = setTimeout(() => {
+    const observeAll = () => {
       document.querySelectorAll('.scroll-reveal').forEach((el) => {
         observer.observe(el)
       })
-    }, 100)
+    }
+
+    observeAll()
+    const tid = setTimeout(observeAll, 150)
 
     return () => {
       clearTimeout(tid)
