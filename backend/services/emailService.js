@@ -45,7 +45,7 @@ Complaint Details:
 - SLA: Action initiated within 24 hours
 
 Aap Smart City Citizen Portal par ja kar apni complaint track kar saktay hain:
-http://localhost:5174/citizen-my-complaints
+https://smart-city-citizen-portel-a37g.vercel.app/citizen-my-complaints
 
 Shukriya,
 Smart City Citizen Portal Team
@@ -127,7 +127,7 @@ Smart City Citizen Portal Team
       </table>
 
       <div class="btn-container">
-        <a href="http://localhost:5174/citizen-my-complaints" class="btn">View & Track Complaint</a>
+        <a href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-my-complaints" class="btn">View & Track Complaint</a>
       </div>
     </div>
     <div class="email-footer">
