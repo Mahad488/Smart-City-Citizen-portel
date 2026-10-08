@@ -673,10 +673,9 @@ Smart City Citizen Portal Administration
         </tr>
       </table>
 
-      <!-- Quick Action Buttons -->
+      <!-- Quick Action Button -->
       <div style="text-align: center; margin: 32px 0 12px;">
-        <a href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-portal" style="display: inline-block; background-color: #0878e8; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(8,120,232,0.35); margin-right: 8px;">Open Dashboard</a>
-        <a href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-new-complaint" style="display: inline-block; background-color: #f1f5f9; color: #0f172a !important; text-decoration: none; padding: 14px 22px; border-radius: 8px; font-weight: 700; font-size: 14px; border: 1px solid #cbd5e1;">Lodge Complaint</a>
+        <a href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-portal" style="display: inline-block; background-color: #0878e8; color: #ffffff !important; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(8,120,232,0.35);">Open Dashboard</a>
       </div>
     </div>
 
