@@ -151,10 +151,15 @@ Smart City Citizen Portal Administration
   if (emailUser && emailPass) {
     try {
       const transporter = nodemailer.createTransport({
-        service: process.env.EMAIL_SERVICE || "gmail",
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
         auth: {
           user: emailUser,
           pass: emailPass.replace(/\s+/g, ""),
+        },
+        tls: {
+          rejectUnauthorized: false,
         },
       });
 
@@ -329,10 +334,15 @@ Smart City Citizen Portal Emergency Team
   if (emailUser && emailPass) {
     try {
       const transporter = nodemailer.createTransport({
-        service: process.env.EMAIL_SERVICE || "gmail",
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
         auth: {
           user: emailUser,
           pass: emailPass.replace(/\s+/g, ""),
+        },
+        tls: {
+          rejectUnauthorized: false,
         },
       });
 

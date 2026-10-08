@@ -7,6 +7,7 @@ import complaintsRoutes from "./routes/complaints.js";
 import emergenciesRoutes from "./routes/emergencies.js";
 import notificationRoutes from "./routes/notifications.js";
 import { authenticate } from "./auth.js";
+import { sendComplaintConfirmationEmail } from "./services/emailService.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -54,6 +55,23 @@ app.use(express.json({ limit: "8mb" }));
 
 app.get("/", (req, res) => {
   res.send("Backend API is running successfully!");
+});
+
+app.get("/api/test-email", async (req, res) => {
+  try {
+    const to = req.query.to || "mahadrafiq480@gmail.com";
+    const result = await sendComplaintConfirmationEmail({
+      citizenName: "Test Citizen",
+      citizenEmail: to,
+      complaintId: 999,
+      title: "Test Complaint Delivery",
+      category: "Test Category",
+      area: "Test Area",
+    });
+    res.json({ ok: true, to, result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 app.use("/api/citizens", citizenRoutes);
