@@ -1,6 +1,109 @@
 import nodemailer from "nodemailer";
 
 /**
+ * Helper to construct an RFC 2822 base64url encoded email for Google Gmail REST API.
+ */
+const makeRawEmail = ({ to, from, subject, html, text }) => {
+  const boundary = "__boundary_smart_city__";
+  const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString("base64")}?=`;
+
+  const messageParts = [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: ${utf8Subject}`,
+    `MIME-Version: 1.0`,
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    ``,
+    `--${boundary}`,
+    `Content-Type: text/plain; charset=UTF-8`,
+    `Content-Transfer-Encoding: 7bit`,
+    ``,
+    text || "",
+    ``,
+    `--${boundary}`,
+    `Content-Type: text/html; charset=UTF-8`,
+    `Content-Transfer-Encoding: 7bit`,
+    ``,
+    html || "",
+    ``,
+    `--${boundary}--`,
+  ];
+
+  const rawMessage = messageParts.join("\r\n");
+  return Buffer.from(rawMessage)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+};
+
+/**
+ * Dispatch an email via official Google Gmail REST API (OAuth 2.0).
+ * Runs over HTTPS port 443 (never blocked by Railway).
+ * Sends directly from muhammadmahad2021@gmail.com to ANY recipient without any custom domain!
+ */
+const sendViaGmailApi = async ({ to, subject, html, text }) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    return null;
+  }
+
+  try {
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId.trim(),
+        client_secret: clientSecret.trim(),
+        refresh_token: refreshToken.trim(),
+        grant_type: "refresh_token",
+      }),
+    });
+
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok || !tokenData.access_token) {
+      console.error("[EMAIL SERVICE] Failed to refresh Gmail access token:", tokenData);
+      return null;
+    }
+
+    const fromEmail = process.env.EMAIL_USER || "muhammadmahad2021@gmail.com";
+    const fromHeader = `"${process.env.EMAIL_FROM_NAME || "Smart City Citizen Portal"}" <${fromEmail}>`;
+
+    const raw = makeRawEmail({
+      to,
+      from: fromHeader,
+      subject,
+      html,
+      text,
+    });
+
+    const sendRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ raw }),
+    });
+
+    const sendData = await sendRes.json();
+    if (sendRes.ok) {
+      console.log(`[EMAIL SERVICE] Email successfully delivered via Gmail API to ${to}. Message ID: ${sendData.id}`);
+      return { success: true, messageId: sendData.id, provider: "gmail-api" };
+    } else {
+      console.error("[EMAIL SERVICE] Gmail API send error:", sendData);
+    }
+  } catch (err) {
+    console.error("[EMAIL SERVICE] Exception calling Gmail API:", err.message);
+  }
+
+  return null;
+};
+
+/**
  * Dispatch an email via Resend HTTPS REST API.
  * In Resend's free sandbox mode (using onboarding@resend.dev), emails can only be sent
  * to the registered account owner (muhammadmahad2021@gmail.com).
@@ -223,6 +326,18 @@ Smart City Citizen Portal Administration
 </html>
 `;
 
+  // 1. Send via Google Gmail REST API (sends to ANY email, 100% free, no domain needed)
+  const gmailResult = await sendViaGmailApi({
+    to: citizenEmail,
+    subject: `Complaint Confirmation #${formattedId} - Smart City Citizen Portal`,
+    html: htmlContent,
+    text: textContent,
+  });
+  if (gmailResult && gmailResult.success) {
+    return gmailResult;
+  }
+
+  // 2. Fallback to Resend HTTPS API
   const resendResult = await sendViaResend({
     from: process.env.RESEND_FROM || "Smart City Portal <onboarding@resend.dev>",
     to: citizenEmail,
@@ -418,6 +533,18 @@ Smart City Citizen Portal Emergency Team
 </html>
 `;
 
+  // 1. Send via Google Gmail REST API (sends to ANY email, 100% free, no domain needed)
+  const gmailResult = await sendViaGmailApi({
+    to: citizenEmail,
+    subject: `Emergency Report Received #${formattedId} - Smart City Citizen Portal`,
+    html: htmlContent,
+    text: textContent,
+  });
+  if (gmailResult && gmailResult.success) {
+    return gmailResult;
+  }
+
+  // 2. Fallback to Resend HTTPS API
   const resendResult = await sendViaResend({
     from: process.env.RESEND_FROM || "Smart City Emergency <onboarding@resend.dev>",
     to: citizenEmail,
