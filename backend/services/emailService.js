@@ -154,6 +154,7 @@ Smart City Citizen Portal Administration
         host: "smtp.gmail.com",
         port: 465,
         secure: true,
+        family: 4,
         auth: {
           user: emailUser,
           pass: emailPass.replace(/\s+/g, ""),
@@ -337,6 +338,7 @@ Smart City Citizen Portal Emergency Team
         host: "smtp.gmail.com",
         port: 465,
         secure: true,
+        family: 4,
         auth: {
           user: emailUser,
           pass: emailPass.replace(/\s+/g, ""),
