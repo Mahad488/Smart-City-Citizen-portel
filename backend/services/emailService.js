@@ -182,6 +182,170 @@ const sendViaResend = async ({ from, to, subject, html, text }) => {
 };
 
 /**
+ * Shared responsive <head> builder optimized for Android (Gmail app, Samsung Email),
+ * iOS (Apple Mail, Gmail iOS), iPadOS, and Android tablets.
+ */
+const getEmailResponsiveHead = (title = "Smart City Notification") => `
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>${title}</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }
+  </style>
+  <![endif]-->
+  <style>
+    /* Reset & Base */
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      -webkit-text-size-adjust: 100% !important;
+      -ms-text-size-adjust: 100% !important;
+      -webkit-font-smoothing: antialiased !important;
+    }
+    * {
+      box-sizing: border-box !important;
+    }
+    table {
+      border-spacing: 0 !important;
+      border-collapse: collapse !important;
+      mso-table-lspace: 0pt !important;
+      mso-table-rspace: 0pt !important;
+    }
+    td {
+      mso-table-lspace: 0pt !important;
+      mso-table-rspace: 0pt !important;
+    }
+    img {
+      border: 0;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+    a {
+      text-decoration: none !important;
+    }
+
+    /* Mobile Devices (iPhone & Android: screens <= 600px) */
+    @media only screen and (max-width: 600px) {
+      .email-wrapper {
+        padding: 12px 6px !important;
+      }
+      .email-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 10px !important;
+      }
+      .email-header {
+        padding: 24px 16px !important;
+      }
+      .email-header-badge {
+        font-size: 11px !important;
+        padding: 3px 10px !important;
+      }
+      .email-header h1 {
+        font-size: 20px !important;
+        line-height: 1.25 !important;
+      }
+      .email-header p {
+        font-size: 13px !important;
+      }
+      .email-body {
+        padding: 20px 16px !important;
+      }
+      .email-greeting {
+        font-size: 16px !important;
+        margin-bottom: 14px !important;
+      }
+      .email-highlight-box {
+        padding: 14px 14px !important;
+        margin: 16px 0 !important;
+        border-left-width: 4px !important;
+      }
+      .email-highlight-title {
+        font-size: 15px !important;
+        line-height: 1.45 !important;
+      }
+      .email-highlight-sub {
+        font-size: 13px !important;
+        margin-top: 6px !important;
+      }
+      .email-table {
+        width: 100% !important;
+        margin: 16px 0 !important;
+      }
+      .email-table-row td {
+        padding: 10px 8px !important;
+      }
+      .email-table-label {
+        width: 38% !important;
+        font-size: 12.5px !important;
+      }
+      .email-table-value {
+        width: 62% !important;
+        font-size: 13px !important;
+        word-break: break-word !important;
+      }
+      .email-button-wrapper {
+        margin: 26px 0 10px !important;
+      }
+      .email-btn {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 14px 16px !important;
+        font-size: 15px !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        min-height: 48px !important;
+        line-height: 20px !important;
+      }
+      .email-footer {
+        padding: 18px 14px !important;
+        font-size: 11px !important;
+      }
+    }
+
+    /* Tablets (iPad, iPad Mini, Android tablets: 601px to 820px) */
+    @media only screen and (min-width: 601px) and (max-width: 820px) {
+      .email-wrapper {
+        padding: 22px 14px !important;
+      }
+      .email-card {
+        width: 95% !important;
+        max-width: 620px !important;
+      }
+      .email-header {
+        padding: 28px 22px !important;
+      }
+      .email-body {
+        padding: 28px 24px !important;
+      }
+      .email-table-label {
+        width: 36% !important;
+        padding: 11px 12px !important;
+      }
+      .email-table-value {
+        padding: 11px 12px !important;
+      }
+      .email-btn {
+        display: inline-block !important;
+        min-width: 260px !important;
+        padding: 14px 32px !important;
+        font-size: 15px !important;
+      }
+    }
+  </style>
+</head>
+`;
+
+/**
  * Send complaint registration confirmation email to the citizen.
  *
  * @param {Object} params
@@ -243,72 +407,71 @@ Smart City Citizen Portal Administration
 
   const htmlContent = `
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 24px 10px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
-  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-    <!-- Header -->
-    <div style="background: linear-gradient(135deg, #0d5ea8, #0878e8); background-color: #0878e8; padding: 32px 24px; text-align: center; color: #ffffff;">
-      <div style="display: inline-block; background-color: rgba(255,255,255,0.2); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; color: #ffffff;">Official Civic Notification</div>
-      <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">Smart City Citizen Portal</h1>
-      <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95; color: #ffffff;">Complaint Registration Confirmation</p>
-    </div>
-    
-    <!-- Body -->
-    <div style="padding: 32px 28px;">
-      <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Dear ${citizenName || "Citizen"},</div>
+<html lang="en">
+${getEmailResponsiveHead("Complaint Confirmation - Smart City Portal")}
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; width: 100%;">
+  <div class="email-wrapper" style="width: 100%; margin: 0; padding: 24px 10px; background-color: #f1f5f9; box-sizing: border-box;">
+    <div class="email-card" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; box-sizing: border-box;">
+      <!-- Header -->
+      <div class="email-header" style="background: linear-gradient(135deg, #0d5ea8, #0878e8); background-color: #0878e8; padding: 32px 24px; text-align: center; color: #ffffff;">
+        <div class="email-header-badge" style="display: inline-block; background-color: rgba(255,255,255,0.2); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; color: #ffffff;">Official Civic Notification</div>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">Smart City Citizen Portal</h1>
+        <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95; color: #ffffff;">Complaint Registration Confirmation</p>
+      </div>
+      
+      <!-- Body -->
+      <div class="email-body" style="padding: 32px 28px;">
+        <div class="email-greeting" style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Dear ${citizenName || "Citizen"},</div>
 
-      <!-- Highlight Card -->
-      <div style="background-color: #f0f7ff; border-left: 5px solid #0878e8; padding: 18px 20px; border-radius: 8px; margin: 20px 0;">
-        <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #0f3d75; font-weight: 700;">Your report is being under process. It will take up to 24 hours to respond by the admin.</p>
-        <p style="margin: 8px 0 0; font-size: 14px; color: #1e40af; font-weight: 600;">Thanks for contacting us!</p>
+        <!-- Highlight Card -->
+        <div class="email-highlight-box" style="background-color: #f0f7ff; border-left: 5px solid #0878e8; padding: 18px 20px; border-radius: 8px; margin: 20px 0;">
+          <p class="email-highlight-title" style="margin: 0; font-size: 16px; line-height: 1.6; color: #0f3d75; font-weight: 700;">Your report is being under process. It will take up to 24 hours to respond by the admin.</p>
+          <p class="email-highlight-sub" style="margin: 8px 0 0; font-size: 14px; color: #1e40af; font-weight: 600;">Thanks for contacting us!</p>
+        </div>
+
+        <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 16px 0;">
+          Your complaint has been successfully registered with the Municipal Authority. Details of your report are provided below:
+        </p>
+
+        <!-- Details Table -->
+        <table class="email-table" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px; width: 40%;">Tracking Reference</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-weight: 800; color: #0878e8; font-size: 16px;">#${formattedId}</td>
+          </tr>
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Issue Title</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${title || "Civic Complaint"}</td>
+          </tr>
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Category</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${category || "General"}</td>
+          </tr>
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Location / Area</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${area || "Central City"}</td>
+          </tr>
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Current Status</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Under Process</span></td>
+          </tr>
+          <tr class="email-table-row">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Resolution SLA</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #ecfdf5; color: #047857; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Within 24 Hours</span></td>
+          </tr>
+        </table>
+
+        <!-- Button -->
+        <div class="email-button-wrapper" style="text-align: center; margin: 32px 0 12px;">
+          <a class="email-btn" href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-my-complaints" style="display: inline-block; background-color: #0878e8; color: #ffffff !important; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 14px; min-height: 48px; line-height: 20px; box-sizing: border-box; box-shadow: 0 4px 12px rgba(8,120,232,0.35);">View & Track Complaint</a>
+        </div>
       </div>
 
-      <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 16px 0;">
-        Your complaint has been successfully registered with the Municipal Authority. Details of your report are provided below:
-      </p>
-
-      <!-- Details Table -->
-      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px; width: 40%;">Tracking Reference</td>
-          <td style="padding: 12px 14px; font-weight: 800; color: #0878e8; font-size: 16px;">#${formattedId}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Issue Title</td>
-          <td style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${title || "Civic Complaint"}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Category</td>
-          <td style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${category || "General"}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Location / Area</td>
-          <td style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${area || "Central City"}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Current Status</td>
-          <td style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Under Process</span></td>
-        </tr>
-        <tr>
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Resolution SLA</td>
-          <td style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #ecfdf5; color: #047857; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Within 24 Hours</span></td>
-        </tr>
-      </table>
-
-      <!-- Button -->
-      <div style="text-align: center; margin: 32px 0 12px;">
-        <a href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-my-complaints" style="display: inline-block; background-color: #0878e8; color: #ffffff !important; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(8,120,232,0.35);">View & Track Complaint</a>
+      <!-- Footer -->
+      <div class="email-footer" style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 22px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
+        <p style="margin: 4px 0;">This is an automated official notification from Smart City Municipal Authority.</p>
+        <p style="margin: 4px 0;">Helpline: +92 42 111 123 456 | Email: support@smartcity.gov</p>
       </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 22px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
-      <p style="margin: 4px 0;">This is an automated official notification from Smart City Municipal Authority.</p>
-      <p style="margin: 4px 0;">Helpline: +92 42 111 123 456 | Email: support@smartcity.gov</p>
     </div>
   </div>
 </body>
@@ -440,68 +603,67 @@ Smart City Citizen Portal Emergency Team
 
   const htmlContent = `
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 24px 10px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
-  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-    <!-- Header -->
-    <div style="background: linear-gradient(135deg, #b91c1c, #e8380a); background-color: #e8380a; padding: 32px 24px; text-align: center; color: #ffffff;">
-      <div style="display: inline-block; background-color: rgba(255,255,255,0.2); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; color: #ffffff;">Official Emergency Notification</div>
-      <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">Smart City Citizen Portal</h1>
-      <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95; color: #ffffff;">Emergency Report Confirmation</p>
-    </div>
-    
-    <!-- Body -->
-    <div style="padding: 32px 28px;">
-      <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Dear ${citizenName || "Citizen"},</div>
+<html lang="en">
+${getEmailResponsiveHead("Emergency Report Confirmation - Smart City Portal")}
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; width: 100%;">
+  <div class="email-wrapper" style="width: 100%; margin: 0; padding: 24px 10px; background-color: #f1f5f9; box-sizing: border-box;">
+    <div class="email-card" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; box-sizing: border-box;">
+      <!-- Header -->
+      <div class="email-header" style="background: linear-gradient(135deg, #b91c1c, #e8380a); background-color: #e8380a; padding: 32px 24px; text-align: center; color: #ffffff;">
+        <div class="email-header-badge" style="display: inline-block; background-color: rgba(255,255,255,0.2); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; color: #ffffff;">Official Emergency Notification</div>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">Smart City Citizen Portal</h1>
+        <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95; color: #ffffff;">Emergency Report Confirmation</p>
+      </div>
+      
+      <!-- Body -->
+      <div class="email-body" style="padding: 32px 28px;">
+        <div class="email-greeting" style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Dear ${citizenName || "Citizen"},</div>
 
-      <!-- Highlight Card -->
-      <div style="background-color: #fff5f5; border-left: 5px solid #e8380a; padding: 18px 20px; border-radius: 8px; margin: 20px 0;">
-        <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #991b1b; font-weight: 700;">Your report is being under process. It will take up to 24 hours to respond by the admin.</p>
-        <p style="margin: 8px 0 0; font-size: 14px; color: #b91c1c; font-weight: 600;">Thanks for contacting us!</p>
+        <!-- Highlight Card -->
+        <div class="email-highlight-box" style="background-color: #fff5f5; border-left: 5px solid #e8380a; padding: 18px 20px; border-radius: 8px; margin: 20px 0;">
+          <p class="email-highlight-title" style="margin: 0; font-size: 16px; line-height: 1.6; color: #991b1b; font-weight: 700;">Your report is being under process. It will take up to 24 hours to respond by the admin.</p>
+          <p class="email-highlight-sub" style="margin: 8px 0 0; font-size: 14px; color: #b91c1c; font-weight: 600;">Thanks for contacting us!</p>
+        </div>
+
+        <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 16px 0;">
+          Your emergency report has been recorded and assigned to the rapid Emergency Response Team. Details of your alert are provided below:
+        </p>
+
+        <!-- Details Table -->
+        <table class="email-table" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px; width: 40%;">Reference ID</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-weight: 800; color: #e8380a; font-size: 16px;">#${formattedId}</td>
+          </tr>
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Emergency Type</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${emergencyType || "Emergency"}</td>
+          </tr>
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Location</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${location || "Not provided"}</td>
+          </tr>
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Current Status</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Under Process</span></td>
+          </tr>
+          <tr class="email-table-row">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Response Time</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #ecfdf5; color: #047857; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Within 24 Hours</span></td>
+          </tr>
+        </table>
+
+        <!-- Button -->
+        <div class="email-button-wrapper" style="text-align: center; margin: 32px 0 12px;">
+          <a class="email-btn" href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-emergency" style="display: inline-block; background-color: #e8380a; color: #ffffff !important; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 14px; min-height: 48px; line-height: 20px; box-sizing: border-box; box-shadow: 0 4px 12px rgba(232,56,10,0.35);">Track Your Emergency</a>
+        </div>
       </div>
 
-      <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 16px 0;">
-        Your emergency report has been recorded and assigned to the rapid Emergency Response Team. Details of your alert are provided below:
-      </p>
-
-      <!-- Details Table -->
-      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px; width: 40%;">Reference ID</td>
-          <td style="padding: 12px 14px; font-weight: 800; color: #e8380a; font-size: 16px;">#${formattedId}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Emergency Type</td>
-          <td style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${emergencyType || "Emergency"}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Location</td>
-          <td style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${location || "Not provided"}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Current Status</td>
-          <td style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Under Process</span></td>
-        </tr>
-        <tr>
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Response Time</td>
-          <td style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #ecfdf5; color: #047857; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Within 24 Hours</span></td>
-        </tr>
-      </table>
-
-      <!-- Button -->
-      <div style="text-align: center; margin: 32px 0 12px;">
-        <a href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-emergency" style="display: inline-block; background-color: #e8380a; color: #ffffff !important; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(232,56,10,0.35);">Track Your Emergency</a>
+      <!-- Footer -->
+      <div class="email-footer" style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 22px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
+        <p style="margin: 4px 0;">This is an automated official notification from Smart City Municipal Authority.</p>
+        <p style="margin: 4px 0;">Emergency Helpline: +92 42 111 123 456 | Rescue: 1122</p>
       </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 22px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
-      <p style="margin: 4px 0;">This is an automated official notification from Smart City Municipal Authority.</p>
-      <p style="margin: 4px 0;">Emergency Helpline: +92 42 111 123 456 | Rescue: 1122</p>
     </div>
   </div>
 </body>
@@ -621,68 +783,67 @@ Smart City Citizen Portal Administration
 
   const htmlContent = `
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 24px 10px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
-  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-    <!-- Header -->
-    <div style="background: linear-gradient(135deg, #0d5ea8, #0878e8); background-color: #0878e8; padding: 32px 24px; text-align: center; color: #ffffff;">
-      <div style="display: inline-block; background-color: rgba(255,255,255,0.2); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; color: #ffffff;">Account Activity</div>
-      <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">Welcome to Smart City Portal</h1>
-      <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95; color: #ffffff;">Citizen Login Notification</p>
-    </div>
-    
-    <!-- Body -->
-    <div style="padding: 32px 28px;">
-      <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Dear ${citizenName || "Citizen"},</div>
+<html lang="en">
+${getEmailResponsiveHead("Welcome to Smart City Portal - Login Successful")}
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; width: 100%;">
+  <div class="email-wrapper" style="width: 100%; margin: 0; padding: 24px 10px; background-color: #f1f5f9; box-sizing: border-box;">
+    <div class="email-card" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; box-sizing: border-box;">
+      <!-- Header -->
+      <div class="email-header" style="background: linear-gradient(135deg, #0d5ea8, #0878e8); background-color: #0878e8; padding: 32px 24px; text-align: center; color: #ffffff;">
+        <div class="email-header-badge" style="display: inline-block; background-color: rgba(255,255,255,0.2); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; color: #ffffff;">Account Activity</div>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">Welcome to Smart City Portal</h1>
+        <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95; color: #ffffff;">Citizen Login Notification</p>
+      </div>
+      
+      <!-- Body -->
+      <div class="email-body" style="padding: 32px 28px;">
+        <div class="email-greeting" style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Dear ${citizenName || "Citizen"},</div>
 
-      <!-- Welcome Card -->
-      <div style="background-color: #f0fdf4; border-left: 5px solid #16a34a; padding: 18px 20px; border-radius: 8px; margin: 20px 0;">
-        <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #14532d; font-weight: 700;">Welcome back! You have successfully signed in to the Smart City Citizen Portal.</p>
-        <p style="margin: 8px 0 0; font-size: 14px; color: #15803d; font-weight: 600;">Our civic services and support channels are available 24/7.</p>
+        <!-- Welcome Card -->
+        <div class="email-highlight-box" style="background-color: #f0fdf4; border-left: 5px solid #16a34a; padding: 18px 20px; border-radius: 8px; margin: 20px 0;">
+          <p class="email-highlight-title" style="margin: 0; font-size: 16px; line-height: 1.6; color: #14532d; font-weight: 700;">Welcome back! You have successfully signed in to the Smart City Citizen Portal.</p>
+          <p class="email-highlight-sub" style="margin: 8px 0 0; font-size: 14px; color: #15803d; font-weight: 600;">Our civic services and support channels are available 24/7.</p>
+        </div>
+
+        <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 16px 0;">
+          Your login session details are summarized below:
+        </p>
+
+        <!-- Details Table -->
+        <table class="email-table" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px; width: 40%;">Citizen Name</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${citizenName || "Citizen"}</td>
+          </tr>
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Account Email</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-weight: 700; color: #0878e8; font-size: 14px;">${citizenEmail}</td>
+          </tr>
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Login Method</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">${loginType}</span></td>
+          </tr>
+          <tr class="email-table-row" style="border-bottom: 1px solid #edf2f7;">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Login Timestamp</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${nowFormatted} PKT</td>
+          </tr>
+          <tr class="email-table-row">
+            <td class="email-table-label" style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Security Status</td>
+            <td class="email-table-value" style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #ecfdf5; color: #047857; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Authorized Session</span></td>
+          </tr>
+        </table>
+
+        <!-- Quick Action Button -->
+        <div class="email-button-wrapper" style="text-align: center; margin: 32px 0 12px;">
+          <a class="email-btn" href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-portal" style="display: inline-block; background-color: #0878e8; color: #ffffff !important; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 14px; min-height: 48px; line-height: 20px; box-sizing: border-box; box-shadow: 0 4px 12px rgba(8,120,232,0.35);">Open Dashboard</a>
+        </div>
       </div>
 
-      <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 16px 0;">
-        Your login session details are summarized below:
-      </p>
-
-      <!-- Details Table -->
-      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px; width: 40%;">Citizen Name</td>
-          <td style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${citizenName || "Citizen"}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Account Email</td>
-          <td style="padding: 12px 14px; font-weight: 700; color: #0878e8; font-size: 14px;">${citizenEmail}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Login Method</td>
-          <td style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">${loginType}</span></td>
-        </tr>
-        <tr style="border-bottom: 1px solid #edf2f7;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Login Timestamp</td>
-          <td style="padding: 12px 14px; font-weight: 700; color: #1e293b; font-size: 14px;">${nowFormatted} PKT</td>
-        </tr>
-        <tr>
-          <td style="padding: 12px 14px; font-weight: 600; color: #64748b; font-size: 14px;">Security Status</td>
-          <td style="padding: 12px 14px; font-size: 14px;"><span style="display: inline-block; background-color: #ecfdf5; color: #047857; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;">Authorized Session</span></td>
-        </tr>
-      </table>
-
-      <!-- Quick Action Button -->
-      <div style="text-align: center; margin: 32px 0 12px;">
-        <a href="https://smart-city-citizen-portel-a37g.vercel.app/citizen-portal" style="display: inline-block; background-color: #0878e8; color: #ffffff !important; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(8,120,232,0.35);">Open Dashboard</a>
+      <!-- Footer -->
+      <div class="email-footer" style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 22px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
+        <p style="margin: 4px 0;">This is an automated security and welcome notification from Smart City Authority.</p>
+        <p style="margin: 4px 0;">If you did not initiate this login, please contact our helpline immediately: +92 42 111 123 456</p>
       </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 22px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
-      <p style="margin: 4px 0;">This is an automated security and welcome notification from Smart City Authority.</p>
-      <p style="margin: 4px 0;">If you did not initiate this login, please contact our helpline immediately: +92 42 111 123 456</p>
     </div>
   </div>
 </body>
