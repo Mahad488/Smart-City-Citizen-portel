@@ -77,27 +77,27 @@ function Home() {
 
 
           {/* FLOATING CARDS */}
-          <div className="hero-floating-cards animate-fade-right delay-3">
+          <div className="hero-floating-cards animate-fade-right delay-3" aria-label="City pillars">
 
             <div className="floating-card">
-              <span className="green-icon">🌿</span>
-              <div>
+              <span className="green-icon" aria-hidden="true">🌿</span>
+              <div className="floating-card-content">
                 <strong>Clean City</strong>
                 <small>Better Environment</small>
               </div>
             </div>
 
             <div className="floating-card">
-              <span className="blue-icon">🛡️</span>
-              <div>
+              <span className="blue-icon" aria-hidden="true">🛡️</span>
+              <div className="floating-card-content">
                 <strong>Safe Community</strong>
                 <small>Connected Citizens</small>
               </div>
             </div>
 
             <div className="floating-card">
-              <span className="purple-icon">🏙️</span>
-              <div>
+              <span className="purple-icon" aria-hidden="true">🏙️</span>
+              <div className="floating-card-content">
                 <strong>Smart Infrastructure</strong>
                 <small>Modern City Services</small>
               </div>
