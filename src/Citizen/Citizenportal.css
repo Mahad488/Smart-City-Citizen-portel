@@ -955,22 +955,21 @@
   }
 }
 
-@media (max-width: 800px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .dashboard-sidebar {
-    width: 68px;
-    padding: 15px 9px;
+    width: 72px;
+    padding: 16px 8px;
   }
 
   .sidebar-brand {
     justify-content: center;
-    padding: 0 0 20px;
+    padding: 0 0 18px;
   }
 
   .brand-logo {
-    width: 35px;
-    height: 35px;
+    width: 36px;
+    height: 36px;
     border-radius: 8px;
-    font-size: 20px;
   }
 
   .sidebar-brand > div:last-child,
@@ -981,25 +980,28 @@
 
   .sidebar-item {
     justify-content: center;
-    padding: 0;
+    padding: 10px 0;
+    min-height: 48px;
   }
 
   .notification-count {
     position: absolute;
-    margin: -20px -24px 0 0;
+    top: 6px;
+    right: 14px;
+    margin: 0;
   }
 
   .dashboard-main {
-    width: calc(100% - 68px);
-    margin-left: 68px;
+    width: calc(100% - 72px);
+    margin-left: 72px;
   }
 
   .dashboard-topbar {
-    padding: 0 15px;
+    padding: 0 16px;
   }
 
   .dashboard-search {
-    width: 45%;
+    width: 42%;
   }
 
   .user-info,
@@ -1008,7 +1010,7 @@
   }
 
   .dashboard-content {
-    padding: 15px;
+    padding: 16px;
   }
 
   .stats-grid {
@@ -1020,19 +1022,25 @@
   }
 }
 
-@media (max-width: 550px) {
+@media (max-width: 768px) {
   .dashboard-sidebar {
+    position: fixed;
     top: auto;
     right: 0;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: calc(68px + env(safe-area-inset-bottom, 0px));
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
     min-height: 0;
-    padding: 4px 6px env(safe-area-inset-bottom, 0px);
+    padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px));
     flex-direction: row;
     overflow: hidden;
-    box-shadow: 0 -5px 18px rgba(3, 35, 69, 0.18);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -4px 18px rgba(3, 35, 69, 0.12);
+    z-index: 999;
   }
 
   .sidebar-brand,
@@ -1044,11 +1052,14 @@
     width: 100%;
     min-width: 0;
     margin: 0;
+    display: flex;
     flex-direction: row;
-    align-items: stretch;
+    align-items: center;
+    justify-content: space-around;
     gap: 2px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
 
@@ -1058,25 +1069,41 @@
 
   .sidebar-item {
     position: relative;
-    flex: 0 0 60px;
-    min-width: 60px;
-    min-height: 56px;
-    padding: 4px 2px;
+    flex: 1 1 0;
+    min-width: 44px;
+    max-width: 76px;
+    min-height: 52px;
+    padding: 6px 2px;
+    display: flex;
     flex-direction: column;
+    align-items: center;
     justify-content: center;
     gap: 3px;
     font-size: 10px;
+    font-weight: 600;
     line-height: 1.1;
     text-align: center;
+    border-radius: 8px;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
 
   .sidebar-item span:not(.portal-icon):not(.notification-count) {
     display: block;
     max-width: 100%;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 9.5px;
   }
 
   .sidebar-item .portal-icon {
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+  }
+
+  .sidebar-item .portal-icon svg {
     width: 19px;
     height: 19px;
   }
@@ -1087,67 +1114,150 @@
 
   .sidebar-item .notification-count {
     position: absolute;
-    top: 1px;
-    right: calc(50% - 19px);
+    top: 2px;
+    right: calc(50% - 16px);
     margin: 0;
-    min-width: 15px;
-    height: 15px;
-    font-size: 8px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 9px;
+    line-height: 16px;
   }
 
   .dashboard-main {
     width: 100%;
     margin-left: 0;
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
 
   .dashboard-topbar {
-    height: 58px;
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    height: auto;
+    min-height: calc(56px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px) 14px 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #edf2f7;
   }
 
   .mobile-brand {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
     color: #12375e;
+  }
+
+  .mobile-brand img {
+    width: 24px;
+    height: 24px;
   }
 
   .dashboard-search {
     display: none;
   }
 
+  .topbar-actions {
+    gap: 10px;
+  }
+
+  .topbar-notification {
+    width: 40px;
+    height: 40px;
+  }
+
+  .user-info,
+  .dropdown-arrow {
+    display: none;
+  }
+
+  .dashboard-content {
+    padding: 14px;
+  }
+
   .welcome-banner {
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: stretch;
     gap: 12px;
+    padding: 18px 16px;
   }
 
   .welcome-banner h1 {
-    font-size: 14px;
+    font-size: 17px;
+    line-height: 1.35;
+  }
+
+  .welcome-banner p {
+    font-size: 12px;
   }
 
   .account-status {
-    min-width: 65px;
-    padding: 7px;
+    align-self: flex-start;
+    padding: 6px 12px;
+    font-size: 11px;
   }
 
   .primary-actions {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .dashboard-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .stats-grid {
-    gap: 7px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 
   .stat-card {
-    padding: 9px;
+    padding: 12px 10px;
+    min-width: 0;
+  }
+
+  .complaints-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 8px 8px;
   }
 
   .complaints-table {
-    min-width: 600px;
+    min-width: 580px;
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-content {
+    padding: 10px;
+  }
+
+  .stats-grid {
+    gap: 6px;
+  }
+
+  .stat-card {
+    padding: 10px 8px;
+  }
+
+  .stat-card h3 {
+    font-size: 18px;
+  }
+
+  .welcome-banner {
+    padding: 14px 12px;
+  }
+
+  .sidebar-item {
+    font-size: 9px;
+  }
+
+  .sidebar-item span:not(.portal-icon):not(.notification-count) {
+    font-size: 8.5px;
   }
 }

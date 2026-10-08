@@ -808,5 +808,43 @@
 
   .track-emergency {
     width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .emergency-content {
+    padding: 12px;
+  }
+
+  .emergency-card,
+  .emergency-form-box {
+    padding: 16px 12px;
+    border-radius: 10px;
+  }
+
+  .emergency-track-dialog {
+    padding: 18px 12px;
+    width: 95vw;
+    border-radius: 12px;
+  }
+
+  .emergency-types-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .emergency-type-card {
+    padding: 12px 8px;
+    min-height: 52px;
+    font-size: 12px;
+  }
+
+  .submit-emergency {
+    min-height: 48px;
+    font-size: 15px;
   }
 }

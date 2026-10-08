@@ -634,6 +634,10 @@
 }
 
 @media (max-width: 600px) {
+  .complaints-content {
+    padding: 14px;
+  }
+
   .complaint-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 7px;
@@ -658,5 +662,35 @@
   .card-header {
     align-items: flex-start;
     gap: 10px;
+    flex-direction: column;
+  }
+
+  .complaints-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .complaints-table th,
+  .complaints-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .complaint-title strong {
+    font-size: 12px;
+  }
+
+  .track-complaint-button,
+  .edit-complaint-button,
+  .delete-complaint-button {
+    min-height: 40px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .complaint-edit-dialog {
+    width: 95vw;
+    padding: 20px 14px;
+    border-radius: 12px;
   }
 }

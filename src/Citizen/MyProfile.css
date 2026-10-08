@@ -646,4 +646,28 @@
     border-bottom: none;
   }
 
+  .profile-actions,
+  .password-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .cancel-button,
+  .save-button,
+  .save-password-button {
+    width: 100%;
+    min-height: 48px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .profile-card-header,
+  .profile-content,
+  .password-content {
+    padding: 16px 14px;
+  }
 }

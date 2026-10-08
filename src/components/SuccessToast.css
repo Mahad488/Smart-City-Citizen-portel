@@ -135,11 +135,11 @@
   color: #4a6070;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .toast-container {
-    bottom: 16px;
-    right: 16px;
-    left: 16px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 12px));
+    right: 14px;
+    left: 14px;
     width: auto;
     max-width: none;
   }

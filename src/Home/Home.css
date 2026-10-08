@@ -172,6 +172,18 @@ html {
   background-attachment: fixed;
 }
 
+@supports (-webkit-touch-callout: none) {
+  .home-hero {
+    background-attachment: scroll !important;
+  }
+}
+
+@media (pointer: coarse) {
+  .home-hero {
+    background-attachment: scroll !important;
+  }
+}
+
 .hero-overlay {
   position: absolute;
   inset: 0;

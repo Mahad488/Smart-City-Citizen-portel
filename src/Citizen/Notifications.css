@@ -477,12 +477,15 @@
   }
 }
 
-@media (max-width: 550px) {
+@media (max-width: 680px) {
   .notifications-page {
     padding: 12px;
   }
 
   .notifications-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
     margin-bottom: 18px;
   }
 

@@ -589,42 +589,61 @@
   }
 
   .auth-brand-panel {
-    min-height: 320px;
+    min-height: 260px;
+    padding: 30px 20px;
   }
 }
 
 @media (max-width: 520px) {
   .citizen-auth-page {
-    padding: 18px 12px;
+    padding: calc(60px + env(safe-area-inset-top, 0px)) 12px calc(24px + env(safe-area-inset-bottom, 0px));
     place-items: stretch;
   }
 
   .auth-back-home {
-    top: 12px;
+    top: max(14px, env(safe-area-inset-top, 14px));
     left: 12px;
     right: 12px;
     justify-content: center;
+    min-height: 44px;
   }
 
   .auth-form-panel {
-    padding: 16px 12px 20px;
+    padding: 12px 6px 16px;
   }
 
   .citizen-auth-card {
-    padding: 22px 16px;
+    padding: 20px 14px;
     border-radius: 14px;
   }
 
   .citizen-auth-header h1 {
-    font-size: 24px;
+    font-size: 22px;
+  }
+
+  .citizen-auth-header p {
+    font-size: 13px;
+  }
+
+  .auth-form-group input,
+  .auth-form-group select {
+    font-size: 16px;
+    min-height: 48px;
+  }
+
+  .citizen-auth-submit {
+    min-height: 48px;
+    font-size: 15px;
   }
 
   .register-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .auth-extra-row {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
   }
 }
