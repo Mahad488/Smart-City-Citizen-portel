@@ -217,11 +217,11 @@ export const sendComplaintConfirmationEmail = async ({
   const formattedId = `CMP-${String(complaintId).padStart(5, "0")}`;
 
   const textContent = `
-Assalam-o-Alaikum ${citizenName || "Citizen"},
+Dear ${citizenName || "Citizen"},
 
 Your report is being under process. It will take up to 24 hours to respond by the admin. Thanks for contacting us!
 
-Aap ki report par kaam jari hai. Admin ki taraf se 24 ghanton ke andar response diya jaye ga. Hum se rabta karne ka shukriya!
+Your complaint has been successfully registered with the Municipal Authority. Details are provided below:
 
 Complaint Details:
 - Tracking ID: #${formattedId} (ID: ${complaintId})
@@ -231,7 +231,7 @@ Complaint Details:
 - Current Status: Under Process
 - Response Time: Within 24 hours
 
-Aap Smart City Citizen Portal par ja kar apni complaint track kar saktay hain:
+You can track your complaint anytime on the Smart City Citizen Portal:
 https://smart-city-citizen-portel-a37g.vercel.app/citizen-my-complaints
 
 Helpline: +92 42 111 123 456
@@ -259,7 +259,7 @@ Smart City Citizen Portal Administration
     
     <!-- Body -->
     <div style="padding: 32px 28px;">
-      <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Assalam-o-Alaikum ${citizenName || "Citizen"},</div>
+      <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Dear ${citizenName || "Citizen"},</div>
 
       <!-- Highlight Card -->
       <div style="background-color: #f0f7ff; border-left: 5px solid #0878e8; padding: 18px 20px; border-radius: 8px; margin: 20px 0;">
@@ -268,7 +268,7 @@ Smart City Citizen Portal Administration
       </div>
 
       <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 16px 0;">
-        Aap ki report receive ho chuki hai aur registered kar li gayi hai. Report ki tafseelat darj zail hain:
+        Your complaint has been successfully registered with the Municipal Authority. Details of your report are provided below:
       </p>
 
       <!-- Details Table -->
@@ -373,7 +373,7 @@ Smart City Citizen Portal Administration
     console.log(`[EMAIL SERVICE - NOTIFICATION SENT]`);
     console.log(`To: ${citizenEmail} (${citizenName})`);
     console.log(`Subject: Complaint Confirmation #${formattedId} - Smart City Citizen Portal`);
-    console.log(`Message: "Aap ki report hum tak pohanch chuki hai. Aap ke report karne ka shukriya! Aap ki report par 24 hours mein kaam shuru kiya jaye ga."`);
+    console.log(`Message: "Your report is being under process. It will take up to 24 hours to respond by the admin. Thanks for contacting us!"`);
     console.log(`Tracking ID: #${formattedId}`);
     console.log(`[NOTE: To dispatch live emails to real inboxes, add EMAIL_USER and EMAIL_PASS to backend .env]`);
     console.log("================================================================================");
@@ -415,11 +415,11 @@ export const sendEmergencyConfirmationEmail = async ({
   const formattedId = `EM-${String(emergencyId).padStart(4, "0")}`;
 
   const textContent = `
-Assalam-o-Alaikum ${citizenName || "Citizen"},
+Dear ${citizenName || "Citizen"},
 
 Your report is being under process. It will take up to 24 hours to respond by the admin. Thanks for contacting us!
 
-Aap ki emergency report par foran kaam shuru kar diya gaya hai. Admin team 24 ghanton ke andar response kare gi. Hum se rabta karne ka shukriya!
+Your emergency alert has been recorded and dispatched to the Emergency Response Team with immediate priority. Details are provided below:
 
 Emergency Details:
 - Reference ID: #${formattedId} (ID: ${emergencyId})
@@ -428,7 +428,7 @@ Emergency Details:
 - Current Status: Under Process (Priority Response)
 - Response Time: Within 24 hours
 
-Aap Smart City Citizen Portal par ja kar apni emergency report track kar saktay hain:
+You can track your emergency report anytime on the Smart City Citizen Portal:
 https://smart-city-citizen-portel-a37g.vercel.app/citizen-emergency
 
 Emergency Helpline: +92 42 111 123 456
@@ -456,7 +456,7 @@ Smart City Citizen Portal Emergency Team
     
     <!-- Body -->
     <div style="padding: 32px 28px;">
-      <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Assalam-o-Alaikum ${citizenName || "Citizen"},</div>
+      <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Dear ${citizenName || "Citizen"},</div>
 
       <!-- Highlight Card -->
       <div style="background-color: #fff5f5; border-left: 5px solid #e8380a; padding: 18px 20px; border-radius: 8px; margin: 20px 0;">
@@ -465,7 +465,7 @@ Smart City Citizen Portal Emergency Team
       </div>
 
       <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 16px 0;">
-        Aap ki emergency report register ho kar Emergency Response Team ko assign kar di gayi hai. Report ki tafseelat darj zail hain:
+        Your emergency report has been recorded and assigned to the rapid Emergency Response Team. Details of your alert are provided below:
       </p>
 
       <!-- Details Table -->
@@ -597,11 +597,11 @@ export const sendLoginWelcomeEmail = async ({
   });
 
   const textContent = `
-Assalam-o-Alaikum ${citizenName || "Citizen"},
+Dear ${citizenName || "Citizen"},
 
 Welcome to Smart City Citizen Portal!
 
-Aap ka portal par login kamyabi se ho chuka hai (${nowFormatted} PKT).
+Your account login was successful on ${nowFormatted} (PKT).
 
 Login Details:
 - Citizen Name: ${citizenName || "Citizen"}
@@ -610,7 +610,7 @@ Login Details:
 - Time: ${nowFormatted} (PKT)
 - Status: Active & Secured
 
-Aap kisi bhi waqt Smart City Citizen Portal par ja kar apni complaints file kar saktay hain, emergency report submit kar saktay hain, aur tracking check kar saktay hain:
+You can access the Smart City Citizen Portal at any time to file complaints, report emergencies, and track pending requests:
 https://smart-city-citizen-portel-a37g.vercel.app/citizen-portal
 
 Helpline: +92 42 111 123 456
@@ -637,16 +637,16 @@ Smart City Citizen Portal Administration
     
     <!-- Body -->
     <div style="padding: 32px 28px;">
-      <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Assalam-o-Alaikum ${citizenName || "Citizen"},</div>
+      <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Dear ${citizenName || "Citizen"},</div>
 
       <!-- Welcome Card -->
       <div style="background-color: #f0fdf4; border-left: 5px solid #16a34a; padding: 18px 20px; border-radius: 8px; margin: 20px 0;">
-        <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #14532d; font-weight: 700;">Welcome back! Aap ka Smart City Citizen Portal me login kamyabi se ho chuka hai.</p>
-        <p style="margin: 8px 0 0; font-size: 14px; color: #15803d; font-weight: 600;">Hum aap ki civic khidmat ke liye 24/7 dastyaab hain.</p>
+        <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #14532d; font-weight: 700;">Welcome back! You have successfully signed in to the Smart City Citizen Portal.</p>
+        <p style="margin: 8px 0 0; font-size: 14px; color: #15803d; font-weight: 600;">Our civic services and support channels are available 24/7.</p>
       </div>
 
       <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 16px 0;">
-        Aap ke account ke login session ki tafseelat darj zail hain:
+        Your login session details are summarized below:
       </p>
 
       <!-- Details Table -->
@@ -683,7 +683,7 @@ Smart City Citizen Portal Administration
     <!-- Footer -->
     <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 22px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
       <p style="margin: 4px 0;">This is an automated security and welcome notification from Smart City Authority.</p>
-      <p style="margin: 4px 0;">Agar yeh login aap ne nahi kiya, toh foran helpline par call karein: +92 42 111 123 456</p>
+      <p style="margin: 4px 0;">If you did not initiate this login, please contact our helpline immediately: +92 42 111 123 456</p>
     </div>
   </div>
 </body>
