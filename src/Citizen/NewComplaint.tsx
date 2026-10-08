@@ -300,6 +300,11 @@ function NewComplaint() {
       return;
     }
 
+    if (label === "Emergency") {
+      navigate("/citizen-emergency");
+      return;
+    }
+
     if (label === "My Complaints") {
       navigate("/citizen-my-complaints");
       return;
@@ -307,6 +312,11 @@ function NewComplaint() {
 
     if (label === "Notifications") {
       navigate("/citizen-notifications");
+      return;
+    }
+
+    if (label === "My Profile") {
+      navigate("/citizen-profile");
       return;
     }
 
