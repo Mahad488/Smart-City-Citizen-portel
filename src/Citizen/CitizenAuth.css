@@ -557,6 +557,67 @@
   line-height: 1.6;
 }
 
+.auth-location-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-location-control .auth-input-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-location-btn {
+  min-height: 50px;
+  border: 1px solid #c7d9f2;
+  background: #f0f7ff;
+  color: #0d6efd;
+  border-radius: 10px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.auth-location-btn:hover:not(:disabled) {
+  background: #0d6efd;
+  color: #ffffff;
+  border-color: #0d6efd;
+  box-shadow: 0 3px 10px rgba(13, 110, 253, 0.25);
+}
+
+.auth-location-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.auth-location-error {
+  margin: 4px 0 0;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.auth-spin {
+  animation: auth-spin 1s linear infinite;
+}
+
+@keyframes auth-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes auth-enter {
   from {
     opacity: 0;
@@ -645,5 +706,16 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+
+  .auth-location-control {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .auth-location-btn {
+    justify-content: center;
+    width: 100%;
   }
 }

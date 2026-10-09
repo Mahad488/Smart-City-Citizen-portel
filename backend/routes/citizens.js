@@ -136,9 +136,8 @@ router.post("/login", async (req, res) => {
     }
 
     if (citizen.status === "Pending") {
-      return res.status(403).json({
-        message: "Your account is waiting for admin approval."
-      });
+      await db.query("UPDATE citizens SET status = 'Active' WHERE id = ?", [citizen.id]);
+      citizen.status = "Active";
     }
 
     if (citizen.status === "Inactive") {
@@ -248,7 +247,8 @@ router.post(["/google-login", "/google"], async (req, res) => {
       citizen = rows[0];
 
       if (citizen.status === "Pending") {
-        return res.status(403).json({ message: "Your account is waiting for admin approval." });
+        await db.query("UPDATE citizens SET status = 'Active' WHERE id = ?", [citizen.id]);
+        citizen.status = "Active";
       }
 
       if (citizen.status === "Inactive") {
@@ -537,7 +537,7 @@ router.post("/register", async (req, res) => {
     const [result] = await db.query(
       `INSERT INTO citizens
        (citizen_id, name, email, password_hash, phone, area, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'Pending')`,
+       VALUES (?, ?, ?, ?, ?, ?, 'Active')`,
       [
         citizenId,
         name,
@@ -549,7 +549,7 @@ router.post("/register", async (req, res) => {
     );
 
     res.status(201).json({
-      message: "Registration successful. Waiting for admin approval.",
+      message: "Registration successful! You can now log in.",
       citizen: {
         id: result.insertId,
         citizen_id: citizenId,
@@ -557,7 +557,7 @@ router.post("/register", async (req, res) => {
         email,
         phone,
         area,
-        status: "Pending",
+        status: "Active",
       },
     });
   } catch (error) {
@@ -611,7 +611,7 @@ router.post("/", authenticate, async (req, res) => {
       email,
       phone || null,
       area || null,
-      status || "Pending"
+      status || "Active"
     ]);
 
     res.status(201).json({

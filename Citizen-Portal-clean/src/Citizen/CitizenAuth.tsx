@@ -9,6 +9,7 @@ import {
   Eye,
   EyeOff,
   Info,
+  Loader2,
   LockKeyhole,
   Mail,
   MapPin,
@@ -16,6 +17,7 @@ import {
   UserRound,
 } from "lucide-react";
 import smartCityMark from "../assets/smart-city-mark.svg";
+import { reverseGeocodeCoordinates } from "../location";
 import "./CitizenAuth.css";
 
 const COUNTRY_CODES = [
@@ -49,6 +51,8 @@ function CitizenAuth() {
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [countryCode, setCountryCode] = useState("+92");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState(() =>
@@ -228,8 +232,10 @@ function CitizenAuth() {
       }
 
       setMessage(
-        "Registration submitted successfully. Please wait for admin approval."
+        data.message || "Registration successful! You can now log in."
       );
+
+      const registeredEmail = registerForm.email;
 
       setRegisterForm({
         name: "",
@@ -240,11 +246,19 @@ function CitizenAuth() {
       });
       setPhoneNumber("");
       setCountryCode("+92");
+      setLocationError("");
+
+      if (registeredEmail) {
+        setLoginForm((prev) => ({
+          ...prev,
+          email: registeredEmail,
+        }));
+      }
 
       setTimeout(() => {
         setMode("login");
         setMessage(
-          "Your account is pending admin approval."
+          "Registration successful! Please log in with your credentials."
         );
       }, 1500);
 
@@ -259,10 +273,61 @@ function CitizenAuth() {
     }
   };
 
+  const useCurrentLocation = () => {
+    if (!window.isSecureContext) {
+      setLocationError("Location access requires HTTPS or localhost.");
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setLocationError("Location is not supported by this browser.");
+      return;
+    }
+
+    setLocating(true);
+    setLocationError("");
+
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        const lat = coords.latitude;
+        const lon = coords.longitude;
+
+        try {
+          const address = await reverseGeocodeCoordinates(lat, lon);
+          setRegisterForm((prev) => ({
+            ...prev,
+            area: address,
+          }));
+        } catch (err) {
+          console.error("Location lookup error:", err);
+          setRegisterForm((prev) => ({
+            ...prev,
+            area: `Lat ${lat.toFixed(4)}, Lng ${lon.toFixed(4)}`,
+          }));
+          setLocationError("Could not fetch full street address. Coordinates added instead.");
+        } finally {
+          setLocating(false);
+        }
+      },
+      (err) => {
+        setLocationError(
+          err.code === err.PERMISSION_DENIED
+            ? "Allow location access in your browser to detect your current location."
+            : err.code === err.POSITION_UNAVAILABLE
+              ? "Your device could not determine a location. Please enable location services."
+              : "Location request timed out. Please try again."
+        );
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
   const switchMode = (newMode: Mode) => {
     setMode(newMode);
     setError("");
     setMessage("");
+    setLocationError("");
   };
 
   return (
@@ -645,7 +710,7 @@ function CitizenAuth() {
                   </div>
 
 
-                  <div className="auth-form-group">
+                  <div className="auth-form-group full">
 
                     <label>Password</label>
 
@@ -682,31 +747,66 @@ function CitizenAuth() {
                   </div>
 
 
-                  <div className="auth-form-group">
+                  <div className="auth-form-group full">
 
-                    <label>Area</label>
+                    <label>Area / Location</label>
 
-                    <div className="auth-input-wrapper select-wrapper">
-                      <span className="input-icon">
-                        <MapPin size={16} aria-hidden="true" />
-                      </span>
+                    <div className="auth-location-control">
+                      <div className="auth-input-wrapper">
+                        <span className="input-icon">
+                          <MapPin size={16} aria-hidden="true" />
+                        </span>
 
-                      <select
-                        value={registerForm.area}
-                        onChange={(e) =>
-                          setRegisterForm({
-                            ...registerForm,
-                            area: e.target.value,
-                          })
-                        }
+                        <input
+                          type="text"
+                          list="suggested-areas"
+                          placeholder="Enter your area or use current location"
+                          value={registerForm.area}
+                          required
+                          onChange={(e) => {
+                            setRegisterForm({
+                              ...registerForm,
+                              area: e.target.value,
+                            });
+                            setLocationError("");
+                          }}
+                        />
+
+                        <datalist id="suggested-areas">
+                          <option value="Central City" />
+                          <option value="North District" />
+                          <option value="South District" />
+                          <option value="East Zone" />
+                          <option value="West Zone" />
+                        </datalist>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="auth-location-btn"
+                        onClick={useCurrentLocation}
+                        disabled={locating}
+                        title="Detect and use my current location"
                       >
-                        <option>Central City</option>
-                        <option>North District</option>
-                        <option>South District</option>
-                        <option>East Zone</option>
-                        <option>West Zone</option>
-                      </select>
+                        {locating ? (
+                          <>
+                            <Loader2 size={15} className="auth-spin" aria-hidden="true" />
+                            <span>Locating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <MapPin size={15} aria-hidden="true" />
+                            <span>Use My Location</span>
+                          </>
+                        )}
+                      </button>
                     </div>
+
+                    {locationError && (
+                      <p className="auth-location-error" role="alert">
+                        {locationError}
+                      </p>
+                    )}
 
                   </div>
 
