@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "../api";
@@ -1018,7 +1018,7 @@ function CitizenAuth() {
 
               {forgotError && (
                 <div className="citizen-auth-error">
-                  <AlertCircle size={16} />
+                  <CircleAlert size={16} />
                   <span>{forgotError}</span>
                 </div>
               )}
