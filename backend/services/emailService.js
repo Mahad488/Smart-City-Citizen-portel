@@ -918,3 +918,101 @@ ${getEmailResponsiveHead("Welcome to Smart City Portal - Login Successful")}
   return { success: true, simulated: true };
 };
 
+export const sendPasswordResetEmail = async ({
+  citizenName,
+  citizenEmail,
+  resetToken,
+  resetLink,
+}) => {
+  if (!citizenEmail) return { success: false, reason: "No recipient email" };
+
+  const emailUser =
+    process.env.EMAIL_USER ||
+    process.env.SMTP_USER ||
+    "muhammadmahad2021@gmail.com";
+  const emailPass =
+    process.env.EMAIL_PASS ||
+    process.env.SMTP_PASS ||
+    "tqbl rvld orck dctq";
+
+  const textContent = `
+Dear ${citizenName || "Citizen"},
+
+We received a request to reset your password for your Smart City Citizen Portal account.
+
+Your password reset token is:
+${resetToken}
+
+Alternatively, you can reset your password using the following link:
+${resetLink}
+
+This token and link will expire in 15 minutes.
+If you did not request this password reset, please ignore this email or contact support.
+
+Smart City Citizen Portal Security Team
+`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; padding: 24px; color: #1e293b;">
+  <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 28px;">
+    <h2 style="color: #0878e8; margin-top: 0;">Password Reset Request</h2>
+    <p>Dear <strong>${citizenName || "Citizen"}</strong>,</p>
+    <p>We received a request to reset your Smart City Citizen Portal account password.</p>
+    <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; text-align: center; margin: 20px 0;">
+      <p style="font-size: 13px; color: #64748b; margin: 0 0 8px;">Your One-Time Reset Token:</p>
+      <code style="font-size: 20px; font-weight: bold; letter-spacing: 2px; color: #0f172a;">${resetToken}</code>
+    </div>
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${resetLink}" style="background-color: #0878e8; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Reset Password</a>
+    </div>
+    <p style="font-size: 13px; color: #64748b;">This reset code and link will expire in 15 minutes for your security. If you did not request this, you can safely ignore this email.</p>
+  </div>
+</body>
+</html>
+`;
+
+  // Try Gmail API first
+  const gmailResult = await sendViaGmailApi({
+    to: citizenEmail,
+    subject: "Reset Your Password - Smart City Citizen Portal",
+    html: htmlContent,
+    text: textContent,
+  });
+  if (gmailResult) return gmailResult;
+
+  // Fallback to SMTP
+  if (emailUser && emailPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        family: 4,
+        auth: {
+          user: emailUser,
+          pass: emailPass.replace(/\s+/g, ""),
+        },
+        tls: { rejectUnauthorized: false },
+      });
+
+      const info = await transporter.sendMail({
+        from: `"${process.env.EMAIL_FROM_NAME || "Smart City Citizen Portal"}" <${emailUser}>`,
+        to: citizenEmail,
+        subject: "Reset Your Password - Smart City Citizen Portal",
+        text: textContent,
+        html: htmlContent,
+      });
+
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error("[EMAIL SERVICE] Error sending password reset email:", err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  return { success: true, simulated: true };
+};
+
+

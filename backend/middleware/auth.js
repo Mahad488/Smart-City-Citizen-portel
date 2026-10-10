@@ -89,13 +89,19 @@ export function authenticateToken(req, res, next) {
   }
 
   const role = decoded.role || (decoded.citizen_id ? "CITIZEN" : "ADMIN");
+  if (role !== "CITIZEN" && role !== "ADMIN") {
+    return unauthorized(res);
+  }
 
-  req.user = {
-    ...decoded,
+  const user = {
     citizen_id: decoded.citizen_id || null,
     email: decoded.email,
     role: role,
   };
+  if (decoded.id !== undefined) user.id = decoded.id;
+  if (decoded.name !== undefined) user.name = decoded.name;
+
+  req.user = user;
 
   return next();
 }

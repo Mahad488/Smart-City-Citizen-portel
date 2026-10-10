@@ -1,7 +1,7 @@
 import express from "express";
 import { Buffer } from "node:buffer";
 import db from "../config/db.js";
-import { authenticate } from "../auth.js";
+import { authenticate, requireAdmin } from "../auth.js";
 import { sendComplaintConfirmationEmail } from "../services/emailService.js";
 
 const router = express.Router();
@@ -18,14 +18,30 @@ const ensureComplaintAttachmentsTable = () =>
 
 
 // =====================================================
-// GET ALL COMPLAINTS - ADMIN
+// GET COMPLAINTS (Admin: all, Citizen: own only)
 // =====================================================
 router.get("/", authenticate, async (req, res) => {
   try {
+    if (req.user.role === "ADMIN") {
+      const [rows] = await db.query(
+        `SELECT *
+         FROM complaints
+         ORDER BY created_at DESC`
+      );
+      return res.json(rows);
+    }
+
+    const citizen_id = req.user.citizen_id;
+    if (!citizen_id) {
+      return res.json([]);
+    }
+
     const [rows] = await db.query(
       `SELECT *
        FROM complaints
-       ORDER BY created_at DESC`
+       WHERE citizen_id = ?
+       ORDER BY created_at DESC`,
+      [citizen_id]
     );
 
     res.json(rows);
@@ -86,7 +102,6 @@ router.get(["/me", "/citizen/:citizen_id"], authenticate, async (req, res) => {
 router.post("/citizen", authenticate, async (req, res) => {
   try {
     const {
-      citizen_id,
       title,
       description,
       category,
@@ -96,16 +111,53 @@ router.post("/citizen", authenticate, async (req, res) => {
       photo,
     } = req.body;
 
+    const citizen_id = req.user.citizen_id || req.body.citizen_id;
+
     if (!citizen_id || !title || !description) {
       return res.status(400).json({
         message: "Citizen, title and description are required",
       });
     }
 
-    if (req.user.citizen_id !== citizen_id) {
+    if (req.user.role !== "ADMIN" && req.user.citizen_id !== citizen_id) {
       return res.status(403).json({
         message: "You can only create complaints for your own account.",
       });
+    }
+
+    // Allowed category validation (M-06)
+    const ALLOWED_CATEGORIES = [
+      "Roads",
+      "Water",
+      "Waste",
+      "Street Lighting",
+      "Electricity",
+      "Public Safety",
+      "Sanitation",
+      "Traffic",
+      "Environment",
+      "Infrastructure",
+      "Other",
+    ];
+    const validatedCategory = ALLOWED_CATEGORIES.includes(category) ? category : "Other";
+
+    // Server-side severity & priority rules (M-07)
+    let calculatedPriority = "Medium";
+    const textToCheck = `${String(title || "")} ${String(description || "")}`.toLowerCase();
+    if (
+      textToCheck.includes("danger") ||
+      textToCheck.includes("emergency") ||
+      textToCheck.includes("fire") ||
+      textToCheck.includes("injury") ||
+      textToCheck.includes("life")
+    ) {
+      calculatedPriority = "Critical";
+    } else if (["Public Safety", "Electricity", "Water"].includes(validatedCategory)) {
+      calculatedPriority = "High";
+    } else if (["Roads", "Waste", "Sanitation"].includes(validatedCategory)) {
+      calculatedPriority = "Medium";
+    } else {
+      calculatedPriority = "Low";
     }
 
     let photoBuffer = null;
@@ -187,12 +239,13 @@ router.post("/citizen", authenticate, async (req, res) => {
          latitude,
          longitude
        )
-      VALUES (?, ?, ?, ?, 'Medium', 'Pending', ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?)`,
       [
         citizen_id,
-        category || "Other",
+        validatedCategory,
         `Title: ${title}\n\n${description}`,
         area || citizen.area || "Not provided",
+        calculatedPriority,
         latitude ?? null,
         longitude ?? null,
       ]
@@ -374,7 +427,10 @@ router.get("/:id/attachment", authenticate, async (req, res) => {
       return res.status(404).json({ message: "Complaint not found" });
     }
 
-    if (req.user.citizen_id !== complaintRows[0].citizen_id) {
+    if (
+      req.user.role !== "ADMIN" &&
+      req.user.citizen_id !== complaintRows[0].citizen_id
+    ) {
       return res.status(403).json({
         message: "You can only access your own complaint photo.",
       });
@@ -420,7 +476,10 @@ router.get("/:id", authenticate, async (req, res) => {
       });
     }
 
-    if (req.user.citizen_id !== rows[0].citizen_id) {
+    if (
+      req.user.role !== "ADMIN" &&
+      req.user.citizen_id !== rows[0].citizen_id
+    ) {
       return res.status(403).json({
         message: "This complaint does not belong to your account.",
       });
@@ -441,7 +500,7 @@ router.get("/:id", authenticate, async (req, res) => {
 // =====================================================
 // ADMIN CREATE COMPLAINT
 // =====================================================
-router.post("/", authenticate, async (req, res) => {
+router.post("/", authenticate, requireAdmin, async (req, res) => {
   try {
     const {
       citizen_id,
@@ -497,7 +556,7 @@ router.post("/", authenticate, async (req, res) => {
 // =====================================================
 // ADMIN UPDATE COMPLAINT
 // =====================================================
-router.put("/:id", authenticate, async (req, res) => {
+router.put("/:id", authenticate, requireAdmin, async (req, res) => {
   try {
     const {
       category,
@@ -554,7 +613,7 @@ router.put("/:id", authenticate, async (req, res) => {
 // =====================================================
 // ADMIN DELETE COMPLAINT
 // =====================================================
-router.delete("/:id", authenticate, async (req, res) => {
+router.delete("/:id", authenticate, requireAdmin, async (req, res) => {
   try {
     const [result] = await db.query(
       `DELETE FROM complaints

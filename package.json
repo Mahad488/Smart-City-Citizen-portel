@@ -9,7 +9,8 @@
     "server": "node backend/server.js",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test backend/tests/security.test.js backend/middleware/auth.test.js"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",

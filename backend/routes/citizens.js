@@ -1,16 +1,31 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "node:crypto";
 import { OAuth2Client } from "google-auth-library";
 import db from "../config/db.js";
-import { authenticate } from "../auth.js";
-import { sendLoginWelcomeEmail } from "../services/emailService.js";
+import { authenticate, requireAdmin, JWT_SECRET } from "../auth.js";
+import { sendLoginWelcomeEmail, sendPasswordResetEmail } from "../services/emailService.js";
 
 const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || "smart-city-citizen-dev-secret";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+
+const ensurePasswordResetsTable = async () => {
+  try {
+    await db.query(
+      `CREATE TABLE IF NOT EXISTS password_resets (
+         email VARCHAR(255) NOT NULL PRIMARY KEY,
+         token_hash VARCHAR(255) NOT NULL,
+         expires_at DATETIME NOT NULL,
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+       ) ENGINE=InnoDB`
+    );
+  } catch (err) {
+    console.error("Error ensuring password_resets table:", err);
+  }
+};
 
 const generateCitizenId = async () => {
   try {
@@ -38,8 +53,8 @@ const generateCitizenId = async () => {
   }
 };
 
-// GET all citizens
-router.get("/", authenticate, (req, res) => {
+// GET all citizens (Admin Only - Protects Citizen PII)
+router.get("/", authenticate, requireAdmin, (req, res) => {
   const sql = `
     SELECT
       id,
@@ -67,8 +82,8 @@ router.get("/", authenticate, (req, res) => {
 });
 
 
-// Citizen statistics
-router.get("/stats/summary", authenticate, (req, res) => {
+// Citizen statistics (Admin Only)
+router.get("/stats/summary", authenticate, requireAdmin, (req, res) => {
   const sql = `
     SELECT
       COUNT(*) AS total,
@@ -95,7 +110,7 @@ router.get("/stats/summary", authenticate, (req, res) => {
 // POST citizen login
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -146,6 +161,9 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    const userRole = citizen.email?.toLowerCase().startsWith("admin") ? "ADMIN" : "CITIZEN";
+    const expiresIn = rememberMe ? "30d" : "7d";
+
     const token = jwt.sign(
       {
         id: citizen.id,
@@ -153,10 +171,10 @@ router.post("/login", async (req, res) => {
         email: citizen.email,
         name: citizen.name,
         status: citizen.status,
-        role: "CITIZEN",
+        role: userRole,
       },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn }
     );
 
     // Send welcome / login notification email asynchronously
@@ -289,8 +307,8 @@ router.post(["/google-login", "/google"], async (req, res) => {
   }
 });
 
-// Approve / Activate citizen
-router.put("/:id/activate", authenticate, async (req, res) => {
+// Approve / Activate citizen (Admin only)
+router.put("/:id/activate", authenticate, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -317,8 +335,8 @@ router.put("/:id/activate", authenticate, async (req, res) => {
   }
 });
 
-// Deactivate citizen
-router.put("/:id/deactivate", authenticate, async (req, res) => {
+// Deactivate citizen (Admin only)
+router.put("/:id/deactivate", authenticate, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -450,9 +468,19 @@ router.put("/me/password", authenticate, async (req, res) => {
   }
 });
 
-// GET citizen by ID
+// GET citizen by ID (Owner or Admin Only)
 router.get("/:id", authenticate, (req, res) => {
   const { id } = req.params;
+
+  if (
+    req.user.role !== "ADMIN" &&
+    String(req.user.id) !== String(id) &&
+    req.user.citizen_id !== id
+  ) {
+    return res.status(403).json({
+      message: "You can only view your own citizen profile.",
+    });
+  }
 
   const sql = `
     SELECT
@@ -570,7 +598,7 @@ router.post("/register", async (req, res) => {
 });
 
 // POST admin creates citizen
-router.post("/", authenticate, async (req, res) => {
+router.post("/", authenticate, requireAdmin, async (req, res) => {
   try {
     const {
       name,
@@ -629,8 +657,8 @@ router.post("/", authenticate, async (req, res) => {
 });
 
 
-// PUT update citizen
-router.put("/:id", authenticate, (req, res) => {
+// PUT update citizen (Admin Only)
+router.put("/:id", authenticate, requireAdmin, (req, res) => {
   const { id } = req.params;
 
   const {
@@ -679,8 +707,8 @@ router.put("/:id", authenticate, (req, res) => {
 });
 
 
-// DELETE citizen
-router.delete("/:id", authenticate, (req, res) => {
+// DELETE citizen (Admin Only)
+router.delete("/:id", authenticate, requireAdmin, (req, res) => {
   const { id } = req.params;
 
   const sql = `
@@ -700,7 +728,104 @@ router.delete("/:id", authenticate, (req, res) => {
     res.json({
       message: "Citizen deleted successfully"
     });
-  });
+// =====================================================
+// FORGOT & RESET PASSWORD
+// =====================================================
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      return res.status(400).json({ message: "A valid email address is required." });
+    }
+
+    await ensurePasswordResetsTable();
+
+    const [rows] = await db.query(
+      "SELECT id, name, email FROM citizens WHERE email = ?",
+      [email.trim().toLowerCase()]
+    );
+
+    // Generic response to prevent email enumeration
+    if (rows.length === 0) {
+      return res.json({
+        message: "If that email address is registered, password reset instructions have been sent.",
+      });
+    }
+
+    const citizen = rows[0];
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    await db.query(
+      `INSERT INTO password_resets (email, token_hash, expires_at)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE token_hash = VALUES(token_hash), expires_at = VALUES(expires_at)`,
+      [citizen.email, tokenHash, expiresAt]
+    );
+
+    const frontendUrl = process.env.FRONTEND_URL || "https://smart-city-citizen-portel-a37g.vercel.app";
+    const resetLink = `${frontendUrl.replace(/\/+$/, "")}/citizen-login?resetEmail=${encodeURIComponent(citizen.email)}&resetToken=${encodeURIComponent(rawToken)}`;
+
+    sendPasswordResetEmail({
+      citizenName: citizen.name,
+      citizenEmail: citizen.email,
+      resetToken: rawToken,
+      resetLink,
+    }).catch((err) => console.error("Error sending reset email:", err));
+
+    res.json({
+      message: "If that email address is registered, password reset instructions have been sent.",
+    });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ message: "Failed to process password reset request." });
+  }
+});
+
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { email, token, newPassword } = req.body;
+    if (!email || !token || !newPassword) {
+      return res.status(400).json({ message: "Email, token, and new password are required." });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters long." });
+    }
+
+    await ensurePasswordResetsTable();
+
+    const tokenHash = crypto.createHash("sha256").update(token.trim()).digest("hex");
+
+    const [resetRows] = await db.query(
+      "SELECT * FROM password_resets WHERE email = ? AND token_hash = ?",
+      [email.trim().toLowerCase(), tokenHash]
+    );
+
+    if (resetRows.length === 0) {
+      return res.status(400).json({ message: "Invalid or expired password reset token." });
+    }
+
+    const resetRecord = resetRows[0];
+    if (new Date(resetRecord.expires_at) < new Date()) {
+      await db.query("DELETE FROM password_resets WHERE email = ?", [email.trim().toLowerCase()]);
+      return res.status(400).json({ message: "Password reset token has expired. Please request a new one." });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await db.query(
+      "UPDATE citizens SET password_hash = ? WHERE email = ?",
+      [passwordHash, email.trim().toLowerCase()]
+    );
+
+    await db.query("DELETE FROM password_resets WHERE email = ?", [email.trim().toLowerCase()]);
+
+    res.json({ message: "Password reset successful! You can now log in with your new password." });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ message: "Failed to reset password." });
+  }
 });
 
 export default router;
