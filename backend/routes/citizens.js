@@ -728,6 +728,9 @@ router.delete("/:id", authenticate, requireAdmin, (req, res) => {
     res.json({
       message: "Citizen deleted successfully"
     });
+  });
+});
+
 // =====================================================
 // FORGOT & RESET PASSWORD
 // =====================================================
