@@ -1,112 +1,156 @@
 import express from "express";
 import db from "../config/db.js";
-import { authenticate } from "../auth.js";
+import { authenticate, requireAdmin } from "../auth.js";
 
 const router = express.Router();
 
-// GET all notifications
-router.get("/", authenticate, (req, res) => {
-    const sql = `
-        SELECT id, title, message, type, is_read, created_at
+const ensureNotificationsTable = async () => {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        citizen_id VARCHAR(50) NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        type VARCHAR(50) DEFAULT 'System',
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB
+    `);
+
+    // Safely add citizen_id column if it does not exist
+    try {
+      await db.query(`ALTER TABLE notifications ADD COLUMN citizen_id VARCHAR(50) NULL AFTER id`);
+    } catch (_) {
+      // Column already exists
+    }
+  } catch (err) {
+    console.error("Notifications table check error:", err);
+  }
+};
+
+// GET notifications (Citizen: own + system announcements, Admin: all)
+router.get("/", authenticate, async (req, res) => {
+  try {
+    await ensureNotificationsTable();
+
+    if (req.user.role === "ADMIN") {
+      const [results] = await db.query(`
+        SELECT id, citizen_id, title, message, type, is_read, created_at
         FROM notifications
         ORDER BY created_at DESC
-    `;
-
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error("Error fetching notifications:", err);
-            return res.status(500).json({
-                message: "Failed to fetch notifications"
-            });
-        }
-
-        res.json(results);
-    });
-});
-
-
-// POST new notification
-router.post("/", authenticate, (req, res) => {
-    const { title, message, type } = req.body;
-
-    if (!title || !message) {
-        return res.status(400).json({
-            message: "Title and message are required"
-        });
+      `);
+      return res.json(results);
     }
 
-    const sql = `
-        INSERT INTO notifications (title, message, type)
-        VALUES (?, ?, ?)
-    `;
-
-    db.query(
-        sql,
-        [title, message, type || "System"],
-        (err, result) => {
-            if (err) {
-                console.error("Error creating notification:", err);
-                return res.status(500).json({
-                    message: "Failed to create notification"
-                });
-            }
-
-            res.status(201).json({
-                message: "Notification created successfully",
-                id: result.insertId
-            });
-        }
+    const citizen_id = req.user.citizen_id;
+    const [results] = await db.query(
+      `
+      SELECT id, citizen_id, title, message, type, is_read, created_at
+      FROM notifications
+      WHERE citizen_id = ? OR citizen_id IS NULL
+      ORDER BY created_at DESC
+      `,
+      [citizen_id || ""]
     );
+
+    res.json(results);
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+    res.status(500).json({ message: "Failed to fetch notifications" });
+  }
 });
 
+// POST new notification (Admin or Authorized System)
+router.post("/", authenticate, async (req, res) => {
+  try {
+    const { title, message, type, citizen_id } = req.body;
 
-// Mark notification as read
-router.put("/:id/read", authenticate, (req, res) => {
-    const { id } = req.params;
+    if (!title || !message) {
+      return res.status(400).json({
+        message: "Title and message are required",
+      });
+    }
 
-    const sql = `
-        UPDATE notifications
-        SET is_read = TRUE
-        WHERE id = ?
-    `;
+    // Citizens can only create notifications for themselves; Admins can target any citizen or broadcast
+    const targetCitizenId = req.user.role === "ADMIN" ? (citizen_id || null) : req.user.citizen_id;
 
-    db.query(sql, [id], (err) => {
-        if (err) {
-            console.error("Error marking notification as read:", err);
-            return res.status(500).json({
-                message: "Failed to mark notification as read"
-            });
-        }
+    await ensureNotificationsTable();
 
-        res.json({
-            message: "Notification marked as read"
-        });
+    const [result] = await db.query(
+      `
+      INSERT INTO notifications (citizen_id, title, message, type)
+      VALUES (?, ?, ?, ?)
+      `,
+      [targetCitizenId, title, message, type || "System"]
+    );
+
+    res.status(201).json({
+      message: "Notification created successfully",
+      id: result.insertId,
     });
+  } catch (err) {
+    console.error("Error creating notification:", err);
+    res.status(500).json({ message: "Failed to create notification" });
+  }
 });
 
-
-// Delete notification
-router.delete("/:id", authenticate, (req, res) => {
+// Mark notification as read (Owner or Admin)
+router.put("/:id/read", authenticate, async (req, res) => {
+  try {
     const { id } = req.params;
+    await ensureNotificationsTable();
 
-    const sql = `
-        DELETE FROM notifications
-        WHERE id = ?
-    `;
+    let sql = `UPDATE notifications SET is_read = TRUE WHERE id = ?`;
+    let params = [id];
 
-    db.query(sql, [id], (err) => {
-        if (err) {
-            console.error("Error deleting notification:", err);
-            return res.status(500).json({
-                message: "Failed to delete notification"
-            });
-        }
+    if (req.user.role !== "ADMIN") {
+      sql += ` AND (citizen_id = ? OR citizen_id IS NULL)`;
+      params.push(req.user.citizen_id || "");
+    }
 
-        res.json({
-            message: "Notification deleted successfully"
-        });
-    });
+    const [result] = await db.query(sql, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Notification not found or access denied",
+      });
+    }
+
+    res.json({ message: "Notification marked as read" });
+  } catch (err) {
+    console.error("Error marking notification as read:", err);
+    res.status(500).json({ message: "Failed to mark notification as read" });
+  }
 });
 
+// Delete notification (Admin or Owner only)
+router.delete("/:id", authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await ensureNotificationsTable();
+
+    let sql = `DELETE FROM notifications WHERE id = ?`;
+    let params = [id];
+
+    if (req.user.role !== "ADMIN") {
+      sql += ` AND citizen_id = ?`;
+      params.push(req.user.citizen_id || "");
+    }
+
+    const [result] = await db.query(sql, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Notification not found or access denied",
+      });
+    }
+
+    res.json({ message: "Notification deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting notification:", err);
+    res.status(500).json({ message: "Failed to delete notification" });
+  }
+});
 
 export default router;

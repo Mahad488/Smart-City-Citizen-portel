@@ -650,43 +650,62 @@
   }
 
   .auth-brand-panel {
-    min-height: 320px;
+    min-height: 260px;
+    padding: 30px 20px;
   }
 }
 
 @media (max-width: 520px) {
   .citizen-auth-page {
-    padding: 18px 12px;
+    padding: calc(60px + env(safe-area-inset-top, 0px)) 12px calc(24px + env(safe-area-inset-bottom, 0px));
     place-items: stretch;
   }
 
   .auth-back-home {
-    top: 12px;
+    top: max(14px, env(safe-area-inset-top, 14px));
     left: 12px;
     right: 12px;
     justify-content: center;
+    min-height: 44px;
   }
 
   .auth-form-panel {
-    padding: 16px 12px 20px;
+    padding: 12px 6px 16px;
   }
 
   .citizen-auth-card {
-    padding: 22px 16px;
+    padding: 20px 14px;
     border-radius: 14px;
   }
 
   .citizen-auth-header h1 {
-    font-size: 24px;
+    font-size: 22px;
+  }
+
+  .citizen-auth-header p {
+    font-size: 13px;
+  }
+
+  .auth-form-group input,
+  .auth-form-group select {
+    font-size: 16px;
+    min-height: 48px;
+  }
+
+  .citizen-auth-submit {
+    min-height: 48px;
+    font-size: 15px;
   }
 
   .register-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .auth-extra-row {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
   }
 
   .auth-location-control {
@@ -700,3 +719,102 @@
     width: 100%;
   }
 }
+
+/* =====================================================
+   Forgot & Reset Password Modal Styles
+   ===================================================== */
+.auth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.auth-modal-card {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.auth-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.auth-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.auth-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.auth-modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-modal-body p {
+  margin: 0;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.auth-modal-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.auth-modal-tab {
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.auth-modal-tab.active {
+  background: #eff6ff;
+  color: #2563eb;
+}

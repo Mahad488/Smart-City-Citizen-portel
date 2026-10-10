@@ -12,17 +12,17 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 // Connection Pool use karein jo automatic reconnect karta hai
 const pool = mysql.createPool({
-  host: process.env.MYSQLHOST || process.env.DB_HOST,
-  user: process.env.MYSQLUSER || process.env.DB_USER || "root",
-  password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD,
-  database:
+  host: (process.env.MYSQLHOST || process.env.DB_HOST || "").trim(),
+  user: (process.env.MYSQLUSER || process.env.DB_USER || "root").trim(),
+  password: (process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || "").trim(),
+  database: (
     process.env.MYSQL_DATABASE ||
     process.env.MYSQLDATABASE ||
-    process.env.DB_NAME,
+    process.env.DB_NAME ||
+    ""
+  ).trim(),
   port: Number(
-    process.env.MYSQLPORT ||
-    process.env.DB_PORT ||
-    3306
+    (process.env.MYSQLPORT || process.env.DB_PORT || "3306").toString().trim()
   ),
   waitForConnections: true,
   connectionLimit: 10,

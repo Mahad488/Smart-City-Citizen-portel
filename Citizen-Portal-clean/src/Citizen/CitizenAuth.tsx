@@ -74,6 +74,31 @@ function CitizenAuth() {
     area: "Central City",
   });
 
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem("remember_me") === "true";
+  });
+
+  const [showForgotModal, setShowForgotModal] = useState(() => {
+    return Boolean(searchParams.get("resetToken") || searchParams.get("resetEmail"));
+  });
+  const [forgotTab, setForgotTab] = useState<"request" | "reset">(() => {
+    return searchParams.get("resetToken") ? "reset" : "request";
+  });
+  const [forgotEmail, setForgotEmail] = useState(() => searchParams.get("resetEmail") || "");
+  const [resetToken, setResetToken] = useState(() => searchParams.get("resetToken") || "");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
+  const [forgotMessage, setForgotMessage] = useState("");
+  const [forgotError, setForgotError] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("remembered_email");
+    if (savedEmail && !loginForm.email) {
+      setLoginForm((prev) => ({ ...prev, email: savedEmail }));
+    }
+  }, []);
+
   // =========================
   // LOGIN
   // =========================
@@ -88,6 +113,14 @@ function CitizenAuth() {
     setLoading(true);
 
     try {
+      if (rememberMe) {
+        localStorage.setItem("remember_me", "true");
+        localStorage.setItem("remembered_email", loginForm.email);
+      } else {
+        localStorage.removeItem("remember_me");
+        localStorage.removeItem("remembered_email");
+      }
+
       const response = await fetch(
         `${API_BASE_URL}/api/citizens/login`,
         {
@@ -95,7 +128,10 @@ function CitizenAuth() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(loginForm),
+          body: JSON.stringify({
+            ...loginForm,
+            rememberMe,
+          }),
         }
       );
 
@@ -178,6 +214,67 @@ function CitizenAuth() {
       setError(err instanceof Error ? err.message : "Google login failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRequestReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError("");
+    setForgotMessage("");
+    setForgotLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/citizens/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to process request");
+      setForgotMessage(data.message);
+    } catch (err: any) {
+      setForgotError(err.message || "Failed to send reset instructions");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError("");
+    setForgotMessage("");
+
+    if (resetPassword.length < 6) {
+      setForgotError("Password must be at least 6 characters");
+      return;
+    }
+    if (resetPassword !== resetConfirmPassword) {
+      setForgotError("Passwords do not match");
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/citizens/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: forgotEmail,
+          token: resetToken,
+          newPassword: resetPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to reset password");
+      setForgotMessage(data.message);
+      setTimeout(() => {
+        setShowForgotModal(false);
+        setMessage("Password reset successfully! Please log in.");
+      }, 2500);
+    } catch (err: any) {
+      setForgotError(err.message || "Failed to reset password");
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -546,13 +643,23 @@ function CitizenAuth() {
                 <div className="auth-extra-row">
 
                   <label className="remember-me">
-                    <input type="checkbox" />
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                    />
                     <span>Remember me</span>
                   </label>
 
                   <button
                     type="button"
                     className="forgot-password"
+                    onClick={() => {
+                      setForgotEmail(loginForm.email || "");
+                      setForgotError("");
+                      setForgotMessage("");
+                      setShowForgotModal(true);
+                    }}
                   >
                     Forgot password?
                   </button>
@@ -868,6 +975,138 @@ function CitizenAuth() {
         </div>
 
       </div>
+
+      {showForgotModal && (
+        <div className="auth-modal-overlay" onClick={() => setShowForgotModal(false)}>
+          <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="auth-modal-header">
+              <h3>Account Password Recovery</h3>
+              <button
+                type="button"
+                className="auth-modal-close"
+                onClick={() => setShowForgotModal(false)}
+                aria-label="Close dialog"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="auth-modal-body">
+              <div className="auth-modal-tabs">
+                <button
+                  type="button"
+                  className={`auth-modal-tab ${forgotTab === "request" ? "active" : ""}`}
+                  onClick={() => { setForgotTab("request"); setForgotError(""); setForgotMessage(""); }}
+                >
+                  1. Request Reset
+                </button>
+                <button
+                  type="button"
+                  className={`auth-modal-tab ${forgotTab === "reset" ? "active" : ""}`}
+                  onClick={() => { setForgotTab("reset"); setForgotError(""); setForgotMessage(""); }}
+                >
+                  2. Enter Code & New Password
+                </button>
+              </div>
+
+              {forgotMessage && (
+                <div className="citizen-auth-success">
+                  <Check size={16} />
+                  <span>{forgotMessage}</span>
+                </div>
+              )}
+
+              {forgotError && (
+                <div className="citizen-auth-error">
+                  <AlertCircle size={16} />
+                  <span>{forgotError}</span>
+                </div>
+              )}
+
+              {forgotTab === "request" ? (
+                <form onSubmit={handleRequestReset}>
+                  <p style={{ marginBottom: "12px" }}>
+                    Enter your registered email address and we will email you a secure one-time reset code.
+                  </p>
+                  <div className="auth-form-group">
+                    <label>Registered Email</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="citizen@example.com"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="citizen-auth-submit"
+                    style={{ marginTop: "16px" }}
+                    disabled={forgotLoading}
+                  >
+                    {forgotLoading ? "Sending Instructions..." : "Send Reset Code"}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleResetPassword}>
+                  <div className="auth-form-group">
+                    <label>Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="auth-form-group" style={{ marginTop: "12px" }}>
+                    <label>Reset Code / Token</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter 64-char code from email"
+                      value={resetToken}
+                      onChange={(e) => setResetToken(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="auth-form-group" style={{ marginTop: "12px" }}>
+                    <label>New Password (min 6 chars)</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="New secure password"
+                      value={resetPassword}
+                      onChange={(e) => setResetPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="auth-form-group" style={{ marginTop: "12px" }}>
+                    <label>Confirm New Password</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Re-type new password"
+                      value={resetConfirmPassword}
+                      onChange={(e) => setResetConfirmPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="citizen-auth-submit"
+                    style={{ marginTop: "16px" }}
+                    disabled={forgotLoading}
+                  >
+                    {forgotLoading ? "Resetting Password..." : "Update Password"}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

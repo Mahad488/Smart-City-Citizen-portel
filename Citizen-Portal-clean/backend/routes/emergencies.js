@@ -1,23 +1,39 @@
 import express from "express";
 import db from "../config/db.js";
-import { authenticate } from "../auth.js";
+import { authenticate, requireAdmin } from "../auth.js";
+import { sendEmergencyConfirmationEmail } from "../services/emailService.js";
 
 const router = express.Router();
 
 
 // =====================================================
-// GET ALL EMERGENCIES - ADMIN
+// GET EMERGENCIES (Admin: all, Citizen: own only)
 // =====================================================
 router.get("/", authenticate, async (req, res) => {
   try {
+    if (req.user.role === "ADMIN") {
+      const [rows] = await db.query(
+        `SELECT *
+         FROM emergencies
+         ORDER BY id DESC`
+      );
+      return res.json(rows);
+    }
+
+    const citizen_id = req.user.citizen_id;
+    if (!citizen_id) {
+      return res.json([]);
+    }
+
     const [rows] = await db.query(
       `SELECT *
        FROM emergencies
-       ORDER BY id DESC`
+       WHERE citizen_id = ?
+       ORDER BY id DESC`,
+      [citizen_id]
     );
 
     res.json(rows);
-
   } catch (error) {
     console.error("GET EMERGENCIES ERROR:", error);
 
@@ -76,7 +92,6 @@ router.get(["/me", "/citizen/:citizen_id"], authenticate, async (req, res) => {
 router.post("/", authenticate, async (req, res) => {
   try {
     const {
-      citizen_id,
       type,
       location,
       team,
@@ -86,20 +101,22 @@ router.post("/", authenticate, async (req, res) => {
       longitude,
     } = req.body;
 
+    const citizen_id = req.user.citizen_id || req.body.citizen_id;
+
     if (!citizen_id || !type || !location) {
       return res.status(400).json({
         message: "Citizen, emergency type and location are required",
       });
     }
 
-    if (req.user.citizen_id !== citizen_id) {
+    if (req.user.role !== "ADMIN" && req.user.citizen_id !== citizen_id) {
       return res.status(403).json({
         message: "You can only report emergencies for your own account.",
       });
     }
 
     const [citizenRows] = await db.query(
-      `SELECT id, name, status
+      `SELECT id, name, email, status
        FROM citizens
        WHERE citizen_id = ?`,
       [citizen_id]
@@ -147,6 +164,17 @@ router.post("/", authenticate, async (req, res) => {
     res.status(201).json({
       message: "Emergency reported successfully",
       id: result.insertId,
+    });
+
+    // Send confirmation email asynchronously (non-blocking)
+    sendEmergencyConfirmationEmail({
+      citizenName: citizen.name,
+      citizenEmail: citizen.email,
+      emergencyId: result.insertId,
+      emergencyType: type,
+      location,
+    }).catch((emailErr) => {
+      console.error("[EMERGENCY ROUTE] Error sending emergency confirmation email:", emailErr);
     });
 
   } catch (error) {
@@ -288,7 +316,10 @@ router.get("/:id", authenticate, async (req, res) => {
       });
     }
 
-    if (req.user.citizen_id !== rows[0].citizen_id) {
+    if (
+      req.user.role !== "ADMIN" &&
+      req.user.citizen_id !== rows[0].citizen_id
+    ) {
       return res.status(403).json({
         message: "This emergency does not belong to your account.",
       });
@@ -309,7 +340,7 @@ router.get("/:id", authenticate, async (req, res) => {
 // =====================================================
 // ADMIN UPDATE EMERGENCY
 // =====================================================
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticate, requireAdmin, async (req, res) => {
   try {
     const {
       type,
@@ -366,7 +397,7 @@ router.put("/:id", async (req, res) => {
 // =====================================================
 // ADMIN DELETE EMERGENCY
 // =====================================================
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticate, requireAdmin, async (req, res) => {
   try {
     const [result] = await db.query(
       `DELETE FROM emergencies
